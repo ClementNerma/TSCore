@@ -31,7 +31,7 @@ export class Dictionary<K, V> {
      * @param object
      */
     static fromObject<T extends object>(object: T): Dictionary<keyof T, T[keyof T]> {
-        return new Dictionary(O.entries(object));
+        return new Dictionary(forceType(O.entries(object)));
     }
 
     /**
