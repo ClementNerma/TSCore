@@ -137,6 +137,57 @@ export class Future<T, E> extends MappedMatchable<FutureMatch<T, E>, Option<Resu
     }
 
     /**
+     * Create a future that creates an immediatly-resolving future based on this one's success
+     * @param callback 
+     */
+    andThen<U>(callback: (data: T) => Result<U, E>): Future<U, E> {
+        return new Future((resolve, reject) => {
+            match(this._under, {
+                Some: result => match(result, {
+                    Ok: data => match(callback(data), {
+                        Ok: resolve,
+                        Err: reject
+                    }),
+                    Err: reject
+                }),
+                None: () => {
+                    this._successHandlers.push(data => match(callback(data), {
+                        Ok: resolve,
+                        Err: reject
+                    }));
+                    this._errorHandlers.push(reject);
+                }
+            });
+        });
+    }
+
+    /**
+     * Equivalent of .andThen(), but with an asynchronous callback
+     * If you want to change the error type as well, use .finally()
+     * @param callback 
+     */
+    andThenAsync<U>(callback: (data: T) => Promise<Result<U, E>>): Future<U, E> {
+        return new Future((resolve, reject) => {
+            match(this._under, {
+                Some: result => match(result, {
+                    Ok: async data => match(await callback(data), {
+                        Ok: resolve,
+                        Err: reject
+                    }),
+                    Err: reject
+                }),
+                None: () => {
+                    this._successHandlers.push(async data => match(await callback(data), {
+                        Ok: resolve,
+                        Err: reject
+                    }));
+                    this._errorHandlers.push(reject);
+                }
+            });
+        });
+    }
+
+    /**
      * Create a future that rejects through a callback taking this future's error value
      * @param callback
      */
