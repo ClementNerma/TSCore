@@ -1,0 +1,602 @@
+import {None, Option, Some} from "./option";
+import {Comparator} from "./comparison";
+import {Rewindable} from "./rewindable";
+import {panic} from "./panic";
+import {O} from "./objects";
+
+export class List<T> {
+    private _content: T[];
+
+    /**
+     * Create a new list
+     * @param content (Optional) Existing array of set
+     */
+    constructor(content?: T[] | Set<T>) {
+        if (!content) {
+            content = [];
+        } else if (content instanceof Set) {
+            content = Array.from(content.values());
+        } else {
+            content = content.slice();
+        }
+
+        // Detect non-contiguous arrays
+        // e.g. `const arr = []; arr[3] = "Hello!";`
+        // Such an array will contain 'empty' elements which will have the 'undefined' value
+        if ((content as Array<T | undefined>).includes(undefined)) {
+            if (content.find(item => item !== undefined)) {
+                panic("Lists can only be created from contiguous arrays");
+            }
+        }
+
+        this._content = content;
+    }
+
+    /**
+     * Get the list's number of items
+     */
+    get length(): number {
+        return this._content.length;
+    }
+
+    /**
+     * Check if an item with a given index exists
+     * @param index
+     */
+    has(index: number): boolean {
+        return this._content.hasOwnProperty(index);
+    }
+
+    /**
+     * Get the item at a given index
+     * @param index
+     */
+    get(index: number): Option<T> {
+        return this.has(index) ? Some(this._content[index]) : None();
+    }
+
+    /**
+     * Get the item at a given index and expect it to exist
+     * @param index
+     */
+    getUnwrap(index: number): T {
+        return this.get(index).unwrap();
+    }
+
+    /**
+     * Set an index's value
+     * Will panic if the index is out-of-bounds
+     * @param index
+     * @param value
+     */
+    set(index: number, value: T): void {
+        if (!this.has(index)) {
+            panic("Out-of-bound index {} in list with length of {}", index, this.length);
+        }
+
+        this._content[index] = value;
+    }
+
+    /**
+     * Get the first element of the list
+     */
+    first(): Option<T> {
+        return this.get(0);
+    }
+
+    /**
+     * Get the first elements of the list
+     * @param size The number of elements to get
+     */
+    firstOnes(size: number): List<T> {
+        return this.slice(0, size);
+    }
+
+    /**
+     * Get the last element of the list
+     */
+    last(): Option<T> {
+        return this.get(this.length);
+    }
+
+    /**
+     * Get the last elements of the list
+     * @param size The number of elements to get
+     */
+    lastOnes(size: number): List<T> {
+        return this.length < size ? new List() : this.slice(-size);
+    }
+
+    /**
+     * Get the index of an item
+     * @param item
+     * @param fromIndex
+     */
+    indexOf(item: T, fromIndex?: number): number {
+        return this._content.indexOf(item, fromIndex);
+    }
+
+    /**
+     * Get the last index of an item
+     * @param item
+     * @param fromIndex
+     */
+    lastIndexOf(item: T, fromIndex?: number): number {
+        return this._content.lastIndexOf(item, fromIndex);
+    }
+
+    /**
+     * Check if an item is present in the list
+     * @param item
+     */
+    includes(item: T): boolean {
+        return this._content.includes(item);
+    }
+
+    /**
+     * Count the number of times an item is present in the list
+     * @param item
+     */
+    count(item: T): number {
+        let counter = 0;
+
+        for (const value of this._content) {
+            if (value === item) {
+                counter ++;
+            }
+        }
+
+        return counter;
+    }
+
+    /**
+     * Get a slice of the list
+     * @param startAt
+     * @param endAt
+     */
+    slice(startAt: number, endAt?: number): List<T> {
+        return List.raw(this._content.slice(startAt, endAt));
+    }
+
+    /**
+     * Concatenate this list to other ones
+     * @param list
+     * @param lists
+     */
+    concatHead(list: Array<T> | List<T>, ...lists: Array<Array<T> | List<T>>): List<T> {
+        return List.raw((O.isArray(list) ? list : list._content).concat(...lists.map(list => O.isArray(list) ? list : list._content)).concat(this._content));
+    }
+
+    /**
+     * Concatenate this list with other ones
+     * @param list
+     * @param lists
+     */
+    concat(list: Array<T> | List<T>, ...lists: Array<Array<T> | List<T>>): List<T> {
+        return List.raw(this._content.concat(O.isArray(list) ? list : list._content).concat(...lists.map(list => O.isArray(list) ? list : list._content)));
+    }
+
+    /**
+     * Join this list as a string
+     * @param separator
+     */
+    join(separator?: string): string {
+        return this._content.join(separator);
+    }
+
+    /**
+     * Run a callback for each item
+     * @param callback
+     */
+    forEach(callback: (value: T, index: number, list: this) => void): void {
+        this._content.forEach((value, index) => callback(value, index, this));
+    }
+
+    /**
+     * Check if every item matches a predicate
+     * @param predicate
+     */
+    every(predicate: (value: T, index: number, list: this) => boolean): boolean {
+        return this._content.every((value, index) => predicate(value, index, this));
+    }
+
+    /**
+     * Check if any item matches a predicate
+     * @param predicate
+     */
+    some(predicate: (value: T, index: number, list: this) => boolean): boolean {
+        return this._content.some((value, index) => predicate(value, index, this));
+    }
+
+    /**
+     * Find the first element matching a predicate
+     * @param predicate
+     */
+    find(predicate: (value: T, index: number, list: this) => boolean): Option<T> {
+        for (let i = 0; i < this._content.length; i ++) {
+            if (predicate(this._content[i], i, this)) {
+                return Some(this._content[i]);
+            }
+        }
+
+        return None();
+    }
+
+    /**
+     * Find the index of the first element matching a predicate
+     * @param predicate
+     */
+    findIndex(predicate: (value: T, index: number, list: this) => boolean): number {
+        for (let i = 0; i < this._content.length; i ++) {
+            if (predicate(this._content[i], i, this)) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
+     * Filter items using a predicate
+     * @param predicate
+     */
+    filter(predicate: (value: T, index: number, list: this) => boolean): List<T> {
+        return List.raw(this._content.filter((value, index) => predicate(value, index, this)));
+    }
+
+    /**
+     * Select items using a predicate
+     * Equivalent of `.filter(...).firstOnes(...)` but a lot faster
+     * @param predicate
+     * @param size
+     * @example (new List([ 2, -1, 3, 2 ])).select(2, num => num > 0);
+     */
+    select(predicate: (value: T, index: number, list: this) => boolean, size: number): List<T> {
+        const selected = new List<T>();
+
+        for (let i = 0; i < this._content.length; i ++) {
+            if (predicate(this._content[i], i, this)) {
+                selected.push(this._content[i]);
+
+                if (selected.length === size) {
+                    return selected;
+                }
+            }
+        }
+
+        return selected;
+    }
+
+    /**
+     * Reverse the list's order
+     */
+    reverse(): List<T> {
+        return List.raw(this._content.reverse());
+    }
+
+    /**
+     * Map items through a function
+     * @param mapper
+     */
+    map<U>(mapper: (value: T, index: number, list: this) => U): List<U> {
+        return List.raw(this._content.map((value, index) => mapper(value, index, this)));
+    }
+
+    /**
+     * Reduce items to a single value
+     * @param callback
+     * @param initial
+     */
+    reduce<U>(callback: (prev: U, current: T, index: number, list: List<T>) => U, initial: U): U {
+        return this._content.reduce((prev, curr, index) => callback(prev, curr, index, this), initial);
+    }
+
+    /**
+     * Reduce items to a single value, starting from the right
+     * @param callback
+     * @param initial
+     */
+    reduceRight<U>(callback: (prev: U, current: T, index: number, list: List<T>) => U, initial: U): U {
+        return this._content.reduceRight((prev, curr, index) => callback(prev, curr, index, this), initial);
+    }
+
+    /**
+     * Get the minimum value
+     * @param numerize Turn the list's values into numbers
+     * @param fallback Fallback if the list is empty
+     */
+    min(numerize: (current: T, index: number, list: List<T>) => number, fallback = 0): number {
+        return this._content.reduce((prev, curr, index) => Math.min(prev, numerize(curr, index, this)), fallback);
+    }
+
+    /**
+     * Get the maximum value
+     * @param numerize Turn the list's values into numbers
+     * @param fallback Fallback if the list is empty
+     */
+    max(numerize: (current: T, index: number, list: List<T>) => number, fallback = 0): number {
+        return this._content.reduce((prev, curr, index) => Math.max(prev, numerize(curr, index, this)), fallback);
+    }
+
+    /**
+     * Sum the list's values
+     * @param numerize Turn the list's values into numbers
+     */
+    sum(numerize: (current: T, index: number, list: List<T>) => number): number {
+        return this._content.reduce((prev, curr, index) => numerize(curr, index, this), 0);
+    }
+
+    /**
+     * Sort the list
+     * @param comparator
+     */
+    sort(comparator?: Comparator<T>): List<T> {
+        return List.raw(this._content.sort(comparator));
+    }
+
+    /**
+     * Add items at the beginning of the list
+     * @param items
+     */
+    unshift(...items: T[]): number {
+        return this._content.unshift(...items);
+    }
+
+    /**
+     * Add items at the end of the list
+     * @param items
+     */
+    push(...items: T[]): number {
+        return this._content.push(...items);
+    }
+
+    /**
+     * Move all elements from another list to the end of this one
+     * @param list
+     */
+    take(list: List<T>): number {
+        this.push(...list.toArray());
+        list.clear();
+        return this.length;
+    }
+
+    /**
+     * Remove the first item from the list
+     */
+    shift(): Option<T> {
+        if (this._content.length) {
+            return Some(this._content.shift() as T);
+        } else {
+            return None();
+        }
+    }
+
+    /**
+     * Insert a value at a specific index
+     * @param index
+     * @param value
+     */
+    insert(index: number, value: T): void {
+        this._content.splice(index, 0, value);
+    }
+
+    /**
+     * Remove the last item from the list
+     */
+    pop(): Option<T> {
+        if (this._content.length) {
+            return Some(this._content.pop() as T);
+        } else {
+            return None();
+        }
+    }
+
+    /**
+     * Remove a slice of the list
+     * @param start
+     * @param deleteCount
+     * @returns Removed items
+     */
+    splice(start: number, deleteCount?: number): List<T>;
+    splice(start: number, deleteCount: number, ...items: Array<T>): List<T>;
+    splice(start: number, deleteCount?: number, ...items: Array<T>): List<T> {
+        return List.raw(
+            deleteCount === undefined
+                ? this._content.splice(start)
+                : this._content.splice(start, deleteCount, ...items)
+        )
+    }
+
+    /**
+     * Run a callback for each item and then make the list empty
+     * @param callback
+     */
+    out(callback: (value: T, index: number, list: this) => void): void {
+        this.forEach(callback);
+        this.clear();
+    }
+
+    /**
+     * Remove the first occurrence of an item from the list
+     * @param item
+     */
+    removeFirst(item: T): boolean {
+        const index = this.indexOf(item);
+
+        if (index !== -1) {
+            this._content.splice(index, 1);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Remove all occurrences of a list of items from the list
+     * @param items
+     */
+    remove(...items: T[]): void {
+        for (const item of items) {
+            let index: number;
+
+            while ((index = this._content.indexOf(item)) !== -1) {
+                this._content.splice(index, 1);
+            }
+        }
+    }
+
+    /**
+     * Wrap this list in an outer list
+     */
+    wrap(): List<List<T>> {
+        // TODO: Fix types here
+        return List.raw([this]) as unknown as List<List<T>>;
+    }
+
+    /**
+     * Remove all items from the list
+     */
+    clear(): void {
+        this._content = [];
+    }
+
+    /**
+     * Iterate over the list's indexes
+     */
+    keys(): Rewindable<number> {
+        return new Rewindable(this._content.keys());
+    }
+
+    /**
+     * Iterate over the list's values
+     */
+    values(): Rewindable<T> {
+        return new Rewindable(this._content.values());
+    }
+
+    /**
+     * Iterate over the list's entries (key-value pairs)
+     */
+    entries(): Rewindable<[number, T]> {
+        return new Rewindable(this._content.entries());
+    }
+
+    /**
+     * Get the list as an independent array
+     */
+    toArray(): T[] {
+        return this._content.slice();
+    }
+
+    /**
+     * Clone the list
+     */
+    clone(): List<T> {
+        return List.raw(this._content.slice());
+    }
+
+    /**
+     * Iterate through the list's values
+     */
+    [Symbol.iterator](): IterableIterator<T> {
+        return this._content[Symbol.iterator]();
+    }
+
+    /**
+     * Create a list from a raw array (not cloning, no check for contiguity)
+     * Instantiation is a lot faster but less safe too
+     */
+    static raw<T>(content: T[] | Set<T>): List<T> {
+        const list = new List<T>();
+        list._content = content instanceof Set ? Array.from(content.values()) : content;
+        return list;
+    }
+
+    static gen<T>(items: number, callback: (index: number, previous: Option<T>) => T): List<T> {
+        const list = new List<T>();
+
+        for (let i = 0; i < items; i ++) {
+            list.push(callback(i, list.last()));
+        }
+
+        return list;
+    }
+}
+
+/**
+ * Consumer functions list
+ * @template T Type of consumed data
+ */
+export class Consumers<T> extends List<(data: T) => void> {
+    /**
+     * Trigger all consumer functions
+     * @param data Consumers' data
+     */
+    trigger(data: T): void {
+        this.forEach(callback => callback(data));
+    }
+
+    /**
+     * Resolve all consumer functions
+     * @param data Consumers' data
+     */
+    resolve(data: T): void {
+        this.out(callback => callback(data));
+    }
+}
+
+export class StringBuffer extends List<string> {
+    constructor(...strings: string[]) {
+        super(strings);
+    }
+
+    countStr(str: string): number {
+        const full = this.join('');
+        let counter = 0;
+
+        for (let i = 0; i < full.length; i ++) {
+            if (full.substr(i, str.length) === str) {
+                i += str.length - 1;
+                counter ++;
+            }
+        }
+
+        return counter;
+    }
+
+    countLines(): number {
+        const full = this.join('');
+        let counter = 0;
+
+        for (let i = 0; i < full.length; i ++) {
+            if (full.charAt(i) === '\r') {
+                if (full.charAt(i + 1) === '\n') {
+                    i ++;
+                }
+
+                counter ++;
+            }
+        }
+
+        return counter;
+    }
+
+    // TODO: getLines(): string[]
+    // TODO: getLine(index: number): Option<string>
+
+    newLine(style = '\r\n'): number {
+        return this.push(style);
+    }
+
+    append(buffer: StringBuffer): this {
+        for (const part of buffer) {
+            this.push(part);
+        }
+
+        return this;
+    }
+
+    finalize(): string {
+        return this.join('');
+    }
+}
