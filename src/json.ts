@@ -330,7 +330,7 @@ export const jsonDecoders = {
                 decoder(value)
                     .mapErr(err => new JsonDecodingError(state('ArrayChildDecodingError', [i, err])))
             )
-        ).unwrapOr(Err(new JsonDecodingError(state('NotArray'))))
+        ).unwrapOr(Err(new JsonDecodingError(state('NotArray'))));
     },
     collection: <T>(decoder: JsonDecoder<T>) => (value: JsonValue): Result<Dictionary<string, T>, JsonDecodingError> => {
         return value.asCollection().map(coll =>
@@ -338,7 +338,7 @@ export const jsonDecoders = {
                 decoder(value)
                     .mapErr(err => new JsonDecodingError(state('CollectionChildDecodingError', [key, err])))
             )
-        ).unwrapOr(Err(new JsonDecodingError(state('NotArray'))))
+        ).unwrapOr(Err(new JsonDecodingError(state('NotArray'))));
     },
     tuple1: <V1>(decoders: [JsonDecoder<V1>]) => (value: JsonValue): Result<[V1], JsonDecodingError> => _decodeTuple(decoders, value) as any,
     tuple2: <V1, V2>(decoders: [JsonDecoder<V1>, JsonDecoder<V2>]) => (value: JsonValue): Result<[V1, V2], JsonDecodingError> => _decodeTuple(decoders, value) as any,
@@ -457,7 +457,7 @@ function _decodeTuple(decoders: JsonDecoder<any>[], value: JsonValue): Result<un
 
 function _decodeMapping(mappings: [string, JsonDecoder<any>][], value: JsonValue): Result<unknown, JsonDecodingError> {
     return value.asCollection().map(dict => {
-        let out = {};
+        let out: { [key: string]: unknown } = {};
 
         for (const [field, decoder] of mappings) {
             const encoded = dict.get(field);
@@ -472,7 +472,7 @@ function _decodeMapping(mappings: [string, JsonDecoder<any>][], value: JsonValue
                 return Err(new JsonDecodingError(state('CollectionChildDecodingError', [field, decoded.unwrap()])));
             }
 
-            out[field as any] = decoded.unwrap();
+            out[field] = decoded.unwrap();
         }
 
         return Ok(out);
