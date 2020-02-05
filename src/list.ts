@@ -287,7 +287,7 @@ export class List<T> {
             }
         }
 
-        Ok(mapped)
+        return Ok(mapped);
     }
 
     /**
