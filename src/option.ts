@@ -224,9 +224,20 @@ export class Option<T> extends Matchable<OptMatch<T>> {
 
     /**
      * Turn the option into a result
-     * @param fallbackError The error result to use if the option is not concrete
+    * @param fallbackError The error result to use if the option is not concrete
+    */
+    ok_or<U>(fallbackError: U): Result<T, U> {
+        return match(this, {
+            Some: value => Ok(value),
+            None: () => Err(fallbackError)
+        });
+    }
+
+    /**
+     * Turn the option into a result
+     * @param fallbackError The error callback to use if the option is not concrete
      */
-    result<U>(fallbackError: () => U): Result<T, U> {
+    ok_or_else<U>(fallbackError: () => U): Result<T, U> {
         return match(this, {
             Some: value => Ok(value),
             None: () => Err(fallbackError())
