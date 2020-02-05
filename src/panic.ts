@@ -1,4 +1,3 @@
-import {List} from "./list";
 
 /**
  * Proxy functions
@@ -10,8 +9,10 @@ export const proxies = {
      * @param params
      */
     format(message: MsgParam, ...params: MsgParam[]): string {
-        const listOfParams = List.raw(params);
-        return message.toString().replace(/{}/g, () => listOfParams.shift().unwrapOr('<<< missing parameter >>>').toString());
+        return message.toString().replace(/{}/g, () => {
+            let param = params.shift();
+            return param !== undefined ? param.toString() : '<<< missing parameter >>>';
+        });
     },
 
     /**

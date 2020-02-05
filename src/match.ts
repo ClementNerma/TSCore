@@ -1,8 +1,5 @@
-/**
- * Union to intersection util.
- */
 import {O} from "./objects";
-import {None, Option, Some} from "./option";
+import {Option, Some, None} from "./option";
 
 /**
  * Get the key types of an union type
@@ -16,7 +13,7 @@ export type KeyOfUnion<T extends object> = T extends any ? keyof T : never;
  * @template T Union type
  * @example ValOfUnion<{ Some: number } | { None: void }> <=> number | void
  */
-export type ValOfUnion<T extends object> = T extends any ? T[keyof T]: never;
+export type ValOfUnion<T extends object> = T extends any ? T[keyof T] : never;
 
 /**
  * Get the value type of an union type's specific key
