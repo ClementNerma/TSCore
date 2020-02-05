@@ -3,6 +3,7 @@ import {Comparator} from "./comparison";
 import {Rewindable} from "./rewindable";
 import {panic} from "./panic";
 import {O} from "./objects";
+import { Result, Ok, Err } from "./result";
 
 export class List<T> {
     private _content: T[];
@@ -265,6 +266,28 @@ export class List<T> {
         }
 
         return selected;
+    }
+
+    /**
+     * Test and map all items in the list using a testing function
+     * If all values are mapped to Ok() values, a list with the mapped values is returned
+     * As soon as an error (mapped to Err()) is encountered, the error is returned
+     * @param tester
+     */
+    resultable<U, E>(tester: (value: T, index: number, list: this) => Result<U, E>): Result<List<U>, E> {
+        const mapped = new List<U>();
+
+        for (let i = 0; i < this._content.length; i ++) {
+            const result = tester(this._content[i], i, this);
+
+            if (result.isOk()) {
+                mapped.push(result.unwrap());
+            } else {
+                return Err(result.unwrapErr());
+            }
+        }
+
+        Ok(mapped)
     }
 
     /**
