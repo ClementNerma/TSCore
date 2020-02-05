@@ -122,10 +122,10 @@ export class O {
      * @param entries
      */
     static fromEntries<K extends string | number | symbol, V>(entries: Array<[K, V]>): { [ key in K ]: V } {
-        let obj = {};   
+        let obj: { [key in K]: V } = {} as any;
 
-        for (const entry in entries) {
-            obj[entry[0]] = entry[1];
+        for (const [key, value] of entries) {
+            obj[key] = value;
         }
 
         return forceType(obj);
