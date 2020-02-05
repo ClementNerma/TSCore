@@ -1,6 +1,8 @@
 import { Option, Some, None } from "./option";
 import { O } from "./objects";
-import {Iter} from "./iter";
+import { Result, Ok, Err } from "./result";
+import { Rewindable } from "./rewindable";
+import { forceType } from "./typecasting";
 
 /**
  * Convert a dictionary type to a collection type
@@ -113,15 +115,37 @@ export class Dictionary<K, V> {
      * @param mapper
      */
     mapKeysToCollection<X extends string | number | symbol>(mapper: (key: K, value: V) => X): { [S in X]: V } {
-        return Object.fromEntries(Array.from(this._content.entries()).map(entry => [ mapper(entry[0], entry[1]), entry[1] ])) as { [S in X]: V };
+        return O.fromEntries(Array.from(this._content.entries()).map(entry => [ mapper(entry[0], entry[1]), entry[1] ])) as { [S in X]: V };
     }
 
     /**
      * Create a collection with mapped values
+     * Fails if all keys are not either strings, symbols or numbers
      * @param mapper
      */
-    mapValuesToCollection<Y>(mapper: (value: V, key: K) => Y): DictionaryToCollection<K, Y> {
-        return Object.fromEntries(Array.from(this._content.entries()).map(entry => [ entry[0], mapper(entry[1], entry[0]) ])) as DictionaryToCollection<K, Y>;
+    mapValuesToCollection<Y>(mapper: (value: V, key: K) => Y): Result<DictionaryToCollection<K, Y>, void> {
+        if (this.size == 0) {
+            return Ok(forceType({}));
+        }
+
+        if (this.keys().any(key => !['string', 'number', 'symbol'].includes(typeof key))) {
+            return Err(undefined);
+        } else {
+            return Ok(O.fromEntries(forceType <[number | string | symbol, Y][]>(Array.from(this._content.entries()).map(entry => [entry[0], mapper(entry[1], entry[0])]))) as DictionaryToCollection<K, Y>);
+        }
+    }
+
+    /**
+     * Create a collection with mapped values
+     * Does not check if keys are valid object indexes, so this function *WILL* return weird results
+     *   if all keys are not either strings, symbols or numbers.
+     * For a safe conversion, see .mapValuesToCollection()
+     * This function's only advantage is it's faster to process than its safe counterpart as it does
+     *   not check all keys in the dictionary.
+     * @param mapper 
+     */
+    mapValuesToCollectionUnchecked<Y>(mapper: (value: V, key: K) => Y): DictionaryToCollection<K, Y> {
+        return O.fromEntries(forceType<[number | string | symbol, Y][]>(Array.from(this._content.entries()).map(entry => [entry[0], mapper(entry[1], entry[0])]))) as DictionaryToCollection<K, Y>;
     }
 
     /**
@@ -129,7 +153,7 @@ export class Dictionary<K, V> {
      * @param mapper
      */
     mapToCollection<X extends string | number | symbol, Y>(mapper: (key: K, value: V) => [X, Y]): { [S in X]: Y } {
-        return Object.fromEntries(Array.from(this._content.entries()).map(entry => mapper(entry[0], entry[1]))) as { [S in X]: Y };
+        return O.fromEntries(Array.from(this._content.entries()).map(entry => mapper(entry[0], entry[1]))) as { [S in X]: Y };
     }
 
     /**
@@ -138,6 +162,28 @@ export class Dictionary<K, V> {
      */
     mapToArray<U>(mapper: (key: K, value: V) => U): U[] {
         return Array.from(this._content.entries()).map(entry => mapper(entry[0], entry[1]));
+    }
+
+    /**
+     * Test and map all values in the dictionary using a testing function
+     * If all values are mapped to Ok() values, a list with the mapped values is returned
+     * As soon as an error (mapped to Err()) is encountered, the error is returned
+     * @param tester
+     */
+    resultable<U, E>(tester: (entry: K, value: V, list: this) => Result<U, E>): Result<Dictionary<K, U>, E> {
+        const mapped = new Dictionary<K, U>();
+
+        for (const entry of this._content.entries()) {
+            const result = tester(entry[0], entry[1], this);
+
+            if (result.isOk()) {
+                mapped.set(entry[0], result.unwrap());
+            } else {
+                return Err(result.unwrapErr());
+            }
+        }
+
+        Ok(mapped)
     }
 
     /**
@@ -152,22 +198,22 @@ export class Dictionary<K, V> {
     /**
      * Iterate through the dictionary's keys
      */
-    keys(): Iter<K> {
-        return new Iter(this._content.keys());
+    keys(): Rewindable<K> {
+        return new Rewindable(this._content.keys());
     }
 
     /**
      * Iterate through the dictionary's values
      */
-    values(): Iter<V> {
-        return new Iter(this._content.values());
+    values(): Rewindable<V> {
+        return new Rewindable(this._content.values());
     }
 
     /**
      * Iterate through the dictionary's entries
      */
-    entries(): Iter<[K, V]> {
-        return new Iter(this._content.entries());
+    entries(): Rewindable<[K, V]> {
+        return new Rewindable(this._content.entries());
     }
 
     /**
