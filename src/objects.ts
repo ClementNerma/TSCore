@@ -1,3 +1,5 @@
+import { forceType } from "./typecasting";
+
 /**
  * Key-value object type
  */
@@ -73,7 +75,7 @@ export class O {
      * @param mapper
      */
     static map<T extends object, K extends keyof T, V, X extends string | number | symbol, Y>(object: T, mapper: (key: K, value: T[K]) => [ X, Y ]): { [S in X]: Y } {
-        return Object.fromEntries(O.entries(object).map(entry => mapper(entry[0] as K, entry[1] as T[K]))) as { [S in X]: Y };
+        return O.fromEntries(O.entries(object).map(entry => mapper(entry[0] as K, entry[1] as T[K]))) as { [S in X]: Y };
     }
 
     /**
@@ -112,5 +114,20 @@ export class O {
                 return obj.hasOwnProperty(prop) ? obj[prop as keyof T] : handler(prop.toString());
             }
         });
+    }
+
+    /**
+     * Create an object from a list of entries
+     * Roughly equivalent to ES2019's O.fromEntries()
+     * @param entries
+     */
+    static fromEntries<K extends string | number | symbol, V>(entries: Array<[K, V]>): { [ key in K ]: V } {
+        let obj = {};   
+
+        for (const entry in entries) {
+            obj[entry[0]] = entry[1];
+        }
+
+        return forceType(obj);
     }
 }
