@@ -86,6 +86,48 @@ export class Iter<T> extends MatchableType<IterState> implements Iterable<T> {
     }
 
     /**
+     * Check if any value in the iterator matches a predicate
+     * @param predicate
+     */
+    any(predicate: (value: T) => boolean): boolean {
+        for (const value of this) {
+            if (predicate(value)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the first element matching a predicate
+     * @param predicate
+     */
+    position(predicate: (value: T) => boolean): Option<T> {
+        for (const value of this) {
+            if (predicate(value)) {
+                return Some(value);
+            }
+        }
+
+        return None();
+    }
+
+    /**
+     * Check if all values in the iterator match a predicate
+     * @param predicate
+     */
+    all(predicate: (value: T) => boolean): boolean {
+        for (const value of this) {
+            if (!predicate(value)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Turn the rewindable iterator into a native iterator
      */
     [Symbol.iterator](): IterableIterator<T> {
