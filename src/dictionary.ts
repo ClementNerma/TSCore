@@ -183,7 +183,7 @@ export class Dictionary<K, V> {
             }
         }
 
-        Ok(mapped)
+        return Ok(mapped);
     }
 
     /**
