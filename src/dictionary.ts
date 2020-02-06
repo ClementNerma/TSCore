@@ -165,19 +165,42 @@ export class Dictionary<K, V> {
     }
 
     /**
+     * Test and map all keys and values in the dictionary using a testing function
+     * If all keys and values are mapped to Ok() values, a list with the mapped values is returned
+     * As soon as an error (mapped to Err()) is encountered, the error is returned
+     * @param tester
+     */
+    resultable<X, Y, E>(tester: (key: K, value: V, dict: this) => Result<[X, Y], E>): Result<Dictionary<X, Y>, E> {
+        const mapped = new Dictionary<X, Y>();
+
+        for (const [key, value] of this._content.entries()) {
+            const result = tester(key, value, this);
+
+            if (result.isOk()) {
+                const [mappedKey, mappedValue] = result.unwrap();
+                mapped.set(mappedKey, mappedValue);
+            } else {
+                return Err(result.unwrapErr());
+            }
+        }
+
+        return Ok(mapped);
+    }
+
+    /**
      * Test and map all values in the dictionary using a testing function
      * If all values are mapped to Ok() values, a list with the mapped values is returned
      * As soon as an error (mapped to Err()) is encountered, the error is returned
      * @param tester
      */
-    resultable<U, E>(tester: (entry: K, value: V, list: this) => Result<U, E>): Result<Dictionary<K, U>, E> {
+    resultableValues<U, E>(tester: (key: K, value: V, dict: this) => Result<U, E>): Result<Dictionary<K, U>, E> {
         const mapped = new Dictionary<K, U>();
 
-        for (const entry of this._content.entries()) {
-            const result = tester(entry[0], entry[1], this);
+        for (const [key, value] of this._content.entries()) {
+            const result = tester(key, value, this);
 
             if (result.isOk()) {
-                mapped.set(entry[0], result.unwrap());
+                mapped.set(key, result.unwrap());
             } else {
                 return Err(result.unwrapErr());
             }
