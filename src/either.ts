@@ -121,7 +121,7 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
  * Create a left union value
  * @param value
  */
-export function Left<L, R>(value: L): Either<L, R> {
+export function Left<L>(value: L): Either<L, any> {
     return Either.left(value);
 }
 
@@ -129,6 +129,6 @@ export function Left<L, R>(value: L): Either<L, R> {
  * Create a right union value
  * @param value
  */
-export function Right<L, R>(value: R): Either<L, R> {
+export function Right<R>(value: R): Either<any, R> {
     return Either.right(value);
 }
