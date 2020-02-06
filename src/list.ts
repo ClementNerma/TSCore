@@ -539,6 +539,11 @@ export class List<T> {
         return list;
     }
 
+    /**
+     * Generate a list of n items using a callback
+     * @param items The number of items to generate
+     * @param callback The generation callback
+     */
     static gen<T>(items: number, callback: (index: number, previous: Option<T>) => T): List<T> {
         const list = new List<T>();
 
