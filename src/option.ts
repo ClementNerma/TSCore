@@ -226,7 +226,7 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      * Turn the option into a result
     * @param fallbackError The error result to use if the option is not concrete
     */
-    ok_or<U>(fallbackError: U): Result<T, U> {
+    okOr<U>(fallbackError: U): Result<T, U> {
         return match(this, {
             Some: value => Ok(value),
             None: () => Err(fallbackError)
@@ -237,7 +237,7 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      * Turn the option into a result
      * @param fallbackError The error callback to use if the option is not concrete
      */
-    ok_or_else<U>(fallbackError: () => U): Result<T, U> {
+    okOrElse<U>(fallbackError: () => U): Result<T, U> {
         return match(this, {
             Some: value => Ok(value),
             None: () => Err(fallbackError())
@@ -301,6 +301,20 @@ export class Option<T> extends Matchable<OptMatch<T>> {
         return match(this, {
             Some: value => Some(value),
             None: () => None()
+        });
+    }
+
+    /**
+     * Transpose an Option<Result<T, E>> value to a Result<Option<T>, E>
+     * @param option
+     */
+    static transpose<T, E>(option: Option<Result<T, E>>): Result<Option<T>, E> {
+        return match(option, {
+            Some: result => match(result, {
+                Ok: data => Ok(Some(data)),
+                Err: err => Err(err)
+            }),
+            None: () => Ok(None())
         });
     }
 
