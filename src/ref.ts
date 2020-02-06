@@ -75,7 +75,7 @@ export class Ref<T> extends MatchableType<RefMatch<T>> {
         return this._wrapper.map(ref => {
             ref.ref = value;
             return this;
-        }).result(() => new Enum("Destroyed"));
+        }).okOr(new Enum("Destroyed"));
     }
 
     /**
@@ -95,7 +95,7 @@ export class Ref<T> extends MatchableType<RefMatch<T>> {
         return this._wrapper.map(ref => {
             ref.ref = core(this.read());
             return this;
-        }).result(() => new Enum("Destroyed"));
+        }).okOr(new Enum("Destroyed"));
     }
 
     /**
