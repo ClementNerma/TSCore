@@ -56,6 +56,10 @@ For complete reference, see the [docs](docs/).
 
 You can also take a look at the [examples](examples/).
 
+## Documentation
+
+Types documentation can be got by running `yarn docs`. HTML files will be put in the `docs/` folder.
+
 ## License
 
 This project is released under the terms of license Apache 2.0.
