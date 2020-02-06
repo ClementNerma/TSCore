@@ -6,7 +6,7 @@
 
 ## Running an example
 
-To run an example, simply go to the [`examples/run`](examples/run/) folder and run:
+To run an example, simply go to the [`examples/run`](run/) folder and run:
 
 ```shell
 yarn <example> [<arguments>]
