@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "strictFunctionTypes": true,
+        "strictNullChecks": true,
+        "downlevelIteration": true,
+        "experimentalDecorators": true,
+        "moduleResolution": "node",
+        "module": "commonjs",
+        "lib": [
+            "esnext"
+        ],
+        "target": "es5",
+        "inlineSourceMap": true
+    },
+    "include": [
+        "../*.ts"
+    ]
+}
