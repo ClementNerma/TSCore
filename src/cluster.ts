@@ -281,7 +281,7 @@ export class TaskCluster<T, E, U> extends Matchable<TaskClusterState<U, E>> {
      * @param task
      * @param repeat
      */
-    static serial<T, E>(task: Task<T, E>, repeat: number): Future<List<T>, E> {
-        return this.collector(task.serial(repeat)).future();
+    static serial<T, E>(task: Task<T, E>, repeat: number): TaskCluster<T, E, List<T>> {
+        return this.collector(task.serial(repeat));
     }
 }
