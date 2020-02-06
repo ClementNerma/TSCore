@@ -1,3 +1,7 @@
+/**
+ * @file Type-safe arrays with functional and iterable capabilities
+ */
+
 import {None, Option, Some} from "./option";
 import {Comparator} from "./comparison";
 import {Rewindable} from "./rewindable";

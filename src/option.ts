@@ -1,3 +1,7 @@
+/**
+ * @file Represent optional values in a type-safe, functional and combinable way
+ */
+
 import {match, Matchable, state, State} from "./match";
 import {Result, Ok, Err} from "./result";
 import {panic} from "./panic";

@@ -1,3 +1,7 @@
+/**
+ * @file Future results management (based on promises)
+ */
+
 import {Err, Ok, Result} from "./result";
 import {MappedMatchable, match, state, State} from "./match";
 import {None, Option, Some} from "./option";

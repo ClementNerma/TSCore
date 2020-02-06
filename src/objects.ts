@@ -1,3 +1,7 @@
+/**
+ * @file Utility functions for objects
+ */
+
 import { forceType } from "./typecasting";
 
 /**

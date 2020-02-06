@@ -1,3 +1,7 @@
+/**
+ * @file Core library for pattern-matching and base matchable types
+ */
+
 import {O} from "./objects";
 import {Option, Some, None} from "./option";
 

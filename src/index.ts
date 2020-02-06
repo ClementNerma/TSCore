@@ -1,3 +1,6 @@
+/**
+ * @file The TS-Core library
+ */
 
 export * from "./assert";
 export * from "./benchmark";

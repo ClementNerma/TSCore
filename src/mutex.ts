@@ -1,3 +1,7 @@
+/**
+ * @file Mutual exclusion
+ */
+
 import {Ref} from "./ref";
 import {Err, Ok, Result} from "./result";
 import {None, Option} from "./option";

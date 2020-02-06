@@ -1,3 +1,7 @@
+/**
+ * @file Some little utilities
+ */
+
 import { Result, Err, Ok } from "./result";
 
 export function tryParseInt(str: string, base: number = 10): Result<number, void> {

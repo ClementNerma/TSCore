@@ -1,3 +1,7 @@
+/**
+ * @file Reference values to avoid cloning and share resources
+ */
+
 import {Consumers} from "./list";
 import {match, Enum, MatchableType, State, state} from "./match";
 import {Option, Some} from "./option";

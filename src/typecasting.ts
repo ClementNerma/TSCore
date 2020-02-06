@@ -1,3 +1,7 @@
+/**
+ * @file Typecasting utilities
+ */
+
 import {panic} from "./panic";
 
 /**

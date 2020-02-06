@@ -1,3 +1,7 @@
+/**
+ * @file Functional observable object
+ */
+
 import {List} from "./list";
 
 /**

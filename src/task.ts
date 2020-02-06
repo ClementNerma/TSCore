@@ -1,3 +1,7 @@
+/**
+ * @file Asynchronous and abortable multi-steps tasks
+ */
+
 import {hasState, match, Matchable, State, state} from "./match";
 import {Err, Ok, Result} from "./result";
 import {Future} from "./future";

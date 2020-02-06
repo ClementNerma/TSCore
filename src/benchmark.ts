@@ -1,3 +1,7 @@
+/**
+ * @file Micro-benchmarking library
+ */
+
 import {Collection, O} from "./objects";
 import {Future} from "./future";
 import {Dictionary} from "./dictionary";

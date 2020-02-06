@@ -1,3 +1,7 @@
+/**
+ * @file JSON parsing and decoding
+ */
+
 import {Result, Ok, Err} from "./result";
 import {hasState, MatchableType, state, State, Matchable} from "./match";
 import {O} from "./objects";

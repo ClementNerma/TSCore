@@ -1,3 +1,7 @@
+/**
+ * @file Assertion utilities
+ */
+
 import {Dictionary} from "./dictionary";
 import {Either} from "./either";
 import {List} from "./list";

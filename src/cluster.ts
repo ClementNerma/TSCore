@@ -1,3 +1,7 @@
+/**
+ * @file Parallel tasks management with concurrent executor and load balancer
+ */
+
 import {List} from "./list";
 import {parallel, Task} from "./task";
 import {match, hasState, state, State, Matchable} from "./match";

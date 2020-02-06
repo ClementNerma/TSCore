@@ -1,3 +1,7 @@
+/**
+ * @file Rewindable iterators - iterators that can go back
+ */
+
 import {None, Option} from "./option";
 import {List} from "./list";
 import {Iter} from "./iter";

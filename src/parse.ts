@@ -1,3 +1,7 @@
+/**
+ * @file Parser library for decoding data
+ */
+
 import { Result, Ok, Err } from "./result";
 import { Matchable, State, VoidStates, state, stateStr } from "./match";
 import { Collection, O } from "./objects";

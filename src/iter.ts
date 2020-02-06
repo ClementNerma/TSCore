@@ -1,3 +1,7 @@
+/**
+ * @file Powered-up iterators
+ */
+
 import {MatchableType, State, state} from "./match";
 import {Consumers, List} from "./list";
 import {None, Option, Some} from "./option";
