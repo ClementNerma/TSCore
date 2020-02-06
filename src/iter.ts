@@ -17,6 +17,8 @@ export class Iter<T> extends MatchableType<IterState> implements Iterable<T> {
     protected readonly _iterator: IterableIterator<T>;
     /** Event listeners to call when a value is yielded */
     protected readonly _onYield: Consumers<T>;
+    /** Peeked values */
+    protected _peeked: Option<T>;
     /** Is the iterator done? */
     protected _done: boolean;
     /** Index of the current value */
@@ -31,6 +33,7 @@ export class Iter<T> extends MatchableType<IterState> implements Iterable<T> {
 
         this._iterator = iterable[Symbol.iterator]();
         this._onYield = new Consumers();
+        this._peeked = None();
         this._done = false;
         this._pointer = -1;
     }
@@ -58,6 +61,10 @@ export class Iter<T> extends MatchableType<IterState> implements Iterable<T> {
             return None();
         }
 
+        if (this._peeked.isSome()) {
+            return Some(this._peeked.take().unwrap());
+        }
+
         this._pointer++;
 
         const next = this._iterator.next();
@@ -73,7 +80,25 @@ export class Iter<T> extends MatchableType<IterState> implements Iterable<T> {
     }
 
     /**
-     * Collect all values of the iterator
+     * Get the next value from the iterator without advancing it
+     * The next time .next() will be called, the peeked value will be returned
+     */
+    peek(): Option<T> {
+        let next = this.next();
+
+        if (next.isNone()) {
+            return None();
+        }
+
+        this._pointer --;
+        this._peeked = Some(next.unwrap());
+
+        return Some(next.unwrap());
+    }
+
+    /**
+     * Collect all yield values in a list
+     * Consumes the iterator
      */
     collect(): List<T> {
         const yielded = new List<T>();
@@ -86,7 +111,80 @@ export class Iter<T> extends MatchableType<IterState> implements Iterable<T> {
     }
 
     /**
+     * Inspect elements without modifying them
+     */
+    inspect(inspector: (value: T) => void): this {
+        this._onYield.push(value => inspector(value));
+        return this;
+    }
+
+    /**
+     * Count the number of values in the iterator
+     * Consumes the iterator
+     */
+    count(): number {
+        let counter = 0;
+        for (const _ of this) {}
+        return counter;
+    }
+
+    /**
+     * Get the nth value of the iterator (0 is the current value)
+     * Consumes the iterator up to the nth item
+     * @param nth 
+     */
+    nth(nth: number): Option<T> {
+        for (const [pos, value] of this.enumerate()) {
+            if (nth === pos) {
+                return Some(value);
+            }
+        }
+
+        return None();
+    }
+
+    /**
+     * Get the last value in the iterator
+     * Consumes the iterator
+     */
+    last(): Option<T> {
+        let last = None<T>();
+
+        for (const value of this) {
+            last = Some(value);
+        }
+
+        return last;
+    }
+
+    /**
+     * Map this iterator's values
+     * Consumes the iterator
+     * @param value
+     * @param position
+     */
+    map<U>(mapper: (value: T, position: number) => U): Iter<U> {
+        const that = this;
+        let position = 0;
+
+        return Iter.fromGenerator(function* (): IterableIterator<U> {
+            for (const value of that) {
+                yield mapper(value, position ++);
+            }
+        });
+    }
+
+    /**
+     * Enumerate this iterator
+     * Consumes the iterator
+     */
+    enumerate(): Iter<[number, T]> {
+        return this.map((value, position) => [position, value]);
+    }
+
+    /**
      * Check if any value in the iterator matches a predicate
+     * Consumes the iterator
      * @param predicate
      */
     any(predicate: (value: T) => boolean): boolean {
@@ -101,9 +199,10 @@ export class Iter<T> extends MatchableType<IterState> implements Iterable<T> {
 
     /**
      * Get the first element matching a predicate
+     * Consumes the iterator
      * @param predicate
      */
-    position(predicate: (value: T) => boolean): Option<T> {
+    find(predicate: (value: T) => boolean): Option<T> {
         for (const value of this) {
             if (predicate(value)) {
                 return Some(value);
@@ -114,7 +213,23 @@ export class Iter<T> extends MatchableType<IterState> implements Iterable<T> {
     }
 
     /**
+     * Get the position of the first element matching a predicate
+     * Consumes the iterator
+     * @param predicate
+     */
+    position(predicate: (value: T) => boolean): Option<number> {
+        for (const [position, value] of this.enumerate()) {
+            if (predicate(value)) {
+                return Some(position);
+            }
+        }
+
+        return None();
+    }
+
+    /**
      * Check if all values in the iterator match a predicate
+     * Consumes the iterator
      * @param predicate
      */
     all(predicate: (value: T) => boolean): boolean {
@@ -125,6 +240,101 @@ export class Iter<T> extends MatchableType<IterState> implements Iterable<T> {
         }
 
         return true;
+    }
+
+    /**
+     * Create an iterator that filters this one's elements
+     * Consumes the iterator
+     * @param predicate
+     */
+    filter(predicate: (value: T) => boolean): Iter<T> {
+        const that = this;
+
+        return Iter.fromGenerator(function* () {
+            for (const value of that) {
+                if (predicate(value)) {
+                    yield value;
+                }
+            }
+        });
+    }
+
+    /**
+     * Create an iterator that filters and maps this one's values
+     * Consumes the iterator
+     * @param predicate
+     */
+    filterMap<U>(predicate: (value: T) => Option<U>): Iter<U> {
+        const that = this;
+
+        return Iter.fromGenerator(function* () {
+            for (const value of that) {
+                const mapped = predicate(value);
+
+                if (mapped.isSome()) {
+                    yield mapped.unwrap();
+                }
+            }
+        });
+    }
+
+    /**
+     * Skip values while the provided predicate returns true
+     * Consumes the iterator
+     * @param predicate 
+     */
+    skipWhile(predicate: (value: T) => boolean): Iter<T> {
+        const that = this;
+
+        return Iter.fromGenerator(function* () {
+            let finished = false;
+
+            for (const value of that) {
+                if (finished || !predicate(value)) {
+                    finished = true;
+                    yield value;
+                }
+            }
+        });
+    }
+
+    /**
+     * Yield values while the provided predicate returns true
+     * Consumes the iterator
+     * @param predicate 
+     */
+    takeWhile(predicate: (value: T) => boolean): Iter<T> {
+        const that = this;
+
+        return Iter.fromGenerator(function* () {
+            for (const value of that) {
+                if (!predicate(value)) {
+                    return ;
+                }
+
+                yield value;
+            }
+        });
+    }
+
+    /**
+     * Skip a given number of values
+     * Consumes the iterator up to the number of specifed values
+     */
+    skip(values: number): this {
+        for (let i = 0; i < values; i ++) {
+            this.next();
+        }
+
+        return this;
+    }
+
+    /**
+     * Yield the nth first elements
+     */
+    take(values: number): Iter<T> {
+        const start = this._pointer;
+        return this.takeWhile(_ => this._pointer - start <= values);
     }
 
     /**
