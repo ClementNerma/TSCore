@@ -23,6 +23,12 @@ export type ValOfUnion<T extends object> = T extends any ? T[keyof T] : never;
 export type ValOfKeyOfUnion<T extends object, K> = T extends any ? (K extends keyof T ? T[K] : never) : never;
 
 /**
+ * Get all void states of a matchable
+ * @example VoidStates<{ Some: number } | { None: void }> <=> "None"
+ */
+export type VoidStates<T extends object> = T extends any ? T[keyof T] extends void | undefined ? keyof T : never : never;
+
+/**
  * Matchable type
  * @template T State type
  */
@@ -221,7 +227,8 @@ export function hasState<T extends object>(matchable: MatchableType<T>, ...state
  * Create a 'void' state object
  * @param name State's name
  */
-export function state<T extends object, K extends KeyOfUnion<T>>(name: ValOfKeyOfUnion<T, K> extends void | undefined ? K : never): T;
+export function state<T extends object, K extends VoidStates<T>>(name: K): T;
+
 /**
  * Create a state object
  * @param name State's name
