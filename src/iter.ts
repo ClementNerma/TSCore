@@ -6,6 +6,7 @@ import {MatchableType, State, state} from "./match";
 import {Consumers, List} from "./list";
 import {None, Option, Some} from "./option";
 import {O} from "./objects";
+import { Rewindable } from "./rewindable";
 
 export type IterState =
     | State<"Created">
@@ -339,6 +340,14 @@ export class Iter<T> extends MatchableType<IterState> implements Iterable<T> {
     take(values: number): Iter<T> {
         const start = this._pointer;
         return this.takeWhile(_ => this._pointer - start <= values);
+    }
+
+    /**
+     * Create a rewindable iterator from this one
+     * Consumes the iterator
+     */
+    rewindable(): Rewindable<T> {
+        return new Rewindable(this._iterator);
     }
 
     /**
