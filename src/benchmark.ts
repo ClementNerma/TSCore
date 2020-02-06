@@ -90,12 +90,12 @@ export function comparativeBenchmark(content: ComparativeBenchmarkContent, timeo
  * @param percentage Use percentages instead of multipliers
  */
 export function tableFromComparativeResults(results: ComparativeBenchmarkResult, numFormatter = (num: number) => num.toFixed(2), percentage = false): Result<string, Enum<"EmptyTable" | "InconsistentRowSize">> {
-    const rows = results.keys().collect().map(name => '<> ' + name).concatHead([ 'function', 'time (ms)', 'ops/sec' ]).wrap();
+    const rows = results.keys().collect().map(name => '<> ' + name).concatHead([ 'function', 'ms/iter', 'ops/sec' ]).wrap();
 
     for (const [name, result] of results) {
         const row = new List([
             name,
-            numFormatter(result.average._total) + ' ms',
+            numFormatter(result.average._total) + ' ms/iter',
             numFormatter(1000 / result.average.milliseconds) + ' ops/sec'
         ]);
 
