@@ -48,10 +48,6 @@ future.match({
 
 The point of pattern-matching is to deal with all cases at once, as well as to prevent forgetting one of the states - you must deal with all them. If you only want to take a look at one specific state for instance, the matchable's class should provide you additional methods fulfilling this purpose.
 
-## Usage
-
-For complete reference, see the [docs](docs/).
-
 ## Examples
 
 You can also take a look at the [examples](examples/).
