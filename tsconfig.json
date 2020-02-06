@@ -10,8 +10,7 @@
     "moduleResolution": "node",
     "module": "commonjs",
     "lib": [
-      "esnext",
-      "dom"
+      "esnext"
     ],
     "target": "es5",
     "inlineSourceMap": true
