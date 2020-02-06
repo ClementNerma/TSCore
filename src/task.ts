@@ -238,5 +238,8 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
  * @param timeout
  */
 export function parallel(core: () => void, timeout = 1): void {
-    setTimeout(core, timeout);
+    setTimeout(core, timeout)
 }
+
+// Force declaration of setTimeout
+declare const setTimeout: (callback: () => void, timeout: number) => number;
