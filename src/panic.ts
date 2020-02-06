@@ -1,5 +1,15 @@
 
 /**
+ * Console interface
+ */
+declare const console: {
+    debug: (message: string) => void,
+    log: (message: string) => void,
+    info: (message: string) => void,
+    error: (message: string) => void
+};
+
+/**
  * Proxy functions
  */
 export const proxies = {
@@ -8,10 +18,10 @@ export const proxies = {
      * @param message
      * @param params
      */
-    format(message: MsgParam, ...params: MsgParam[]): string {
+    format(formatter: (data: MsgParam) => string, message: MsgParam, ...params: MsgParam[]): string {
         return message.toString().replace(/{}/g, () => {
             let param = params.shift();
-            return param !== undefined ? param.toString() : '<<< missing parameter >>>';
+            return param !== undefined ? formatter(param) : '<<< missing parameter >>>';
         });
     },
 
@@ -72,7 +82,16 @@ export type MsgParam = number | boolean | string;
  * @param params Its parameters
  */
 export function format(message: MsgParam, ...params: MsgParam[]): string {
-    return proxies.format(message, ...params);
+    return proxies.format(param => param.toString(), message, ...params);
+}
+
+/**
+ * Format a message with a custom formatter
+ * @param message 
+ * @param params 
+ */
+export function formatCustom(formatter: (data: MsgParam) => string, message: MsgParam, ...params: MsgParam[]): string {
+    return proxies.format(formatter, message, ...params);
 }
 
 /**
