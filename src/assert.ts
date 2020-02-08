@@ -57,7 +57,7 @@ export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: stri
         }
 
         for (let i = 0; i < left.length; i ++) {
-            assertEq(left[i], right[i], _ctx.concat('[Array].Index(' + i + ')'));
+            assertEq(left[i], right[i], panicMessage, _ctx.concat('[Array].Index(' + i + ')'));
         }
 
         return ;
@@ -77,7 +77,7 @@ export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: stri
                 fail("Right object does not have left object's {} key", key as string);
             }
 
-            assertEq((left as any)[key], (right as any)[key], _ctx.concat('Key ' + key as string));
+            assertEq((left as any)[key], (right as any)[key], panicMessage, _ctx.concat('Key ' + key as string));
         }
         
         return ;
@@ -103,7 +103,7 @@ export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: stri
         }
 
         for (let i = 0; i < left.length; i ++) {
-            assertEq(left.get(i).unwrap(), right.get(i).unwrap(), _ctx.concat('[List].Index(' + i + ')'));
+            assertEq(left.get(i).unwrap(), right.get(i).unwrap(), panicMessage, _ctx.concat('[List].Index(' + i + ')'));
         }
 
         return ;
@@ -123,7 +123,7 @@ export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: stri
                 fail("Left and right dictionaries do not have the same keys", key as string);
             }
 
-            assertEq(left.get(key).unwrap(), right.get(key).unwrap(), _ctx.concat('Key ' + key as string));
+            assertEq(left.get(key).unwrap(), right.get(key).unwrap(), panicMessage, _ctx.concat('Key ' + key as string));
         }
 
         return ;
@@ -140,7 +140,7 @@ export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: stri
         }
 
         if (left.isSome()) {
-            assertEq(left.unwrap(), right.unwrap(), _ctx.concat('[Option].Some'));
+            assertEq(left.unwrap(), right.unwrap(), panicMessage, _ctx.concat('[Option].Some'));
         }
 
         return ;
@@ -157,9 +157,9 @@ export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: stri
         }
 
         if (left.isOk()) {
-            assertEq(left.ok().unwrap(), right.ok().unwrap(), _ctx.concat('[Result].Ok'));
+            assertEq(left.ok().unwrap(), right.ok().unwrap(), panicMessage, _ctx.concat('[Result].Ok'));
         } else {
-            assertEq(left.err().unwrap(), right.err().unwrap(), _ctx.concat('[Result].Err'));
+            assertEq(left.err().unwrap(), right.err().unwrap(), panicMessage, _ctx.concat('[Result].Err'));
         }
 
         return ;
@@ -176,9 +176,9 @@ export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: stri
         }
 
         if (left.isLeft()) {
-            assertEq(left.left().unwrap(), right.left().unwrap(), _ctx.concat('[Either].Left'));
+            assertEq(left.left().unwrap(), right.left().unwrap(), panicMessage, _ctx.concat('[Either].Left'));
         } else {
-            assertEq(left.right().unwrap(), right.right().unwrap(), _ctx.concat('[Either].Right'));
+            assertEq(left.right().unwrap(), right.right().unwrap(), panicMessage, _ctx.concat('[Either].Right'));
         }
 
         return ;
