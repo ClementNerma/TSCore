@@ -461,15 +461,21 @@ export class List<T> {
     /**
      * Remove all occurrences of a list of items from the list
      * @param items
+     * @returns The number of removed items
      */
-    remove(...items: T[]): void {
+    remove(...items: T[]): number {
+        let removed = 0;
+
         for (const item of items) {
             let index: number;
 
             while ((index = this._content.indexOf(item)) !== -1) {
                 this._content.splice(index, 1);
+                removed ++;
             }
         }
+
+        return removed;
     }
 
     /**
