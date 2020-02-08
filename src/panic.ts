@@ -6,10 +6,10 @@
  * Console interface
  */
 declare const console: {
-    debug: (message: string) => void,
-    log: (message: string) => void,
-    info: (message: string) => void,
-    error: (message: string) => void
+    debug: (message: unknown) => void,
+    log: (message: unknown) => void,
+    info: (message: unknown) => void,
+    error: (message: unknown) => void
 };
 
 /**
@@ -23,8 +23,18 @@ export const proxies = {
      */
     format(formatter: (data: MsgParam) => string, message: MsgParam, ...params: MsgParam[]): string {
         return message.toString().replace(/{}/g, () => {
+            if (params.length === 0) {
+                return '<<< missing parameter >>>';
+            }
+
             let param = params.shift();
-            return param !== undefined ? formatter(param) : '<<< missing parameter >>>';
+
+            if (param === undefined || param === null) {
+                eprintln("WARNING: Got malformed parameter in format() function ('null' or 'undefined')");
+                return '<<< malformed parameter >>>';
+            }
+
+            return param.toString();
         });
     },
 
