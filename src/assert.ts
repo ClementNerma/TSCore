@@ -16,13 +16,15 @@ import {forceType} from "./typecasting";
  * Assert equality of two values
  * @param left Left value
  * @param right Right value
+ * @param panicMessage Panic message
  * @param _ctx [Internal parameter]
  * @example assertEq([ 1, 2 ], [ 1, 2 ])
  */
-export function assertEq<T>(left: T, right: T, _ctx: string[] = []): void | never {
+export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: string[] = []): void | never {
     // Beautified panic function
     const fail = (message: MsgParam, ...params: MsgParam[]): never =>
-        panic(message + '\n' + _ctx.join('\n'), ...params)
+        //panic((panicMessage || 'Assertion failed') + '(' + message + '\n' + _ctx.join('\n') + ')', ...params)
+        panic(`{} (${message})\n{}`, panicMessage || 'Assertion failed', ...params, _ctx.join('\n'));
     ;
 
     // Ensure values type are identical
@@ -193,11 +195,12 @@ export function assertEq<T>(left: T, right: T, _ctx: string[] = []): void | neve
  * @param left
  * @param right
  * @param strict Check strictly (=== operator)
+ * @param panicMessage Panic message
  * @example assertIs(2, 2)
  * @example assertIs(2, "2", true)
  */
-export function assertIs(left: unknown, right: unknown, strict = true): void | never {
+export function assertIs(left: unknown, right: unknown, panicMessage?: string, strict = true): void | never {
     if (strict ? left !== right : left != right) {
-        panic("Left and right values are not {}identical", strict ? "strictly " : "");
+        panic("{} (Left and right values are not {}identical)", panicMessage || 'Assertion failed', strict ? "strictly " : "");
     }
 }
