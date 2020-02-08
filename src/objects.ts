@@ -74,6 +74,41 @@ export class O {
     }
 
     /**
+     * Clone a value recursively
+     * NOTE: Types which are not clonable will simply be copied to the output value without any cloning
+     * @param value 
+     */
+    static cloneDeep<T>(value: T): T {
+        if (value === undefined || value === null) {
+            return value;
+        } else {
+            const cstr = (value as Object).constructor;
+
+            if (cstr === Boolean || cstr === Number || cstr === Symbol || cstr === String) {
+                return value;
+            }
+
+            else if (O.isArray(value)) {
+                return value.map(sub => O.cloneDeep(sub)) as any;
+            }
+
+            else if (O.isCollection(value)) {
+                let out: { [key: string]: unknown } = {};
+
+                for (const [key, val] of O.entries(value)) {
+                    out[key as any] = O.cloneDeep(val);
+                }
+
+                return out as any;
+            }
+
+            else {
+                return value;
+            }
+        }
+    }
+
+    /**
      * Map an object's entries
      * @param object
      * @param mapper
