@@ -189,6 +189,12 @@ export class Enum<S extends string> extends Matchable<State<S>> {
         super(typeof stateOrName === 'string' ? state(stateOrName as any) : stateOrName);
     }
 
+    isVariant(stateOrName: State<S> | S): boolean {
+        return typeof stateOrName === 'string' ?
+            this._getStateName() === stateOrName :
+            this._getStateName() === Object.keys(state)[0];
+    }
+
     replace(stateOrName: State<S> | S) {
         this._state = typeof stateOrName === 'string' ? state(stateOrName as any) : stateOrName;
     }
