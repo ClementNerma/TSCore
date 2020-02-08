@@ -231,14 +231,14 @@ export class List<T> {
      * Find the index of the first element matching a predicate
      * @param predicate
      */
-    findIndex(predicate: (value: T, index: number, list: this) => boolean): number {
+    findIndex(predicate: (value: T, index: number, list: this) => boolean): Option<number> {
         for (let i = 0; i < this._content.length; i ++) {
             if (predicate(this._content[i], i, this)) {
-                return i;
+                return Some(i);
             }
         }
 
-        return -1;
+        return None();
     }
 
     /**
