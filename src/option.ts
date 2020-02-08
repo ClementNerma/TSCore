@@ -345,6 +345,15 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     static undefinable<T = unknown>(value: T | undefined): Option<T> {
         return value === undefined ? None() : Some(value);
     }
+
+    /**
+     * Return a Some(T) if the provided predicate is `true` ; else None() is returned
+     * @param predicate
+     * @param value
+     */
+    static cond<T>(predicate: boolean, value: T): Option<T> {
+        return predicate ? Some(value) : None();
+    }
 }
 
 /**
