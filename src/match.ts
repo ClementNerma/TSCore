@@ -36,7 +36,7 @@ export type VoidStates<T extends object> = T extends any ? T[keyof T] extends vo
  * Matchable type
  * @template T State type
  */
-export abstract class MatchableType<T extends object> {
+export abstract class AbstractMatchable<T extends object> {
     /** State getter */
     protected readonly __getState: () => T;
 
@@ -134,7 +134,7 @@ export type State<N extends string, V = void> = { readonly [K in N]: V };
  * Simple matchable type
  * @template T State type
  */
-export class Matchable<T extends object> extends MatchableType<T> {
+export class Matchable<T extends object> extends AbstractMatchable<T> {
     /** Matchable's state */
     protected _state: T;
 
@@ -153,7 +153,7 @@ export class Matchable<T extends object> extends MatchableType<T> {
  * @template T State type
  * @template H Underlying state (from which the state is generated)
  */
-export abstract class MappedMatchable<T extends object, H extends object> extends MatchableType<T> {
+export abstract class MappedMatchable<T extends object, H extends object> extends AbstractMatchable<T> {
     /** Underlying state */
     protected _under: H;
 
@@ -220,7 +220,7 @@ export function havePatternsFallback<T extends object, U>(patterns: MatchPattern
  * Get the name of a matchable's state
  * @param matchable
  */
-export function getStateName<T extends object>(matchable: MatchableType<T>): KeyOfUnion<T> {
+export function getStateName<T extends object>(matchable: AbstractMatchable<T>): KeyOfUnion<T> {
     return matchable._getStateName();
 }
 
@@ -229,7 +229,7 @@ export function getStateName<T extends object>(matchable: MatchableType<T>): Key
  * @param matchable
  * @param states Multiple states can be provided for multiple checking
  */
-export function hasState<T extends object>(matchable: MatchableType<T>, ...states: Array<KeyOfUnion<T>>): boolean {
+export function hasState<T extends object>(matchable: AbstractMatchable<T>, ...states: Array<KeyOfUnion<T>>): boolean {
     return states.includes(getStateName(matchable));
 }
 
@@ -263,7 +263,7 @@ export function stateStr<K extends string, U extends string>(name: K): Enum<K | 
  * @param matchable
  * @param patterns
  */
-export function match<T extends object, U>(matchable: MatchableType<T>, patterns: MatchPatterns<T, U>): U {
+export function match<T extends object, U>(matchable: AbstractMatchable<T>, patterns: MatchPatterns<T, U>): U {
     return matchable.match(patterns);
 }
 

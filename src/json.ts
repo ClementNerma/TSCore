@@ -3,7 +3,7 @@
  */
 
 import {Result, Ok, Err} from "./result";
-import {hasState, MatchableType, state, State, Matchable} from "./match";
+import {hasState, AbstractMatchable, state, State, Matchable} from "./match";
 import {O} from "./objects";
 import {None, Option, Some} from "./option";
 import {List} from "./list";
@@ -32,7 +32,7 @@ export type MatchableJsonValue =
     | State<'Array', List<JsonValue>>
     | State<'Collection', Dictionary<string, JsonValue>>;
 
-export class JsonValue extends MatchableType<MatchableJsonValue> {
+export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
     private readonly value: JsonValueType;
 
     constructor(value: JsonValueType) {

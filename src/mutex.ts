@@ -5,7 +5,7 @@
 import {Ref} from "./ref";
 import {Err, Ok, Result} from "./result";
 import {None, Option} from "./option";
-import {state, match, MatchableType, State, matchState} from "./match";
+import {state, match, AbstractMatchable, State, matchState} from "./match";
 import {Future} from "./future";
 import {Consumers} from "./list";
 import {panic} from "./panic";
@@ -29,7 +29,7 @@ export type MutexPoisonError = State<'Poisoned'>;
  * Mutual exclusion
  * @template T Shared data type
  */
-export class Mutex<T> extends MatchableType<MutexState> {
+export class Mutex<T> extends AbstractMatchable<MutexState> {
     private readonly _ref: Ref<T>;
     private readonly _locked: Option<Ref<T>>;
     private _poisoned: boolean;

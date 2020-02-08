@@ -3,7 +3,7 @@
  */
 
 import {Consumers} from "./list";
-import {match, Enum, MatchableType, State, state} from "./match";
+import {match, Enum, AbstractMatchable, State, state} from "./match";
 import {Option, Some} from "./option";
 import {panic} from "./panic";
 import {Result} from "./result";
@@ -18,7 +18,7 @@ export type RefMatch<T> =
  * Allows to destroy the reference
  * @template T Type of referred value
  */
-export class Ref<T> extends MatchableType<RefMatch<T>> {
+export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
     private readonly _wrapper: Option<{ ref: T }>;
     private _onDestroy: Consumers<void>;
 

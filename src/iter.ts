@@ -2,7 +2,7 @@
  * @file Powered-up iterators
  */
 
-import {MatchableType, State, state} from "./match";
+import {AbstractMatchable, State, state} from "./match";
 import {Consumers, List} from "./list";
 import {None, Option, Some} from "./option";
 import {O} from "./objects";
@@ -17,7 +17,7 @@ export type IterState =
  * Iterator
  * @template T Values yield by the iterator
  */
-export class Iter<T> extends MatchableType<IterState> implements Iterable<T> {
+export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T> {
     /** Sub-iterator used to yield values */
     protected readonly _iterator: IterableIterator<T>;
     /** Event listeners to call when a value is yielded */
