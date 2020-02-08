@@ -279,3 +279,12 @@ export function matchState<T extends object, U>(state: T, patterns: MatchPattern
 
     return patterns[stateName as keyof typeof patterns](state[stateName] as unknown as ValOfKeyOfUnion<T, KeyOfUnion<T>>);
 }
+
+/**
+ * Pattern-match a string
+ * @param str
+ * @param patterns
+ */
+export function matchString<S extends string, U>(str: S, patterns: MatchPatterns<{ [key in S]: void }, U>): U {
+    return matchState({ [str]: undefined } as { [key in S]: void }, patterns);
+}
