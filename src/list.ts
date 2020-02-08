@@ -473,6 +473,19 @@ export class List<T> {
     }
 
     /**
+     * Remove value at a given index
+     * @param index 
+     */
+    removeAt(index: number): boolean {
+        if (index >= this._content.length) {
+            return false;
+        }
+
+        this._content.splice(index, 1);
+        return true;
+    }
+
+    /**
      * Wrap this list in an outer list
      */
     wrap(): List<List<T>> {
