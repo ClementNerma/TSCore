@@ -204,3 +204,15 @@ export function assertIs(left: unknown, right: unknown, panicMessage?: string, s
         panic("{} (Left and right values are not {}identical)", panicMessage || 'Assertion failed', strict ? "strictly " : "");
     }
 }
+
+/**
+ * Assert that a predicate is `true`
+ * @param predicate
+ * @param panicMessage Panic message
+ * @example assert(1 === 1)
+ */
+export function assert(predicate: boolean, panicMessage?: string): void | never {
+    if (!predicate) {
+        panic("{} (Predicate was not satisfied)", panicMessage || 'Assertion failed');
+    }
+}
