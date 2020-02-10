@@ -156,6 +156,25 @@ export class O {
     }
 
     /**
+     * Create an object with the keys and properties of two others
+     * @param from The original object
+     * @param add The object to add properties from
+     */
+    static merge<T extends object, A extends object>(from: T, add: A): T & A {
+        let out: T & A = {} as any;
+
+        for (const [key, value] of O.entries(from)) {
+            out[key as keyof (T & A)] = value as (T & A)[keyof (T & A)];
+        }
+
+        for (const [key, value] of O.entries(add)) {
+            out[key as keyof (T & A)] = value as (T & A)[keyof (T & A)];
+        }
+
+        return out;
+    }
+
+    /**
      * Create an object from a list of entries
      * Roughly equivalent to ES2019's O.fromEntries()
      * @param entries
