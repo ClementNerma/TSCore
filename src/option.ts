@@ -66,6 +66,16 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     }
 
     /**
+     * Convert this value to a native one ('undefined' if this option is a 'None' value)
+     */
+    toNative(): T | undefined {
+        return match(this, {
+            Some: value => value,
+            None: () => undefined
+        });
+    }
+
+    /**
      * Expect this option to be concrete
      * Panics if it isn't
      * @param message Panic message
