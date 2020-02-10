@@ -154,10 +154,10 @@ export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
     }
 
     /**
-     * Create a reference from a plain data
+     * Wrap a data in a reference
      * @param data
      */
-    static plain<T>(data: T): Ref<T> {
+    static wrap<T>(data: T): Ref<T> {
         return new Ref({ ref: data });
     }
 }
