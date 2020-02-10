@@ -346,6 +346,52 @@ export class List<T> {
     }
 
     /**
+     * Get the smallest value of the list
+     * @param numerize Turn the list's values into numbers
+     */
+    smallest(numerize: (current: T, index: number, list: List<T>) => number): Option<T> {
+        if (this._content.length === 0) {
+            return None();
+        }
+
+        let index = 0, minValue = +Infinity;
+
+        for (let i = 0; i < this._content.length; i ++) {
+            const num = numerize(this._content[i], i, this);
+
+            if (num < minValue) {
+                minValue = num;
+                index = i;
+            }
+        }
+
+        return Some(this._content[index]);
+    }
+
+    /**
+     * Get the largest value of the list
+     * @param numerize Turn the list's values into numbers
+     */
+    largest(numerize: (current: T, index: number, list: List<T>) => number): Option<T> {
+        if (this._content.length === 0) {
+            return None();
+        }
+
+        let index = 0, maxValue = -Infinity;
+
+        for (let i = 0; i < this._content.length; i++) {
+            const num = numerize(this._content[i], i, this);
+
+            if (num > maxValue) {
+                maxValue = num;
+                index = i;
+            }
+        }
+
+        return Some(this._content[index]);
+    }
+
+    /**
      * Sum the list's values
      * @param numerize Turn the list's values into numbers
      */
