@@ -238,6 +238,22 @@ export class Future<T, E> extends MappedMatchable<FutureMatch<T, E>, Option<Resu
         });
     }
 
+    andFinally<U, X>(callback: (result: Result<T, E>) => Result<U, X>): Future<U, X> {
+        return new Future((resolve, reject) => {
+            match(this._under, {
+                Some: result => callback(result).match({
+                    Ok: success => resolve(success),
+                    Err: err => reject(err)
+                }),
+
+                None: () => this._finalHandlers.push(result => callback(result).match({
+                    Ok: success => resolve(success),
+                    Err: err => reject(err)
+                }))
+            });
+        });
+    }
+
     /**
      * Get a promise that won't reject from the current future
      */
