@@ -129,7 +129,7 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      */
     count(): number {
         let counter = 0;
-        for (const _ of this) {}
+        for (const _ of this) counter ++;
         return counter;
     }
 
