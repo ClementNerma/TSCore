@@ -319,6 +319,14 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     }
 
     /**
+     * Cast this option's inner value to a parent type
+     * If the provided type is not a parent of the inner value's one, the option will be returned but typechecking will fail
+     */
+    cast<U>(): T extends U ? Option<U> : never {
+        return this.clone() as any;
+    }
+
+    /**
      * Transpose an Option<Result<T, E>> value to a Result<Option<T>, E>
      * @param option
      */
