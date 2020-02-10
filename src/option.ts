@@ -372,6 +372,15 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     static cond<T>(predicate: boolean, value: T): Option<T> {
         return predicate ? Some(value) : None();
     }
+
+    /**
+     * Return a Some(T) if the provided property exists in the provided object ; else None() is returnedd
+     * @param prop 
+     * @param obj 
+     */
+    static prop<T extends object, K extends keyof T>(obj: T, prop: K): Option<T[K]> {
+        return prop in obj ? Some(obj[prop]) : None();
+    }
 }
 
 /**
