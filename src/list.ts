@@ -618,6 +618,14 @@ export class List<T> {
 
         return list;
     }
+
+    /**
+     * Get an array from a value that may be a list
+     * @param arr The value to get as an array
+     */
+    static toArray<T>(arr: Array<T> | List<T>): Array<T> {
+        return O.isArray(arr) ? arr : arr.toArray();
+    }
 }
 
 /**
