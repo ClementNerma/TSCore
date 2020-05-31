@@ -2,30 +2,27 @@
  * @file Asynchronous and abortable multi-steps tasks
  */
 
-import {hasState, match, Matchable, State, state} from "./match";
-import {Err, Ok, Result} from "./result";
-import {Future} from "./future";
-import {None, Option, Some} from "./option";
-import {panic} from "./panic";
-import {TaskCluster, TaskClusterReducer} from "./cluster";
-import {List} from "./list";
+import { hasState, match, Matchable, State, state } from "./match"
+import { Err, Ok, Result } from "./result"
+import { Future } from "./future"
+import { None, Option, Some } from "./option"
+import { panic } from "./panic"
+import { TaskCluster, TaskClusterReducer } from "./cluster"
+import { List } from "./list"
 
 /**
  * State of a task
  * @template T Type of fulfill value
  * @template E Type of fail value
  */
-export type TaskState<T, E> =
-    | State<"Created" | "Pending" | "RunningStep">
-    | State<"Fulfilled", T>
-    | State<"Failed", E>;
+export type TaskState<T, E> = State<"Created" | "Pending" | "RunningStep"> | State<"Fulfilled", T> | State<"Failed", E>
 
 /**
  * Task iterator
  * @template T Type of fulfill value
  * @template E Type of fail value
  */
-export type TaskIterator<T, E> = AsyncIterableIterator<void | Result<T, E>>;
+export type TaskIterator<T, E> = AsyncIterableIterator<void | Result<T, E>>
 
 /**
  * Task
@@ -34,15 +31,15 @@ export type TaskIterator<T, E> = AsyncIterableIterator<void | Result<T, E>>;
  */
 export class Task<T, E> extends Matchable<TaskState<T, E>> {
     /** Task's core function (returning the task's iterator */
-    private readonly _core: () => TaskIterator<T, E>;
+    private readonly _core: () => TaskIterator<T, E>
     /** Task's content (iterator) */
-    private readonly _iter: TaskIterator<T, E>;
+    private readonly _iter: TaskIterator<T, E>
     /** Completion future that resolves when the task completes */
-    private readonly _completionFuture: Future<T, E>;
+    private readonly _completionFuture: Future<T, E>
     /** Time during which the task was running */
-    private _elapsed: number;
+    private _elapsed: number
     /** Mark the task as completed */
-    private __completeFuture: (result: Result<T, E>) => void;
+    private __completeFuture: (result: Result<T, E>) => void
 
     /**
      * Create a new task
@@ -50,14 +47,14 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
      * @example new Task(function* () { yield Ok(2); })
      */
     constructor(core: () => TaskIterator<T, E>) {
-        super(state("Created"));
+        super(state("Created"))
 
-        this._core = core;
-        this._iter = core();
-        this.__completeFuture = () => {}; // FIX requirement to init. properties in constructor
-        this._completionFuture = new Future((_, __, complete) => this.__completeFuture = result => complete(result));
-        this._elapsed = 0;
-        this._state = state('Created');
+        this._core = core
+        this._iter = core()
+        this.__completeFuture = () => {} // FIX requirement to init. properties in constructor
+        this._completionFuture = new Future((_, __, complete) => (this.__completeFuture = (result) => complete(result)))
+        this._elapsed = 0
+        this._state = state("Created")
     }
 
     /**
@@ -67,8 +64,8 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
         return match(this, {
             Fulfilled: () => true,
             Failed: () => true,
-            _: () => false
-        });
+            _: () => false,
+        })
     }
 
     /**
@@ -78,15 +75,15 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
         return match(this, {
             Created: () => true,
             Pending: () => true,
-            _: () => false
-        });
+            _: () => false,
+        })
     }
 
     /**
      * Get the time consumed by the task so far
      */
     get elapsed(): number {
-        return this._elapsed;
+        return this._elapsed
     }
 
     /**
@@ -94,7 +91,7 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
      * @private
      */
     _getMatchableState(): TaskState<T, E> {
-        return this._state;
+        return this._state
     }
 
     /**
@@ -102,11 +99,11 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
      * @returns A future resolving when the first step ended
      */
     start(): Future<Option<Result<T, E>>, void> {
-        if (hasState(this, 'Created')) {
-            this._state = state('Pending');
-            return this.next();
+        if (hasState(this, "Created")) {
+            this._state = state("Pending")
+            return this.next()
         } else {
-            return panic('Cannot start a task twice');
+            return panic("Cannot start a task twice")
         }
     }
 
@@ -116,47 +113,47 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
      * @returns A future resolving when the step ended
      */
     next(startImplicitly = true): Future<Option<Result<T, E>>, void> {
-        return new Future(async resolve => {
-            if (startImplicitly && hasState(this, 'Created')) {
-                this._state = state('Pending');
-            } else if (!hasState(this, 'Pending')) {
-                panic("Cannot run next step as the task is not pending!");
+        return new Future(async (resolve) => {
+            if (startImplicitly && hasState(this, "Created")) {
+                this._state = state("Pending")
+            } else if (!hasState(this, "Pending")) {
+                panic("Cannot run next step as the task is not pending!")
             }
 
             // Mark the task as running a step
-            this._state = state('RunningStep');
+            this._state = state("RunningStep")
 
             // Get the current timestamp
-            const now = Date.now();
+            const now = Date.now()
 
             // Get the step's result value
-            const { done, value } = await this._iter.next();
+            const { done, value } = await this._iter.next()
 
             // Measure elapsed time
-            this._elapsed += Date.now() - now;
+            this._elapsed += Date.now() - now
 
             // If a value was yielded, complete the task
             if (value) {
                 this._state = match(value, {
-                    Ok: success => state('Fulfilled', success),
-                    Err: error => state('Failed', error)
-                });
+                    Ok: (success) => state("Fulfilled", success),
+                    Err: (error) => state("Failed", error),
+                })
 
-                this.__completeFuture(value);
+                this.__completeFuture(value)
 
-                return resolve(Some(value));
+                return resolve(Some(value))
             }
 
             // Tasks cannot end without yielding a result value
             if (done) {
-                return panic("Task completed without yielding a success or error value!");
+                return panic("Task completed without yielding a success or error value!")
             }
 
             // The task did not complete nor is done - mark the task as pending
-            this._state = state('Pending');
+            this._state = state("Pending")
 
-            return resolve(None());
-        });
+            return resolve(None())
+        })
     }
 
     /**
@@ -165,18 +162,18 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
     complete(): Future<T, E> {
         return new Future(async (_, __, complete) => {
             while (!this.completed) {
-                await this.next().promise();
+                await this.next().promise()
             }
 
-            this._completionFuture.finally(complete);
-        });
+            this._completionFuture.finally(complete)
+        })
     }
 
     /**
      * Get a future that resolves when the task is completed
      */
     future(): Future<T, E> {
-        return this._completionFuture;
+        return this._completionFuture
     }
 
     /**
@@ -184,17 +181,17 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
      */
     result(): Option<Result<T, E>> {
         return match(this, {
-            Fulfilled: success => Some(Ok(success)),
-            Failed: error => Some(Err(error)),
-            _: () => None<Result<T, E>>()
-        });
+            Fulfilled: (success) => Some(Ok(success)),
+            Failed: (error) => Some(Err(error)),
+            _: () => None<Result<T, E>>(),
+        })
     }
 
     /**
      * Clone the task
      */
     clone(): Task<T, E> {
-        return new Task(this._core);
+        return new Task(this._core)
     }
 
     /**
@@ -202,17 +199,17 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
      * @param repeat
      */
     serial(repeat: number): List<Task<T, E>> {
-        return List.gen(repeat, () => this.clone());
+        return List.gen(repeat, () => this.clone())
     }
 
     /**
      * Create a cluster from this task
      * @param options
      */
-    clusterize<U>(options: { repeat: number, reducer: TaskClusterReducer<T, U>, initial: U }): TaskCluster<T, E, U> {
-        const cluster = new TaskCluster<T, E, U>(options.reducer, options.initial);
-        cluster.add(this, options.repeat);
-        return cluster;
+    clusterize<U>(options: { repeat: number; reducer: TaskClusterReducer<T, U>; initial: U }): TaskCluster<T, E, U> {
+        const cluster = new TaskCluster<T, E, U>(options.reducer, options.initial)
+        cluster.add(this, options.repeat)
+        return cluster
     }
 
     /**
@@ -221,8 +218,8 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
      */
     static straight<T, E>(callback: () => Result<T, E>): Task<T, E> {
         return new Task(async function* (): TaskIterator<T, E> {
-            return callback();
-        });
+            return callback()
+        })
     }
 
     /**
@@ -231,8 +228,8 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
      */
     static async<T, E>(callback: () => Future<T, E>): Task<T, E> {
         return new Task(async function* (): TaskIterator<T, E> {
-            return await callback().promise();
-        });
+            return await callback().promise()
+        })
     }
 }
 
@@ -246,4 +243,4 @@ export function parallel(core: () => void, timeout = 1): void {
 }
 
 // Force declaration of setTimeout
-declare const setTimeout: (callback: () => void, timeout: number) => number;
+declare const setTimeout: (callback: () => void, timeout: number) => number

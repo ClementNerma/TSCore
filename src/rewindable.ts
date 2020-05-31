@@ -2,9 +2,9 @@
  * @file Rewindable iterators - iterators that can go back
  */
 
-import {None, Option} from "./option";
-import {List} from "./list";
-import {Iter} from "./iter";
+import { None, Option } from "./option"
+import { List } from "./list"
+import { Iter } from "./iter"
 
 /**
  * Rewindable iterator
@@ -13,7 +13,7 @@ import {Iter} from "./iter";
  */
 export class Rewindable<T> extends Iter<T> {
     /** List of yielded values if the iterator is rewindable */
-    protected readonly _yielded: List<T>;
+    protected readonly _yielded: List<T>
 
     /**
      * Create a new iterator
@@ -21,12 +21,12 @@ export class Rewindable<T> extends Iter<T> {
      * @param collect Collect all values at once
      */
     constructor(iterable: { [Symbol.iterator](): IterableIterator<T> }, collect = false) {
-        super(iterable);
-        this._yielded = new List();
+        super(iterable)
+        this._yielded = new List()
 
         if (collect) {
-            this.collect();
-            this._pointer = -1;
+            this.collect()
+            this._pointer = -1
         }
     }
 
@@ -34,7 +34,7 @@ export class Rewindable<T> extends Iter<T> {
      * Get all yielded values
      */
     yielded(): List<T> {
-        return this._yielded.clone();
+        return this._yielded.clone()
     }
 
     /**
@@ -42,7 +42,7 @@ export class Rewindable<T> extends Iter<T> {
      * @param index
      */
     get(index: number): Option<T> {
-        return this._yielded.get(index);
+        return this._yielded.get(index)
     }
 
     /**
@@ -51,10 +51,10 @@ export class Rewindable<T> extends Iter<T> {
      */
     prev(): Option<T> {
         if (this._pointer <= 0) {
-            return None();
+            return None()
         }
 
-        return this._yielded.get(-- this._pointer);
+        return this._yielded.get(--this._pointer)
     }
 
     /**
@@ -62,7 +62,7 @@ export class Rewindable<T> extends Iter<T> {
      * @returns `None` if the iterator didn't yield any value
      */
     current(): Option<T> {
-        return this._yielded.get(this._pointer);
+        return this._yielded.get(this._pointer)
     }
 
     /**
@@ -72,10 +72,10 @@ export class Rewindable<T> extends Iter<T> {
      */
     next(): Option<T> {
         if (this._yielded.has(this._pointer + 1)) {
-            return this._yielded.get(this._pointer + 1);
+            return this._yielded.get(this._pointer + 1)
         }
 
-        return super.next().some(value => this._yielded.push(value));
+        return super.next().some((value) => this._yielded.push(value))
     }
 
     /**
@@ -83,12 +83,12 @@ export class Rewindable<T> extends Iter<T> {
      * @param joinLeft Join all previously-yielded values
      */
     collect(joinLeft = false): List<T> {
-        const startIndex = this._pointer;
+        const startIndex = this._pointer
 
         while (!this._done) {
-            this.next();
+            this.next()
         }
 
-        return joinLeft ? this.yielded() : this.yielded().slice(startIndex + 1);
+        return joinLeft ? this.yielded() : this.yielded().slice(startIndex + 1)
     }
 }

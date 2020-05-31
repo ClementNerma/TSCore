@@ -8,14 +8,14 @@
 export enum CompResult {
     Smaller = -1,
     Equal = 0,
-    Greater = 1
+    Greater = 1,
 }
 
 /**
  * Comparator
  * @template T Type of values to compare
  */
-export type Comparator<T> = (a: T, b: T) => CompResult;
+export type Comparator<T> = (a: T, b: T) => CompResult
 
 /**
  * Compare two values
@@ -24,11 +24,11 @@ export type Comparator<T> = (a: T, b: T) => CompResult;
  */
 export function compare<T>(a: T, b: T): CompResult {
     if (a < b) {
-        return CompResult.Smaller;
+        return CompResult.Smaller
     } else if (a === b) {
-        return CompResult.Equal;
+        return CompResult.Equal
     } else {
-        return CompResult.Greater;
+        return CompResult.Greater
     }
 }
 
@@ -40,15 +40,15 @@ export function compare<T>(a: T, b: T): CompResult {
 export function comparator<T extends object>(...keys: Array<keyof T>): Comparator<T> {
     return (a, b) => {
         for (const key of keys) {
-            const result = compare(a[key], b[key]);
+            const result = compare(a[key], b[key])
 
             if (result !== 0) {
-                return result;
+                return result
             }
         }
 
-        return 0;
-    };
+        return 0
+    }
 }
 
 /**
@@ -58,5 +58,5 @@ export function comparator<T extends object>(...keys: Array<keyof T>): Comparato
  * @example sortByKey([ { points: 10, points: 30, points: 15 } ], 'points')
  */
 export function sortByKey<T extends object>(arr: Array<T>, ...keys: Array<keyof T>): Array<T> {
-    return arr.sort(comparator(...keys));
+    return arr.sort(comparator(...keys))
 }

@@ -2,18 +2,16 @@
  * @file Result values that are either a success or an error
  */
 
-import {match, Matchable, state, State} from "./match";
-import {None, Option, Some} from "./option";
-import {panic} from "./panic";
+import { match, Matchable, state, State } from "./match"
+import { None, Option, Some } from "./option"
+import { panic } from "./panic"
 
 /**
  * Result's pattern matching
  * @template T Success type
  * @template E Error type
  */
-export type ResultMatch<T, E> =
-    | State<"Ok", T>
-    | State<"Err", E>;
+export type ResultMatch<T, E> = State<"Ok", T> | State<"Err", E>
 
 /**
  * Result type
@@ -27,8 +25,8 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
     isOk(): boolean {
         return match(this, {
             Ok: () => true,
-            Err: () => false
-        });
+            Err: () => false,
+        })
     }
 
     /**
@@ -37,8 +35,8 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
     isErr(): boolean {
         return match(this, {
             Ok: () => false,
-            Err: () => true
-        });
+            Err: () => true,
+        })
     }
 
     /**
@@ -46,9 +44,9 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      */
     ok(): Option<T> {
         return match(this, {
-            Ok: value => Some(value),
-            Err: () => None()
-        });
+            Ok: (value) => Some(value),
+            Err: () => None(),
+        })
     }
 
     /**
@@ -57,8 +55,8 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
     err(): Option<E> {
         return match(this, {
             Ok: () => None(),
-            Err: err => Some(err)
-        });
+            Err: (err) => Some(err),
+        })
     }
 
     /**
@@ -68,9 +66,9 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      */
     expect(message: string): T {
         return match(this, {
-            Ok: value => value,
-            Err: () => panic(message)
-        });
+            Ok: (value) => value,
+            Err: () => panic(message),
+        })
     }
 
     /**
@@ -81,8 +79,8 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
     expectErr(message: string): E {
         return match(this, {
             Ok: () => panic(message),
-            Err: err => err
-        });
+            Err: (err) => err,
+        })
     }
 
     /**
@@ -91,9 +89,9 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      */
     unwrap(): T {
         return match(this, {
-            Ok: value => value,
-            Err: () => panic("Tried to unwrap an 'Err' value!")
-        });
+            Ok: (value) => value,
+            Err: () => panic("Tried to unwrap an 'Err' value!"),
+        })
     }
 
     /**
@@ -102,9 +100,9 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      */
     unwrapOr(fallback: T): T {
         return match(this, {
-            Ok: value => value,
-            Err: () => fallback
-        });
+            Ok: (value) => value,
+            Err: () => fallback,
+        })
     }
 
     /**
@@ -113,9 +111,9 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      */
     unwrapOrElse(fallback: (err: E) => T): T {
         return match(this, {
-            Ok: value => value,
-            Err: err => fallback(err)
-        });
+            Ok: (value) => value,
+            Err: (err) => fallback(err),
+        })
     }
 
     /**
@@ -124,8 +122,8 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
     unwrapErr(): E {
         return match(this, {
             Ok: () => panic("Tried to unwrap error of an 'Ok' value!"),
-            Err: err => err
-        });
+            Err: (err) => err,
+        })
     }
 
     /**
@@ -134,9 +132,9 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      */
     map<U>(mapper: (value: T) => U): Result<U, E> {
         return match(this, {
-            Ok: value => Ok(mapper(value)),
-            Err: err => Err(err)
-        });
+            Ok: (value) => Ok(mapper(value)),
+            Err: (err) => Err(err),
+        })
     }
 
     /**
@@ -146,9 +144,9 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      */
     mapOrElse<U>(success: (value: T) => U, error: (err: E) => U): U {
         return match(this, {
-            Ok: value => success(value),
-            Err: err => error(err)
-        });
+            Ok: (value) => success(value),
+            Err: (err) => error(err),
+        })
     }
 
     /**
@@ -157,9 +155,9 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      */
     mapErr<F>(mapper: (err: E) => F): Result<T, F> {
         return match(this, {
-            Ok: value => Ok(value),
-            Err: err => Err(mapper(err))
-        });
+            Ok: (value) => Ok(value),
+            Err: (err) => Err(mapper(err)),
+        })
     }
 
     /**
@@ -169,8 +167,8 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
     and<U>(other: Result<U, E>): Result<U, E> {
         return match(this, {
             Ok: () => other,
-            Err: err => Err(err)
-        });
+            Err: (err) => Err(err),
+        })
     }
 
     /**
@@ -179,9 +177,9 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      */
     andThen<U>(other: (value: T) => Result<U, E>): Result<U, E> {
         return match(this, {
-            Ok: value => other(value),
-            Err: err => Err(err)
-        });
+            Ok: (value) => other(value),
+            Err: (err) => Err(err),
+        })
     }
 
     /**
@@ -190,9 +188,9 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      */
     or<F>(other: Result<T, F>): Result<T, F> {
         return match(this, {
-            Ok: value => Ok(value),
-            Err: () => other
-        });
+            Ok: (value) => Ok(value),
+            Err: () => other,
+        })
     }
 
     /**
@@ -201,9 +199,9 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      */
     orElse<F>(other: () => Result<T, F>): Result<T, F> {
         return match(this, {
-            Ok: value => Ok(value),
-            Err: () => other()
-        });
+            Ok: (value) => Ok(value),
+            Err: () => other(),
+        })
     }
 
     /**
@@ -211,15 +209,15 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      * @param core
      */
     static fallible<T>(core: () => T): Result<T, Error> {
-        let value: T;
+        let value: T
 
         try {
-            value = core();
+            value = core()
         } catch (e) {
-            return Err(e);
+            return Err(e)
         }
-        
-        return Ok(value);
+
+        return Ok(value)
     }
 }
 
@@ -228,7 +226,7 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
  * @param value The success value
  */
 export function Ok<T>(value: T): Result<T, any> {
-    return new Result(state("Ok", value));
+    return new Result(state("Ok", value))
 }
 
 /**
@@ -236,5 +234,5 @@ export function Ok<T>(value: T): Result<T, any> {
  * @param err The error value
  */
 export function Err<E>(err: E): Result<any, E> {
-    return new Result(state("Err", err));
+    return new Result(state("Err", err))
 }

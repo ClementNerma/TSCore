@@ -2,15 +2,15 @@
  * @file Type-safe arrays with functional and iterable capabilities
  */
 
-import {None, Option, Some} from "./option";
-import {Comparator} from "./comparison";
-import {Rewindable} from "./rewindable";
-import {panic} from "./panic";
-import {O} from "./objects";
-import { Result, Ok, Err } from "./result";
+import { None, Option, Some } from "./option"
+import { Comparator } from "./comparison"
+import { Rewindable } from "./rewindable"
+import { panic } from "./panic"
+import { O } from "./objects"
+import { Result, Ok, Err } from "./result"
 
 export class List<T> {
-    private _content: T[];
+    private _content: T[]
 
     /**
      * Create a new list
@@ -18,30 +18,30 @@ export class List<T> {
      */
     constructor(content?: T[] | Set<T>) {
         if (!content) {
-            content = [];
+            content = []
         } else if (content instanceof Set) {
-            content = Array.from(content.values());
+            content = Array.from(content.values())
         } else {
-            content = content.slice();
+            content = content.slice()
         }
 
         // Detect non-contiguous arrays
         // e.g. `const arr = []; arr[3] = "Hello!";`
         // Such an array will contain 'empty' elements which will have the 'undefined' value
         if ((content as Array<T | undefined>).includes(undefined)) {
-            if (content.find(item => item !== undefined)) {
-                panic("Lists can only be created from contiguous arrays");
+            if (content.find((item) => item !== undefined)) {
+                panic("Lists can only be created from contiguous arrays")
             }
         }
 
-        this._content = content;
+        this._content = content
     }
 
     /**
      * Get the list's number of items
      */
     get length(): number {
-        return this._content.length;
+        return this._content.length
     }
 
     /**
@@ -49,7 +49,7 @@ export class List<T> {
      * @param index
      */
     has(index: number): boolean {
-        return this._content.hasOwnProperty(index);
+        return this._content.hasOwnProperty(index)
     }
 
     /**
@@ -57,7 +57,7 @@ export class List<T> {
      * @param index
      */
     get(index: number): Option<T> {
-        return this.has(index) ? Some(this._content[index]) : None();
+        return this.has(index) ? Some(this._content[index]) : None()
     }
 
     /**
@@ -65,7 +65,7 @@ export class List<T> {
      * @param index
      */
     getUnwrap(index: number): T {
-        return this.get(index).unwrap();
+        return this.get(index).unwrap()
     }
 
     /**
@@ -76,17 +76,17 @@ export class List<T> {
      */
     set(index: number, value: T): void {
         if (!this.has(index)) {
-            panic("Out-of-bound index {} in list with length of {}", index, this.length);
+            panic("Out-of-bound index {} in list with length of {}", index, this.length)
         }
 
-        this._content[index] = value;
+        this._content[index] = value
     }
 
     /**
      * Get the first element of the list
      */
     first(): Option<T> {
-        return this.get(0);
+        return this.get(0)
     }
 
     /**
@@ -94,14 +94,14 @@ export class List<T> {
      * @param size The number of elements to get
      */
     firstOnes(size: number): List<T> {
-        return this.slice(0, size);
+        return this.slice(0, size)
     }
 
     /**
      * Get the last element of the list
      */
     last(): Option<T> {
-        return this.get(this.length);
+        return this.get(this.length)
     }
 
     /**
@@ -109,7 +109,7 @@ export class List<T> {
      * @param size The number of elements to get
      */
     lastOnes(size: number): List<T> {
-        return this.length < size ? new List() : this.slice(-size);
+        return this.length < size ? new List() : this.slice(-size)
     }
 
     /**
@@ -118,7 +118,7 @@ export class List<T> {
      * @param fromIndex
      */
     indexOf(item: T, fromIndex?: number): number {
-        return this._content.indexOf(item, fromIndex);
+        return this._content.indexOf(item, fromIndex)
     }
 
     /**
@@ -127,7 +127,7 @@ export class List<T> {
      * @param fromIndex
      */
     lastIndexOf(item: T, fromIndex?: number): number {
-        return this._content.lastIndexOf(item, fromIndex);
+        return this._content.lastIndexOf(item, fromIndex)
     }
 
     /**
@@ -135,7 +135,7 @@ export class List<T> {
      * @param item
      */
     includes(item: T): boolean {
-        return this._content.includes(item);
+        return this._content.includes(item)
     }
 
     /**
@@ -143,15 +143,15 @@ export class List<T> {
      * @param item
      */
     count(item: T): number {
-        let counter = 0;
+        let counter = 0
 
         for (const value of this._content) {
             if (value === item) {
-                counter ++;
+                counter++
             }
         }
 
-        return counter;
+        return counter
     }
 
     /**
@@ -160,7 +160,7 @@ export class List<T> {
      * @param endAt
      */
     slice(startAt: number, endAt?: number): List<T> {
-        return List.raw(this._content.slice(startAt, endAt));
+        return List.raw(this._content.slice(startAt, endAt))
     }
 
     /**
@@ -169,7 +169,9 @@ export class List<T> {
      * @param lists
      */
     concatHead(list: Array<T> | List<T>, ...lists: Array<Array<T> | List<T>>): List<T> {
-        return List.raw((O.isArray(list) ? list : list._content).concat(...lists.map(list => O.isArray(list) ? list : list._content)).concat(this._content));
+        return List.raw(
+            (O.isArray(list) ? list : list._content).concat(...lists.map((list) => (O.isArray(list) ? list : list._content))).concat(this._content)
+        )
     }
 
     /**
@@ -178,7 +180,9 @@ export class List<T> {
      * @param lists
      */
     concat(list: Array<T> | List<T>, ...lists: Array<Array<T> | List<T>>): List<T> {
-        return List.raw(this._content.concat(O.isArray(list) ? list : list._content).concat(...lists.map(list => O.isArray(list) ? list : list._content)));
+        return List.raw(
+            this._content.concat(O.isArray(list) ? list : list._content).concat(...lists.map((list) => (O.isArray(list) ? list : list._content)))
+        )
     }
 
     /**
@@ -186,7 +190,7 @@ export class List<T> {
      * @param separator
      */
     join(separator?: string): string {
-        return this._content.join(separator);
+        return this._content.join(separator)
     }
 
     /**
@@ -194,7 +198,7 @@ export class List<T> {
      * @param callback
      */
     forEach(callback: (value: T, index: number, list: this) => void): void {
-        this._content.forEach((value, index) => callback(value, index, this));
+        this._content.forEach((value, index) => callback(value, index, this))
     }
 
     /**
@@ -202,7 +206,7 @@ export class List<T> {
      * @param predicate
      */
     every(predicate: (value: T, index: number, list: this) => boolean): boolean {
-        return this._content.every((value, index) => predicate(value, index, this));
+        return this._content.every((value, index) => predicate(value, index, this))
     }
 
     /**
@@ -210,7 +214,7 @@ export class List<T> {
      * @param predicate
      */
     some(predicate: (value: T, index: number, list: this) => boolean): boolean {
-        return this._content.some((value, index) => predicate(value, index, this));
+        return this._content.some((value, index) => predicate(value, index, this))
     }
 
     /**
@@ -218,13 +222,13 @@ export class List<T> {
      * @param predicate
      */
     find(predicate: (value: T, index: number, list: this) => boolean): Option<T> {
-        for (let i = 0; i < this._content.length; i ++) {
+        for (let i = 0; i < this._content.length; i++) {
             if (predicate(this._content[i], i, this)) {
-                return Some(this._content[i]);
+                return Some(this._content[i])
             }
         }
 
-        return None();
+        return None()
     }
 
     /**
@@ -232,13 +236,13 @@ export class List<T> {
      * @param predicate
      */
     findIndex(predicate: (value: T, index: number, list: this) => boolean): Option<number> {
-        for (let i = 0; i < this._content.length; i ++) {
+        for (let i = 0; i < this._content.length; i++) {
             if (predicate(this._content[i], i, this)) {
-                return Some(i);
+                return Some(i)
             }
         }
 
-        return None();
+        return None()
     }
 
     /**
@@ -246,7 +250,7 @@ export class List<T> {
      * @param predicate
      */
     filter(predicate: (value: T, index: number, list: this) => boolean): List<T> {
-        return List.raw(this._content.filter((value, index) => predicate(value, index, this)));
+        return List.raw(this._content.filter((value, index) => predicate(value, index, this)))
     }
 
     /**
@@ -257,19 +261,19 @@ export class List<T> {
      * @example (new List([ 2, -1, 3, 2 ])).select(2, num => num > 0);
      */
     select(predicate: (value: T, index: number, list: this) => boolean, size: number): List<T> {
-        const selected = new List<T>();
+        const selected = new List<T>()
 
-        for (let i = 0; i < this._content.length; i ++) {
+        for (let i = 0; i < this._content.length; i++) {
             if (predicate(this._content[i], i, this)) {
-                selected.push(this._content[i]);
+                selected.push(this._content[i])
 
                 if (selected.length === size) {
-                    return selected;
+                    return selected
                 }
             }
         }
 
-        return selected;
+        return selected
     }
 
     /**
@@ -279,26 +283,26 @@ export class List<T> {
      * @param tester
      */
     resultable<U, E>(tester: (value: T, index: number, list: this) => Result<U, E>): Result<List<U>, E> {
-        const mapped = new List<U>();
+        const mapped = new List<U>()
 
-        for (let i = 0; i < this._content.length; i ++) {
-            const result = tester(this._content[i], i, this);
+        for (let i = 0; i < this._content.length; i++) {
+            const result = tester(this._content[i], i, this)
 
             if (result.isOk()) {
-                mapped.push(result.unwrap());
+                mapped.push(result.unwrap())
             } else {
-                return Err(result.unwrapErr());
+                return Err(result.unwrapErr())
             }
         }
 
-        return Ok(mapped);
+        return Ok(mapped)
     }
 
     /**
      * Reverse the list's order
      */
     reverse(): List<T> {
-        return List.raw(this._content.reverse());
+        return List.raw(this._content.reverse())
     }
 
     /**
@@ -306,7 +310,7 @@ export class List<T> {
      * @param mapper
      */
     map<U>(mapper: (value: T, index: number, list: this) => U): List<U> {
-        return List.raw(this._content.map((value, index) => mapper(value, index, this)));
+        return List.raw(this._content.map((value, index) => mapper(value, index, this)))
     }
 
     /**
@@ -315,7 +319,7 @@ export class List<T> {
      * @param initial
      */
     reduce<U>(callback: (prev: U, current: T, index: number, list: List<T>) => U, initial: U): U {
-        return this._content.reduce((prev, curr, index) => callback(prev, curr, index, this), initial);
+        return this._content.reduce((prev, curr, index) => callback(prev, curr, index, this), initial)
     }
 
     /**
@@ -324,7 +328,7 @@ export class List<T> {
      * @param initial
      */
     reduceRight<U>(callback: (prev: U, current: T, index: number, list: List<T>) => U, initial: U): U {
-        return this._content.reduceRight((prev, curr, index) => callback(prev, curr, index, this), initial);
+        return this._content.reduceRight((prev, curr, index) => callback(prev, curr, index, this), initial)
     }
 
     /**
@@ -333,7 +337,7 @@ export class List<T> {
      * @param fallback Fallback if the list is empty
      */
     min(numerize: (current: T, index: number, list: List<T>) => number, fallback = 0): number {
-        return this._content.reduce((prev, curr, index) => Math.min(prev, numerize(curr, index, this)), fallback);
+        return this._content.reduce((prev, curr, index) => Math.min(prev, numerize(curr, index, this)), fallback)
     }
 
     /**
@@ -342,7 +346,7 @@ export class List<T> {
      * @param fallback Fallback if the list is empty
      */
     max(numerize: (current: T, index: number, list: List<T>) => number, fallback = 0): number {
-        return this._content.reduce((prev, curr, index) => Math.max(prev, numerize(curr, index, this)), fallback);
+        return this._content.reduce((prev, curr, index) => Math.max(prev, numerize(curr, index, this)), fallback)
     }
 
     /**
@@ -351,21 +355,22 @@ export class List<T> {
      */
     smallest(numerize: (current: T, index: number, list: List<T>) => number): Option<T> {
         if (this._content.length === 0) {
-            return None();
+            return None()
         }
 
-        let index = 0, minValue = +Infinity;
+        let index = 0,
+            minValue = +Infinity
 
-        for (let i = 0; i < this._content.length; i ++) {
-            const num = numerize(this._content[i], i, this);
+        for (let i = 0; i < this._content.length; i++) {
+            const num = numerize(this._content[i], i, this)
 
             if (num < minValue) {
-                minValue = num;
-                index = i;
+                minValue = num
+                index = i
             }
         }
 
-        return Some(this._content[index]);
+        return Some(this._content[index])
     }
 
     /**
@@ -374,21 +379,22 @@ export class List<T> {
      */
     largest(numerize: (current: T, index: number, list: List<T>) => number): Option<T> {
         if (this._content.length === 0) {
-            return None();
+            return None()
         }
 
-        let index = 0, maxValue = -Infinity;
+        let index = 0,
+            maxValue = -Infinity
 
         for (let i = 0; i < this._content.length; i++) {
-            const num = numerize(this._content[i], i, this);
+            const num = numerize(this._content[i], i, this)
 
             if (num > maxValue) {
-                maxValue = num;
-                index = i;
+                maxValue = num
+                index = i
             }
         }
 
-        return Some(this._content[index]);
+        return Some(this._content[index])
     }
 
     /**
@@ -396,7 +402,7 @@ export class List<T> {
      * @param numerize Turn the list's values into numbers
      */
     sum(numerize: (current: T, index: number, list: List<T>) => number): number {
-        return this._content.reduce((prev, curr, index) => numerize(curr, index, this), 0);
+        return this._content.reduce((prev, curr, index) => numerize(curr, index, this), 0)
     }
 
     /**
@@ -404,7 +410,7 @@ export class List<T> {
      * @param comparator
      */
     sort(comparator?: Comparator<T>): List<T> {
-        return List.raw(this._content.sort(comparator));
+        return List.raw(this._content.sort(comparator))
     }
 
     /**
@@ -412,7 +418,7 @@ export class List<T> {
      * @param items
      */
     unshift(...items: T[]): number {
-        return this._content.unshift(...items);
+        return this._content.unshift(...items)
     }
 
     /**
@@ -420,15 +426,15 @@ export class List<T> {
      * @param items
      */
     push(...items: T[]): number {
-        return this._content.push(...items);
+        return this._content.push(...items)
     }
 
     /**
      * Add items at the end of the list if they are not currently in the list
      */
     pushNew(...items: T[]): number {
-        let newItems = items.filter(item => !this.includes(item));
-        return this.push(...items);
+        let newItems = items.filter((item) => !this.includes(item))
+        return this.push(...items)
     }
 
     /**
@@ -436,9 +442,9 @@ export class List<T> {
      * @param list
      */
     take(list: List<T>): number {
-        this.push(...list.toArray());
-        list.clear();
-        return this.length;
+        this.push(...list.toArray())
+        list.clear()
+        return this.length
     }
 
     /**
@@ -446,9 +452,9 @@ export class List<T> {
      */
     shift(): Option<T> {
         if (this._content.length) {
-            return Some(this._content.shift() as T);
+            return Some(this._content.shift() as T)
         } else {
-            return None();
+            return None()
         }
     }
 
@@ -458,7 +464,7 @@ export class List<T> {
      * @param value
      */
     insert(index: number, value: T): void {
-        this._content.splice(index, 0, value);
+        this._content.splice(index, 0, value)
     }
 
     /**
@@ -466,9 +472,9 @@ export class List<T> {
      */
     pop(): Option<T> {
         if (this._content.length) {
-            return Some(this._content.pop() as T);
+            return Some(this._content.pop() as T)
         } else {
-            return None();
+            return None()
         }
     }
 
@@ -478,14 +484,10 @@ export class List<T> {
      * @param deleteCount
      * @returns Removed items
      */
-    splice(start: number, deleteCount?: number): List<T>;
-    splice(start: number, deleteCount: number, ...items: Array<T>): List<T>;
+    splice(start: number, deleteCount?: number): List<T>
+    splice(start: number, deleteCount: number, ...items: Array<T>): List<T>
     splice(start: number, deleteCount?: number, ...items: Array<T>): List<T> {
-        return List.raw(
-            deleteCount === undefined
-                ? this._content.splice(start)
-                : this._content.splice(start, deleteCount, ...items)
-        )
+        return List.raw(deleteCount === undefined ? this._content.splice(start) : this._content.splice(start, deleteCount, ...items))
     }
 
     /**
@@ -493,8 +495,8 @@ export class List<T> {
      * @param callback
      */
     out(callback: (value: T, index: number, list: this) => void): void {
-        this.forEach(callback);
-        this.clear();
+        this.forEach(callback)
+        this.clear()
     }
 
     /**
@@ -502,13 +504,13 @@ export class List<T> {
      * @param item
      */
     removeFirst(item: T): boolean {
-        const index = this.indexOf(item);
+        const index = this.indexOf(item)
 
         if (index !== -1) {
-            this._content.splice(index, 1);
-            return true;
+            this._content.splice(index, 1)
+            return true
         } else {
-            return false;
+            return false
         }
     }
 
@@ -518,31 +520,31 @@ export class List<T> {
      * @returns The number of removed items
      */
     remove(...items: T[]): number {
-        let removed = 0;
+        let removed = 0
 
         for (const item of items) {
-            let index: number;
+            let index: number
 
             while ((index = this._content.indexOf(item)) !== -1) {
-                this._content.splice(index, 1);
-                removed ++;
+                this._content.splice(index, 1)
+                removed++
             }
         }
 
-        return removed;
+        return removed
     }
 
     /**
      * Remove value at a given index
-     * @param index 
+     * @param index
      */
     removeAt(index: number): boolean {
         if (index >= this._content.length) {
-            return false;
+            return false
         }
 
-        this._content.splice(index, 1);
-        return true;
+        this._content.splice(index, 1)
+        return true
     }
 
     /**
@@ -550,56 +552,56 @@ export class List<T> {
      */
     wrap(): List<List<T>> {
         // TODO: Fix types here
-        return List.raw([this]) as unknown as List<List<T>>;
+        return (List.raw([this]) as unknown) as List<List<T>>
     }
 
     /**
      * Remove all items from the list
      */
     clear(): void {
-        this._content = [];
+        this._content = []
     }
 
     /**
      * Iterate over the list's indexes
      */
     keys(): Rewindable<number> {
-        return new Rewindable(this._content.keys());
+        return new Rewindable(this._content.keys())
     }
 
     /**
      * Iterate over the list's values
      */
     values(): Rewindable<T> {
-        return new Rewindable(this._content.values());
+        return new Rewindable(this._content.values())
     }
 
     /**
      * Iterate over the list's entries (key-value pairs)
      */
     entries(): Rewindable<[number, T]> {
-        return new Rewindable(this._content.entries());
+        return new Rewindable(this._content.entries())
     }
 
     /**
      * Get the list as an independent array
      */
     toArray(): T[] {
-        return this._content.slice();
+        return this._content.slice()
     }
 
     /**
      * Clone the list
      */
     clone(): List<T> {
-        return List.raw(this._content.slice());
+        return List.raw(this._content.slice())
     }
 
     /**
      * Iterate through the list's values
      */
     [Symbol.iterator](): IterableIterator<T> {
-        return this._content[Symbol.iterator]();
+        return this._content[Symbol.iterator]()
     }
 
     /**
@@ -607,9 +609,9 @@ export class List<T> {
      * Instantiation is a lot faster but less safe too
      */
     static raw<T>(content: T[] | Set<T>): List<T> {
-        const list = new List<T>();
-        list._content = content instanceof Set ? Array.from(content.values()) : content;
-        return list;
+        const list = new List<T>()
+        list._content = content instanceof Set ? Array.from(content.values()) : content
+        return list
     }
 
     /**
@@ -618,13 +620,13 @@ export class List<T> {
      * @param callback The generation callback
      */
     static gen<T>(items: number, callback: (index: number, previous: Option<T>) => T): List<T> {
-        const list = new List<T>();
+        const list = new List<T>()
 
-        for (let i = 0; i < items; i ++) {
-            list.push(callback(i, list.last()));
+        for (let i = 0; i < items; i++) {
+            list.push(callback(i, list.last()))
         }
 
-        return list;
+        return list
     }
 
     /**
@@ -632,7 +634,7 @@ export class List<T> {
      * @param arr The value to get as an array
      */
     static toArray<T>(arr: Array<T> | List<T>): Array<T> {
-        return O.isArray(arr) ? arr : arr.toArray();
+        return O.isArray(arr) ? arr : arr.toArray()
     }
 }
 
@@ -646,7 +648,7 @@ export class Consumers<T> extends List<(data: T) => void> {
      * @param data Consumers' data
      */
     trigger(data: T): void {
-        this.forEach(callback => callback(data));
+        this.forEach((callback) => callback(data))
     }
 
     /**
@@ -654,62 +656,62 @@ export class Consumers<T> extends List<(data: T) => void> {
      * @param data Consumers' data
      */
     resolve(data: T): void {
-        this.out(callback => callback(data));
+        this.out((callback) => callback(data))
     }
 }
 
 export class StringBuffer extends List<string> {
     constructor(...strings: string[]) {
-        super(strings);
+        super(strings)
     }
 
     countStr(str: string): number {
-        const full = this.join('');
-        let counter = 0;
+        const full = this.join("")
+        let counter = 0
 
-        for (let i = 0; i < full.length; i ++) {
+        for (let i = 0; i < full.length; i++) {
             if (full.substr(i, str.length) === str) {
-                i += str.length - 1;
-                counter ++;
+                i += str.length - 1
+                counter++
             }
         }
 
-        return counter;
+        return counter
     }
 
     countLines(): number {
-        const full = this.join('');
-        let counter = 0;
+        const full = this.join("")
+        let counter = 0
 
-        for (let i = 0; i < full.length; i ++) {
-            if (full.charAt(i) === '\r') {
-                if (full.charAt(i + 1) === '\n') {
-                    i ++;
+        for (let i = 0; i < full.length; i++) {
+            if (full.charAt(i) === "\r") {
+                if (full.charAt(i + 1) === "\n") {
+                    i++
                 }
 
-                counter ++;
+                counter++
             }
         }
 
-        return counter;
+        return counter
     }
 
     // TODO: getLines(): string[]
     // TODO: getLine(index: number): Option<string>
 
-    newLine(style = '\r\n'): number {
-        return this.push(style);
+    newLine(style = "\r\n"): number {
+        return this.push(style)
     }
 
     append(buffer: StringBuffer): this {
         for (const part of buffer) {
-            this.push(part);
+            this.push(part)
         }
 
-        return this;
+        return this
     }
 
     finalize(): string {
-        return this.join('');
+        return this.join("")
     }
 }

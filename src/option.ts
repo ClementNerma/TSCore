@@ -2,17 +2,15 @@
  * @file Represent optional values in a type-safe, functional and combinable way
  */
 
-import {match, Matchable, state, State} from "./match";
-import {Result, Ok, Err} from "./result";
-import {panic} from "./panic";
+import { match, Matchable, state, State } from "./match"
+import { Result, Ok, Err } from "./result"
+import { panic } from "./panic"
 
 /**
  * Option's pattern matching
  * @template T Concrete value type
  */
-export type OptMatch<T> =
-    | State<"Some", T>
-    | State<"None">;
+export type OptMatch<T> = State<"Some", T> | State<"None">
 
 /**
  * Option type
@@ -25,8 +23,8 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     isSome(): boolean {
         return match(this, {
             Some: () => true,
-            None: () => false
-        });
+            None: () => false,
+        })
     }
 
     /**
@@ -35,8 +33,8 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     isNone(): boolean {
         return match(this, {
             Some: () => false,
-            None: () => true
-        });
+            None: () => true,
+        })
     }
 
     /**
@@ -45,11 +43,11 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     some(callback: (data: T) => void): this {
         match(this, {
-            Some: data => callback(data),
-            None: () => {}
-        });
+            Some: (data) => callback(data),
+            None: () => {},
+        })
 
-        return this;
+        return this
     }
 
     /**
@@ -59,10 +57,10 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     none(callback: () => void): this {
         match(this, {
             Some: () => {},
-            None: () => callback()
-        });
+            None: () => callback(),
+        })
 
-        return this;
+        return this
     }
 
     /**
@@ -70,9 +68,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     toNative(): T | undefined {
         return match(this, {
-            Some: value => value,
-            None: () => undefined
-        });
+            Some: (value) => value,
+            None: () => undefined,
+        })
     }
 
     /**
@@ -82,9 +80,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     expect(message: string): T {
         return match(this, {
-            Some: value => value,
-            None: () => panic(message)
-        });
+            Some: (value) => value,
+            None: () => panic(message),
+        })
     }
 
     /**
@@ -95,8 +93,8 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     expectNone(message: string): void {
         return match(this, {
             Some: () => panic(message),
-            None: () => {}
-        });
+            None: () => {},
+        })
     }
 
     /**
@@ -105,9 +103,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     unwrap(): T {
         return match(this, {
-            Some: value => value,
-            None: () => panic("Tried to unwrap a 'None' value!")
-        });
+            Some: (value) => value,
+            None: () => panic("Tried to unwrap a 'None' value!"),
+        })
     }
 
     /**
@@ -116,9 +114,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     unwrapOr(fallback: T): T {
         return match(this, {
-            Some: value => value,
-            None: () => fallback
-        });
+            Some: (value) => value,
+            None: () => fallback,
+        })
     }
 
     /**
@@ -127,9 +125,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     unwrapOrElse(fallback: () => T): T {
         return match(this, {
-            Some: value => value,
-            None: () => fallback()
-        });
+            Some: (value) => value,
+            None: () => fallback(),
+        })
     }
 
     /**
@@ -138,8 +136,8 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     map<U>(mapper: (value: T) => U): Option<U> {
         return match(this, {
-            Some: value => Some(mapper(value)),
-            None: () => None()
+            Some: (value) => Some(mapper(value)),
+            None: () => None(),
         })
     }
 
@@ -150,9 +148,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     mapOr<U>(mapper: (value: T) => U, fallback: U): U {
         return match(this, {
-            Some: value => mapper(value),
-            None: () => fallback
-        });
+            Some: (value) => mapper(value),
+            None: () => fallback,
+        })
     }
 
     /**
@@ -162,8 +160,8 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     mapOrElse<U>(mapper: (value: T) => U, fallback: () => U): U {
         return match(this, {
-            Some: value => mapper(value),
-            None: () => fallback()
+            Some: (value) => mapper(value),
+            None: () => fallback(),
         })
     }
 
@@ -174,8 +172,8 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     and<U>(other: Option<U>): Option<U> {
         return match(this, {
             Some: () => other,
-            None: () => None()
-        });
+            None: () => None(),
+        })
     }
 
     /**
@@ -184,9 +182,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     andThen<U>(mapper: (value: T) => Option<U>): Option<U> {
         return match(this, {
-            Some: value => mapper(value),
-            None: () => None()
-        });
+            Some: (value) => mapper(value),
+            None: () => None(),
+        })
     }
 
     /**
@@ -195,9 +193,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     filter(predicate: (value: T) => boolean): Option<T> {
         return match(this, {
-            Some: value => predicate(value) ? this.clone() : None(),
-            None: () => None()
-        });
+            Some: (value) => (predicate(value) ? this.clone() : None()),
+            None: () => None(),
+        })
     }
 
     /**
@@ -207,8 +205,8 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     or(other: Option<T>): Option<T> {
         return match(this, {
             Some: () => this.clone(),
-            None: () => other
-        });
+            None: () => other,
+        })
     }
 
     /**
@@ -218,8 +216,8 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     orElse(other: () => Option<T>): Option<T> {
         return match(this, {
             Some: () => this.clone(),
-            None: () => other()
-        });
+            None: () => other(),
+        })
     }
 
     /**
@@ -228,23 +226,24 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     xor(other: Option<T>): Option<T> {
         return match(this, {
-            Some: () => match(other, {
-                Some: () => None(),
-                None: () => this.clone()
-            }),
-            None: () => other
-        });
+            Some: () =>
+                match(other, {
+                    Some: () => None(),
+                    None: () => this.clone(),
+                }),
+            None: () => other,
+        })
     }
 
     /**
      * Turn the option into a result
-    * @param fallbackError The error result to use if the option is not concrete
-    */
+     * @param fallbackError The error result to use if the option is not concrete
+     */
     okOr<U>(fallbackError: U): Result<T, U> {
         return match(this, {
-            Some: value => Ok(value),
-            None: () => Err(fallbackError)
-        });
+            Some: (value) => Ok(value),
+            None: () => Err(fallbackError),
+        })
     }
 
     /**
@@ -253,9 +252,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     okOrElse<U>(fallbackError: () => U): Result<T, U> {
         return match(this, {
-            Some: value => Ok(value),
-            None: () => Err(fallbackError())
-        });
+            Some: (value) => Ok(value),
+            None: () => Err(fallbackError()),
+        })
     }
 
     /**
@@ -264,12 +263,12 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     getOrInsert(value: T): T {
         return match(this, {
-            Some: value => value,
+            Some: (value) => value,
             None: () => {
-                this._state = state("Some", value);
-                return value;
-            }
-        });
+                this._state = state("Some", value)
+                return value
+            },
+        })
     }
 
     /**
@@ -278,13 +277,13 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     getOrInsertWith(callback: () => T): T {
         return match(this, {
-            Some: value => value,
+            Some: (value) => value,
             None: () => {
-                const newValue = callback();
-                this._state = state("Some", newValue);
-                return newValue;
-            }
-        });
+                const newValue = callback()
+                this._state = state("Some", newValue)
+                return newValue
+            },
+        })
     }
 
     /**
@@ -292,9 +291,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      * @returns This option (before replacement)
      */
     take(): Option<T> {
-        const prev = this.clone();
-        this._state = state("None");
-        return prev;
+        const prev = this.clone()
+        this._state = state("None")
+        return prev
     }
 
     /**
@@ -303,9 +302,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      * @returns This option (before replacement)
      */
     replace(value: T): Option<T> {
-        const prev = this.clone();
-        this._state = state("Some", value);
-        return prev;
+        const prev = this.clone()
+        this._state = state("Some", value)
+        return prev
     }
 
     /**
@@ -313,9 +312,9 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     clone(): Option<T> {
         return match(this, {
-            Some: value => Some(value),
-            None: () => None()
-        });
+            Some: (value) => Some(value),
+            None: () => None(),
+        })
     }
 
     /**
@@ -323,7 +322,7 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      * If the provided type is not a parent of the inner value's one, the option will be returned but typechecking will fail
      */
     cast<U>(): T extends U ? Option<U> : never {
-        return this.clone() as any;
+        return this.clone() as any
     }
 
     /**
@@ -332,12 +331,13 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      */
     static transpose<T, E>(option: Option<Result<T, E>>): Result<Option<T>, E> {
         return match(option, {
-            Some: result => match(result, {
-                Ok: data => Ok(Some(data)),
-                Err: err => Err(err)
-            }),
-            None: () => Ok(None())
-        });
+            Some: (result) =>
+                match(result, {
+                    Ok: (data) => Ok(Some(data)),
+                    Err: (err) => Err(err),
+                }),
+            None: () => Ok(None()),
+        })
     }
 
     /**
@@ -345,7 +345,7 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      * @param value A nullable value
      */
     static nullable<T = unknown>(value: T | null | undefined): Option<T> {
-        return value === null || value === undefined ? None() : Some(value);
+        return value === null || value === undefined ? None() : Some(value)
     }
 
     /**
@@ -353,7 +353,7 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      * @param value A voidable value
      */
     static voidable<T = unknown>(value: T | void): Option<T> {
-        return value === undefined ? None() : Some(value);
+        return value === undefined ? None() : Some(value)
     }
 
     /**
@@ -361,7 +361,7 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      * @param value A potentially undefined value
      */
     static undefinable<T = unknown>(value: T | undefined): Option<T> {
-        return value === undefined ? None() : Some(value);
+        return value === undefined ? None() : Some(value)
     }
 
     /**
@@ -370,16 +370,16 @@ export class Option<T> extends Matchable<OptMatch<T>> {
      * @param value
      */
     static cond<T>(predicate: boolean, value: T): Option<T> {
-        return predicate ? Some(value) : None();
+        return predicate ? Some(value) : None()
     }
 
     /**
      * Return a Some(T) if the provided property exists in the provided object ; else None() is returnedd
-     * @param prop 
-     * @param obj 
+     * @param prop
+     * @param obj
      */
     static prop<T extends object, K extends keyof T>(obj: T, prop: K): Option<T[K]> {
-        return prop in obj ? Some(obj[prop]) : None();
+        return prop in obj ? Some(obj[prop]) : None()
     }
 }
 
@@ -388,12 +388,12 @@ export class Option<T> extends Matchable<OptMatch<T>> {
  * @param value A value
  */
 export function Some<T>(value: T): Option<T> {
-    return new Option(state("Some", value));
+    return new Option(state("Some", value))
 }
 
 /**
  * Create a new 'None' value
  */
 export function None<T = unknown>(): Option<T> {
-    return new Option(state("None"));
+    return new Option(state("None"))
 }

@@ -2,7 +2,7 @@
  * @file Typecasting utilities
  */
 
-import {panic} from "./panic";
+import { panic } from "./panic"
 
 /**
  * Force the type of a data
@@ -12,7 +12,7 @@ import {panic} from "./panic";
  * @returns The provided value, typed with the provided type
  */
 export function forceType<T>(value: unknown): T {
-    return value as T;
+    return value as T
 }
 
 /**
@@ -22,8 +22,8 @@ export function forceType<T>(value: unknown): T {
  */
 export function expect<T>(value: T | null | undefined, message?: string): NonNullable<T> {
     if (value === undefined || value === null) {
-        panic(message || "Tried to use a null or undefined value as non-nullable!");
+        panic(message || "Tried to use a null or undefined value as non-nullable!")
     }
 
-    return forceType(value);
+    return forceType(value)
 }

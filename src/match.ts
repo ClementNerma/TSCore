@@ -2,35 +2,35 @@
  * @file Core library for pattern-matching and base matchable types
  */
 
-import {O} from "./objects";
-import {Option, Some, None} from "./option";
+import { O } from "./objects"
+import { Option, Some, None } from "./option"
 
 /**
  * Get the key types of an union type
  * @template T Union type
  * @example KeyOfUnion<{ Some: number } | { None: void }> <=> "Some" | "None"
  */
-export type KeyOfUnion<T extends object> = T extends any ? keyof T : never;
+export type KeyOfUnion<T extends object> = T extends any ? keyof T : never
 
 /**
  * Get the value types of an union type
  * @template T Union type
  * @example ValOfUnion<{ Some: number } | { None: void }> <=> number | void
  */
-export type ValOfUnion<T extends object> = T extends any ? T[keyof T] : never;
+export type ValOfUnion<T extends object> = T extends any ? T[keyof T] : never
 
 /**
  * Get the value type of an union type's specific key
  * @example ValOfKeyOfUnion<{ Some: number } | { None: void }, "Some"> <=> number
  * @example ValOfKeyOfUnion<{ Some: number } | { None: void }, "None"> <=> void
  */
-export type ValOfKeyOfUnion<T extends object, K> = T extends any ? (K extends keyof T ? T[K] : never) : never;
+export type ValOfKeyOfUnion<T extends object, K> = T extends any ? (K extends keyof T ? T[K] : never) : never
 
 /**
  * Get all void states of a matchable
  * @example VoidStates<{ Some: number } | { None: void }> <=> "None"
  */
-export type VoidStates<T extends object> = T extends any ? T[keyof T] extends void | undefined ? keyof T : never : never;
+export type VoidStates<T extends object> = T extends any ? (T[keyof T] extends void | undefined ? keyof T : never) : never
 
 /**
  * Matchable type
@@ -38,14 +38,14 @@ export type VoidStates<T extends object> = T extends any ? T[keyof T] extends vo
  */
 export abstract class AbstractMatchable<T extends object> {
     /** State getter */
-    protected readonly __getState: () => T;
+    protected readonly __getState: () => T
 
     /**
      * Instantiate the matchable
      * @param getState State getter
      */
     protected constructor(getState: () => T) {
-        this.__getState = getState;
+        this.__getState = getState
     }
 
     /**
@@ -53,8 +53,8 @@ export abstract class AbstractMatchable<T extends object> {
      * @private
      */
     _getState(): T {
-        const state = this.__getState();
-        return { [O.keys(state)[0]]: O.values(state)[0] } as T;
+        const state = this.__getState()
+        return { [O.keys(state)[0]]: O.values(state)[0] } as T
     }
 
     /**
@@ -62,7 +62,7 @@ export abstract class AbstractMatchable<T extends object> {
      * @private
      */
     _getStateName(): KeyOfUnion<T> {
-        return O.keys(this.__getState())[0] as KeyOfUnion<T>;
+        return O.keys(this.__getState())[0] as KeyOfUnion<T>
     }
 
     /**
@@ -70,7 +70,7 @@ export abstract class AbstractMatchable<T extends object> {
      * @private
      */
     _getStateValue(): ValOfUnion<T> {
-        return O.values(this.__getState())[0] as ValOfUnion<T>;
+        return O.values(this.__getState())[0] as ValOfUnion<T>
     }
 
     /**
@@ -78,7 +78,7 @@ export abstract class AbstractMatchable<T extends object> {
      * @param patterns
      */
     match<U>(patterns: MatchPatterns<T, U>): U {
-        return matchState(this.__getState(), patterns);
+        return matchState(this.__getState(), patterns)
     }
 
     /**
@@ -86,12 +86,12 @@ export abstract class AbstractMatchable<T extends object> {
      * @param key
      */
     getStateValue<K extends string & KeyOfUnion<T>, U>(key: K): Option<ValOfKeyOfUnion<T, K>> {
-        let state = this.__getState();
+        let state = this.__getState()
 
         if (O.keys(state)[0] !== key) {
-            return None();
+            return None()
         } else {
-            return Some(O.values(state)[0] as ValOfKeyOfUnion<T, K>);
+            return Some(O.values(state)[0] as ValOfKeyOfUnion<T, K>)
         }
     }
 }
@@ -101,7 +101,7 @@ export abstract class AbstractMatchable<T extends object> {
  * @template T State type
  * @template U Type returned by the patterns
  */
-export type MatchPatterns<T extends object, U> = MatchPatternsCovering<T, U> | MatchPatternsWithFallback<T, U>;
+export type MatchPatterns<T extends object, U> = MatchPatternsCovering<T, U> | MatchPatternsWithFallback<T, U>
 
 /**
  * Covering match patterns (one callback per possible state)
@@ -110,7 +110,7 @@ export type MatchPatterns<T extends object, U> = MatchPatternsCovering<T, U> | M
  */
 export type MatchPatternsCovering<T extends object, U> = {
     [K in KeyOfUnion<T>]: (value: ValOfKeyOfUnion<T, K>) => U
-};
+}
 
 /**
  * Match patterns with callback (optional callback for possible states, one fallback callback for unhandled states)
@@ -121,14 +121,14 @@ export type MatchPatternsWithFallback<T extends object, U> = {
     [K in KeyOfUnion<T>]?: (value: ValOfKeyOfUnion<T, K>) => U
 } & {
     _: (value: ValOfUnion<T>, stateName: KeyOfUnion<T>) => U
-};
+}
 
 /**
  * Matchable state
  * @template N State name
  * @template V State value (default: 'void')
  */
-export type State<N extends string, V = void> = { readonly [K in N]: V };
+export type State<N extends string, V = void> = { readonly [K in N]: V }
 
 /**
  * Simple matchable type
@@ -136,15 +136,15 @@ export type State<N extends string, V = void> = { readonly [K in N]: V };
  */
 export class Matchable<T extends object> extends AbstractMatchable<T> {
     /** Matchable's state */
-    protected _state: T;
+    protected _state: T
 
     /**
      * Instantiate the matchable
      * @param state Initial state
      */
     constructor(state: T) {
-        super(() => this._state);
-        this._state = state;
+        super(() => this._state)
+        this._state = state
     }
 }
 
@@ -155,7 +155,7 @@ export class Matchable<T extends object> extends AbstractMatchable<T> {
  */
 export abstract class MappedMatchable<T extends object, H extends object> extends AbstractMatchable<T> {
     /** Underlying state */
-    protected _under: H;
+    protected _under: H
 
     /**
      * Instantiate the matchable
@@ -163,8 +163,8 @@ export abstract class MappedMatchable<T extends object, H extends object> extend
      * @param getState State getter
      */
     protected constructor(state: H, getState: () => T) {
-        super(getState);
-        this._under = state;
+        super(getState)
+        this._under = state
     }
 
     /**
@@ -172,7 +172,7 @@ export abstract class MappedMatchable<T extends object, H extends object> extend
      * @param patterns
      */
     protected _matchUnder<U>(patterns: MatchPatterns<H, U>): U {
-        return matchState(this._under, patterns);
+        return matchState(this._under, patterns)
     }
 }
 
@@ -186,25 +186,23 @@ export class Enum<S extends string> extends Matchable<State<S>> {
      * @param stateOrName The state's name
      */
     constructor(stateOrName: State<S> | S) {
-        super(typeof stateOrName === 'string' ? state(stateOrName as any) : stateOrName);
+        super(typeof stateOrName === "string" ? state(stateOrName as any) : stateOrName)
     }
 
     isVariant(stateOrName: State<S> | S): boolean {
-        return typeof stateOrName === 'string' ?
-            this._getStateName() === stateOrName :
-            this._getStateName() === Object.keys(state)[0];
+        return typeof stateOrName === "string" ? this._getStateName() === stateOrName : this._getStateName() === Object.keys(state)[0]
     }
 
     replace(stateOrName: State<S> | S) {
-        this._state = typeof stateOrName === 'string' ? state(stateOrName as any) : stateOrName;
+        this._state = typeof stateOrName === "string" ? state(stateOrName as any) : stateOrName
     }
 
     into<U extends string>(): Enum<S | U> {
-        return new Enum<S | U>(this._getStateName());
+        return new Enum<S | U>(this._getStateName())
     }
 
     static get<S extends string>(stateOrName: State<S> | S): Enum<S> {
-        return new Enum(stateOrName);
+        return new Enum(stateOrName)
     }
 }
 
@@ -213,7 +211,7 @@ export class Enum<S extends string> extends Matchable<State<S>> {
  * @param patterns
  */
 export function havePatternsFallback<T extends object, U>(patterns: MatchPatterns<T, U>): patterns is MatchPatternsWithFallback<T, U> {
-    return patterns.hasOwnProperty('_');
+    return patterns.hasOwnProperty("_")
 }
 
 /**
@@ -221,7 +219,7 @@ export function havePatternsFallback<T extends object, U>(patterns: MatchPattern
  * @param matchable
  */
 export function getStateName<T extends object>(matchable: AbstractMatchable<T>): KeyOfUnion<T> {
-    return matchable._getStateName();
+    return matchable._getStateName()
 }
 
 /**
@@ -230,23 +228,23 @@ export function getStateName<T extends object>(matchable: AbstractMatchable<T>):
  * @param states Multiple states can be provided for multiple checking
  */
 export function hasState<T extends object>(matchable: AbstractMatchable<T>, ...states: Array<KeyOfUnion<T>>): boolean {
-    return states.includes(getStateName(matchable));
+    return states.includes(getStateName(matchable))
 }
 
 /**
  * Create a 'void' state object
  * @param name State's name
  */
-export function state<T extends object, K extends VoidStates<T>>(name: K): T;
+export function state<T extends object, K extends VoidStates<T>>(name: K): T
 
 /**
  * Create a state object
  * @param name State's name
  * @param value State's value
  */
-export function state<T extends object, K extends KeyOfUnion<T>>(name: K, value: ValOfKeyOfUnion<T, K>): T;
+export function state<T extends object, K extends KeyOfUnion<T>>(name: K, value: ValOfKeyOfUnion<T, K>): T
 export function state<T extends object, K extends KeyOfUnion<T>>(name: K, value?: ValOfKeyOfUnion<T, K>): T {
-    return { [name]: value } as T;
+    return { [name]: value } as T
 }
 
 /**
@@ -255,7 +253,7 @@ export function state<T extends object, K extends KeyOfUnion<T>>(name: K, value?
  * @param name
  */
 export function stateStr<K extends string, U extends string>(name: K): Enum<K | U> {
-    return new Enum<K | U>(name);
+    return new Enum<K | U>(name)
 }
 
 /**
@@ -264,7 +262,7 @@ export function stateStr<K extends string, U extends string>(name: K): Enum<K | 
  * @param patterns
  */
 export function match<T extends object, U>(matchable: AbstractMatchable<T>, patterns: MatchPatterns<T, U>): U {
-    return matchable.match(patterns);
+    return matchable.match(patterns)
 }
 
 /**
@@ -273,17 +271,17 @@ export function match<T extends object, U>(matchable: AbstractMatchable<T>, patt
  * @param patterns
  */
 export function matchState<T extends object, U>(state: T, patterns: MatchPatterns<T, U>): U {
-    const stateName = Object.keys(state)[0] as keyof T;
+    const stateName = Object.keys(state)[0] as keyof T
 
     if (havePatternsFallback(patterns)) {
         if (patterns.hasOwnProperty(stateName)) {
-            return (patterns[stateName as keyof typeof patterns] as ((value: unknown) => U))(state[stateName]);
+            return (patterns[stateName as keyof typeof patterns] as (value: unknown) => U)(state[stateName])
         } else {
-            return patterns._(state[stateName] as ValOfUnion<T>, stateName as KeyOfUnion<T>);
+            return patterns._(state[stateName] as ValOfUnion<T>, stateName as KeyOfUnion<T>)
         }
     }
 
-    return patterns[stateName as keyof typeof patterns](state[stateName] as unknown as ValOfKeyOfUnion<T, KeyOfUnion<T>>);
+    return patterns[stateName as keyof typeof patterns]((state[stateName] as unknown) as ValOfKeyOfUnion<T, KeyOfUnion<T>>)
 }
 
 /**
@@ -292,5 +290,5 @@ export function matchState<T extends object, U>(state: T, patterns: MatchPattern
  * @param patterns
  */
 export function matchString<S extends string, U>(str: S, patterns: MatchPatterns<{ [key in S]: void }, U>): U {
-    return matchState({ [str]: undefined } as { [key in S]: void }, patterns);
+    return matchState({ [str]: undefined } as { [key in S]: void }, patterns)
 }

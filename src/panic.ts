@@ -6,11 +6,11 @@
  * Console interface
  */
 declare const console: {
-    debug: (message: unknown) => void,
-    log: (message: unknown) => void,
-    info: (message: unknown) => void,
+    debug: (message: unknown) => void
+    log: (message: unknown) => void
+    info: (message: unknown) => void
     error: (message: unknown) => void
-};
+}
 
 /**
  * Proxy functions
@@ -24,18 +24,18 @@ export const proxies = {
     format(formatter: (data: MsgParam) => string, message: MsgParam, ...params: MsgParam[]): string {
         return message.toString().replace(/{}/g, () => {
             if (params.length === 0) {
-                return '<<< missing parameter >>>';
+                return "<<< missing parameter >>>"
             }
 
-            let param = params.shift();
+            let param = params.shift()
 
             if (param === undefined || param === null) {
-                eprintln("WARNING: Got malformed parameter in format() function ('null' or 'undefined')");
-                return '<<< malformed parameter >>>';
+                eprintln("WARNING: Got malformed parameter in format() function ('null' or 'undefined')")
+                return "<<< malformed parameter >>>"
             }
 
-            return param.toString();
-        });
+            return param.toString()
+        })
     },
 
     /**
@@ -44,7 +44,7 @@ export const proxies = {
      * @param params
      */
     println(message: MsgParam, ...params: MsgParam[]): void {
-        console.log(format(message, ...params));
+        console.log(format(message, ...params))
     },
 
     /**
@@ -53,7 +53,7 @@ export const proxies = {
      * @param params
      */
     eprintln(message: MsgParam, ...params: MsgParam[]): void {
-        console.error(format(message, ...params));
+        console.error(format(message, ...params))
     },
 
     /**
@@ -62,7 +62,7 @@ export const proxies = {
      * @param params
      */
     panic(message: MsgParam, ...params: MsgParam[]): never {
-        throw new Error('Panicked! ' + format(message, ...params) + '\n' + (new Error()).stack);
+        throw new Error("Panicked! " + format(message, ...params) + "\n" + new Error().stack)
     },
 
     /**
@@ -71,7 +71,7 @@ export const proxies = {
      * @param params
      */
     unimplemented(message?: MsgParam, ...params: MsgParam[]): never {
-        throw new Error('Panicked! ' + format(message || "Unimplemented", ...params) + '\n' + (new Error()).stack);
+        throw new Error("Panicked! " + format(message || "Unimplemented", ...params) + "\n" + new Error().stack)
     },
 
     /**
@@ -80,14 +80,14 @@ export const proxies = {
      * @param params
      */
     unreachable(message?: MsgParam, ...params: MsgParam[]): never {
-        throw new Error('Panicked! ' + format(message || "Unreachable", ...params) + '\n' + (new Error()).stack);
-    }
-};
+        throw new Error("Panicked! " + format(message || "Unreachable", ...params) + "\n" + new Error().stack)
+    },
+}
 
 /**
  * Message parameter type
  */
-export type MsgParam = number | boolean | string;
+export type MsgParam = number | boolean | string
 
 /**
  * Format a message
@@ -95,16 +95,16 @@ export type MsgParam = number | boolean | string;
  * @param params Its parameters
  */
 export function format(message: MsgParam, ...params: MsgParam[]): string {
-    return proxies.format(param => param.toString(), message, ...params);
+    return proxies.format((param) => param.toString(), message, ...params)
 }
 
 /**
  * Format a message with a custom formatter
- * @param message 
- * @param params 
+ * @param message
+ * @param params
  */
 export function formatCustom(formatter: (data: MsgParam) => string, message: MsgParam, ...params: MsgParam[]): string {
-    return proxies.format(formatter, message, ...params);
+    return proxies.format(formatter, message, ...params)
 }
 
 /**
@@ -113,7 +113,7 @@ export function formatCustom(formatter: (data: MsgParam) => string, message: Msg
  * @param params Its parameters
  */
 export function println(message: MsgParam, ...params: MsgParam[]): void {
-    return proxies.println(message, ...params);
+    return proxies.println(message, ...params)
 }
 
 /**
@@ -122,7 +122,7 @@ export function println(message: MsgParam, ...params: MsgParam[]): void {
  * @param params Its parameters
  */
 export function eprintln(message: MsgParam, ...params: MsgParam[]): void {
-    return proxies.eprintln(message, ...params);
+    return proxies.eprintln(message, ...params)
 }
 
 /**
@@ -131,7 +131,7 @@ export function eprintln(message: MsgParam, ...params: MsgParam[]): void {
  * @param params Its parameters
  */
 export function panic(message: MsgParam, ...params: MsgParam[]): never {
-    return proxies.panic(message, ...params);
+    return proxies.panic(message, ...params)
 }
 
 /**
@@ -140,7 +140,7 @@ export function panic(message: MsgParam, ...params: MsgParam[]): never {
  * @param params Its parameters
  */
 export function unimplemented(message?: MsgParam, ...params: MsgParam[]): never {
-    return proxies.unimplemented(message, ...params);
+    return proxies.unimplemented(message, ...params)
 }
 
 /**
@@ -149,5 +149,5 @@ export function unimplemented(message?: MsgParam, ...params: MsgParam[]): never 
  * @param params Its parameters
  */
 export function unreachable(message?: MsgParam, ...params: MsgParam[]): never {
-    return proxies.unreachable(message, ...params);
+    return proxies.unreachable(message, ...params)
 }

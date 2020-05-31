@@ -2,12 +2,12 @@
  * @file Utility functions for objects
  */
 
-import { forceType } from "./typecasting";
+import { forceType } from "./typecasting"
 
 /**
  * Key-value object type
  */
-export type Collection<T> = { [key: string]: T };
+export type Collection<T> = { [key: string]: T }
 
 /**
  * Object utilities
@@ -19,7 +19,7 @@ export class O {
      * @param value
      */
     static isArray(value: unknown): value is unknown[] {
-        return Array.isArray(value);
+        return Array.isArray(value)
     }
 
     /**
@@ -27,7 +27,7 @@ export class O {
      * @param value
      */
     static isCollection(value: unknown): value is Collection<unknown> {
-        return value && (value as object).constructor === ({}).constructor;
+        return value && (value as object).constructor === {}.constructor
     }
 
     /**
@@ -36,8 +36,8 @@ export class O {
      * @param generator Generation function (takes index as a parameter)
      */
     static array<T>(length: number, generator: (index: number) => T): T[] {
-        let index = 0;
-        return Array.apply(null, Array(length)).map(() => generator(index ++));
+        let index = 0
+        return Array.apply(null, Array(length)).map(() => generator(index++))
     }
 
     /**
@@ -46,7 +46,7 @@ export class O {
      * @param object
      */
     static keys<T extends object>(object: T): Array<keyof T> {
-        return Reflect.ownKeys(object) as Array<keyof T>;
+        return Reflect.ownKeys(object) as Array<keyof T>
     }
 
     /**
@@ -54,7 +54,7 @@ export class O {
      * @param object
      */
     static values<T extends object>(object: T): Array<T[keyof T]> {
-        return O.keys(object).map(key => object[key]);
+        return O.keys(object).map((key) => object[key])
     }
 
     /**
@@ -62,7 +62,7 @@ export class O {
      * @param object
      */
     static entries<T extends object>(object: T): Array<[keyof T, T[keyof T]]> {
-        return O.keys(object).map(key => [key as keyof T, object[key]]);
+        return O.keys(object).map((key) => [key as keyof T, object[key]])
     }
 
     /**
@@ -70,40 +70,34 @@ export class O {
      * @param object
      */
     static cloneSoft<T extends object>(object: T): T {
-        return Object.assign({}, object);
+        return Object.assign({}, object)
     }
 
     /**
      * Clone a value recursively
      * NOTE: Types which are not clonable will simply be copied to the output value without any cloning
-     * @param value 
+     * @param value
      */
     static cloneDeep<T>(value: T): T {
         if (value === undefined || value === null) {
-            return value;
+            return value
         } else {
-            const cstr = (value as Object).constructor;
+            const cstr = (value as Object).constructor
 
             if (cstr === Boolean || cstr === Number || cstr === Symbol || cstr === String) {
-                return value;
-            }
-
-            else if (O.isArray(value)) {
-                return value.map(sub => O.cloneDeep(sub)) as any;
-            }
-
-            else if (O.isCollection(value)) {
-                let out: { [key: string]: unknown } = {};
+                return value
+            } else if (O.isArray(value)) {
+                return value.map((sub) => O.cloneDeep(sub)) as any
+            } else if (O.isCollection(value)) {
+                let out: { [key: string]: unknown } = {}
 
                 for (const [key, val] of O.entries(value)) {
-                    out[key as any] = O.cloneDeep(val);
+                    out[key as any] = O.cloneDeep(val)
                 }
 
-                return out as any;
-            }
-
-            else {
-                return value;
+                return out as any
+            } else {
+                return value
             }
         }
     }
@@ -113,8 +107,11 @@ export class O {
      * @param object
      * @param mapper
      */
-    static map<T extends object, K extends keyof T, V, X extends string | number | symbol, Y>(object: T, mapper: (key: K, value: T[K]) => [ X, Y ]): { [S in X]: Y } {
-        return O.fromEntries(O.entries(object).map(entry => mapper(entry[0] as K, entry[1] as T[K]))) as { [S in X]: Y };
+    static map<T extends object, K extends keyof T, V, X extends string | number | symbol, Y>(
+        object: T,
+        mapper: (key: K, value: T[K]) => [X, Y]
+    ): { [S in X]: Y } {
+        return O.fromEntries(O.entries(object).map((entry) => mapper(entry[0] as K, entry[1] as T[K]))) as { [S in X]: Y }
     }
 
     /**
@@ -123,7 +120,7 @@ export class O {
      * @param mapper
      */
     static mapValues<T extends object, K extends keyof T, V, Y>(object: T, mapper: (key: K, value: T[K]) => Y): { [S in K]: Y } {
-        return O.map(object, (key, value) => [ key, mapper(key as K, value as T[K]) ]);
+        return O.map(object, (key, value) => [key, mapper(key as K, value as T[K])])
     }
 
     /**
@@ -132,13 +129,13 @@ export class O {
      * @param keys The keys to remove
      */
     static without<T extends object, K extends keyof T>(object: T, keys: K[]): { [SK in Exclude<keyof T, K>]: T[SK] } {
-        const copy = O.cloneSoft(object);
+        const copy = O.cloneSoft(object)
 
         for (const key of keys) {
-            delete copy[key];
+            delete copy[key]
         }
 
-        return copy;
+        return copy
     }
 
     /**
@@ -150,9 +147,9 @@ export class O {
     static cover<T extends object>(obj: T, handler: (prop: string) => unknown): T {
         return new Proxy(obj as any, {
             get(_, prop) {
-                return obj.hasOwnProperty(prop) ? obj[prop as keyof T] : handler(prop.toString());
-            }
-        });
+                return obj.hasOwnProperty(prop) ? obj[prop as keyof T] : handler(prop.toString())
+            },
+        })
     }
 
     /**
@@ -161,17 +158,17 @@ export class O {
      * @param add The object to add properties from
      */
     static merge<T extends object, A extends object>(from: T, add: A): T & A {
-        let out: T & A = {} as any;
+        let out: T & A = {} as any
 
         for (const [key, value] of O.entries(from)) {
-            out[key as keyof (T & A)] = value as (T & A)[keyof (T & A)];
+            out[key as keyof (T & A)] = value as (T & A)[keyof (T & A)]
         }
 
         for (const [key, value] of O.entries(add)) {
-            out[key as keyof (T & A)] = value as (T & A)[keyof (T & A)];
+            out[key as keyof (T & A)] = value as (T & A)[keyof (T & A)]
         }
 
-        return out;
+        return out
     }
 
     /**
@@ -179,13 +176,13 @@ export class O {
      * Roughly equivalent to ES2019's O.fromEntries()
      * @param entries
      */
-    static fromEntries<K extends string | number | symbol, V>(entries: Array<[K, V]>): { [ key in K ]: V } {
-        let obj: { [key in K]: V } = {} as any;
+    static fromEntries<K extends string | number | symbol, V>(entries: Array<[K, V]>): { [key in K]: V } {
+        let obj: { [key in K]: V } = {} as any
 
         for (const [key, value] of entries) {
-            obj[key] = value;
+            obj[key] = value
         }
 
-        return forceType(obj);
+        return forceType(obj)
     }
 }

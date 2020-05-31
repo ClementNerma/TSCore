@@ -2,83 +2,87 @@
  * @file Mutual exclusion
  */
 
-import {Ref} from "./ref";
-import {Err, Ok, Result} from "./result";
-import {None, Option} from "./option";
-import {state, match, AbstractMatchable, State, matchState} from "./match";
-import {Future} from "./future";
-import {Consumers} from "./list";
-import {panic} from "./panic";
+import { Ref } from "./ref"
+import { Err, Ok, Result } from "./result"
+import { None, Option } from "./option"
+import { state, match, AbstractMatchable, State, matchState } from "./match"
+import { Future } from "./future"
+import { Consumers } from "./list"
+import { panic } from "./panic"
 
 /**
  * State of a mutex
  */
-export type MutexState = State<'Available' | 'Locked' | 'Poisoned'>;
+export type MutexState = State<"Available" | "Locked" | "Poisoned">
 
 /**
  * Mutex error
  */
-export type MutexError = State<'Locked' | 'Poisoned'>;
+export type MutexError = State<"Locked" | "Poisoned">
 
 /**
  * Mutex poison error
  */
-export type MutexPoisonError = State<'Poisoned'>;
+export type MutexPoisonError = State<"Poisoned">
 
 /**
  * Mutual exclusion
  * @template T Shared data type
  */
 export class Mutex<T> extends AbstractMatchable<MutexState> {
-    private readonly _ref: Ref<T>;
-    private readonly _locked: Option<Ref<T>>;
-    private _poisoned: boolean;
-    private _unlockWaiters: Consumers<Result<Ref<T>, MutexPoisonError>>;
+    private readonly _ref: Ref<T>
+    private readonly _locked: Option<Ref<T>>
+    private _poisoned: boolean
+    private _unlockWaiters: Consumers<Result<Ref<T>, MutexPoisonError>>
 
     /**
      * Create a new mutex
      * @param ref The reference to share
      */
     constructor(ref: Ref<T>) {
-        super(() => this._poisoned ? state('Poisoned') : (this._locked.isSome() ? state('Locked') : state('Available')));
+        super(() => (this._poisoned ? state("Poisoned") : this._locked.isSome() ? state("Locked") : state("Available")))
 
-        this._ref = ref;
-        this._locked = None();
-        this._poisoned = false;
-        this._unlockWaiters = new Consumers();
+        this._ref = ref
+        this._locked = None()
+        this._poisoned = false
+        this._unlockWaiters = new Consumers()
 
         ref.onDestroy(() => {
-            this._poisoned = true;
-        });
+            this._poisoned = true
+        })
     }
 
     /**
      * Is the mutex locked?
      */
-    get locked(): boolean { return this._locked.isSome(); }
+    get locked(): boolean {
+        return this._locked.isSome()
+    }
 
     /**
      * Is the mutex poisoned?
      */
-    get poisoned(): boolean { return this._poisoned; }
+    get poisoned(): boolean {
+        return this._poisoned
+    }
 
     /**
      * Try to get a lock reference from this mutex
      */
     lock(): Result<Ref<T>, MutexError> {
         if (this._poisoned) {
-            return Err(state('Poisoned'));
+            return Err(state("Poisoned"))
         }
 
         if (this._locked.isSome()) {
-            return Err(state('Locked'));
+            return Err(state("Locked"))
         }
 
-        const lockRef = this._ref.clone();
+        const lockRef = this._ref.clone()
 
-        this._locked.replace(lockRef);
+        this._locked.replace(lockRef)
 
-        return Ok(lockRef);
+        return Ok(lockRef)
     }
 
     /**
@@ -88,27 +92,27 @@ export class Mutex<T> extends AbstractMatchable<MutexState> {
      */
     unlock(ref: Ref<T>): void {
         if (this._poisoned) {
-            panic("Cannot unlock a poisoned mutex!");
+            panic("Cannot unlock a poisoned mutex!")
         }
 
         return match(this._locked, {
-            Some: lockRef => {
+            Some: (lockRef) => {
                 if (ref !== lockRef) {
-                    panic("Provided mutex unlock reference is invalid!");
+                    panic("Provided mutex unlock reference is invalid!")
                 }
 
-                lockRef.destroy();
-                this._locked.take();
+                lockRef.destroy()
+                this._locked.take()
 
                 match(this._unlockWaiters.shift(), {
-                    Some: callback => callback(Ok(this.lock().expect("Failed to lock mutex just after unlocking!"))),
-                    None: () => {}
-                });
+                    Some: (callback) => callback(Ok(this.lock().expect("Failed to lock mutex just after unlocking!"))),
+                    None: () => {},
+                })
 
-                return true;
+                return true
             },
-            None: () => panic("Cannot unlock an available mutex!")
-        });
+            None: () => panic("Cannot unlock an available mutex!"),
+        })
     }
 
     /**
@@ -118,10 +122,10 @@ export class Mutex<T> extends AbstractMatchable<MutexState> {
      * @param core The function to apply
      */
     withLock(core: (ref: Ref<T>) => void): Result<void, MutexError> {
-        return this.lock().map(ref => {
-            core(ref);
-            return this.unlock(ref);
-        });
+        return this.lock().map((ref) => {
+            core(ref)
+            return this.unlock(ref)
+        })
     }
 
     /**
@@ -131,10 +135,10 @@ export class Mutex<T> extends AbstractMatchable<MutexState> {
      * @param core The function to apply
      */
     apply(core: (value: T) => T): Result<void, MutexError> {
-        return this.lock().map(ref => {
-            ref.apply(core);
-            return this.unlock(ref);
-        });
+        return this.lock().map((ref) => {
+            ref.apply(core)
+            return this.unlock(ref)
+        })
     }
 
     /**
@@ -144,16 +148,20 @@ export class Mutex<T> extends AbstractMatchable<MutexState> {
     futureLock(): Future<Ref<T>, MutexPoisonError> {
         return new Future<Ref<T>, MutexPoisonError>((resolve, reject) => {
             match(this.lock(), {
-                Ok: ref => resolve(ref),
-                Err: err => matchState(err, {
-                    Locked: () => this._unlockWaiters.push(result => match(result, {
-                        Ok: ref => resolve(ref),
-                        Err: err => reject(err)
-                    })),
-                    Poisoned: () => reject(state('Poisoned'))
-                })
-            });
-        });
+                Ok: (ref) => resolve(ref),
+                Err: (err) =>
+                    matchState(err, {
+                        Locked: () =>
+                            this._unlockWaiters.push((result) =>
+                                match(result, {
+                                    Ok: (ref) => resolve(ref),
+                                    Err: (err) => reject(err),
+                                })
+                            ),
+                        Poisoned: () => reject(state("Poisoned")),
+                    }),
+            })
+        })
     }
 
     /**
@@ -162,18 +170,18 @@ export class Mutex<T> extends AbstractMatchable<MutexState> {
      */
     poison(): void {
         if (this._poisoned) {
-            panic("Cannot poison a mutex twice!");
+            panic("Cannot poison a mutex twice!")
         }
 
-        this._poisoned = true;
-        this._unlockWaiters.resolve(Err(state('Poisoned')));
+        this._poisoned = true
+        this._unlockWaiters.resolve(Err(state("Poisoned")))
     }
 
     /**
      * Get the mutex's reference (UNSAFE !)
      */
     unsafeRef(): Ref<T> {
-        return this._ref;
+        return this._ref
     }
 
     /**
@@ -181,13 +189,15 @@ export class Mutex<T> extends AbstractMatchable<MutexState> {
      * @param data
      */
     static plain<T>(data: T): Mutex<T> {
-        return new Mutex(new Ref({ ref: data }));
+        return new Mutex(new Ref({ ref: data }))
     }
 
     /**
      * Create an empty mutex
      */
     static void(): Mutex<void> {
-        return new Mutex(new Ref<void>({ ref: undefined }));
+        return new Mutex(
+            new Ref<void>({ ref: undefined })
+        )
     }
 }

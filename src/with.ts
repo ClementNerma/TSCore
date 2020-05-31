@@ -2,8 +2,8 @@
  * @file Constrained type
  */
 
-import { assert } from "./assert";
-import { Result, Ok, Err } from "./result";
+import { assert } from "./assert"
+import { Result, Ok, Err } from "./result"
 
 /**
  * Constrained type
@@ -11,8 +11,8 @@ import { Result, Ok, Err } from "./result";
  * @template T Type
  */
 export class With<T> {
-    protected _constraint: (value: T) => boolean;
-    protected _value: T;
+    protected _constraint: (value: T) => boolean
+    protected _value: T
 
     /**
      * Create a new constrained type
@@ -21,13 +21,10 @@ export class With<T> {
      * @param initial The initial value
      */
     constructor(constraint: (value: T) => boolean, initial: T) {
-        assert(
-            constraint(initial),
-            "Initial value does not respect provided type constraint"
-        );
+        assert(constraint(initial), "Initial value does not respect provided type constraint")
 
-        this._constraint = constraint;
-        this._value = initial;
+        this._constraint = constraint
+        this._value = initial
     }
 
     /**
@@ -37,10 +34,10 @@ export class With<T> {
      */
     set(value: T): Result<null, null> {
         if (this._constraint(value)) {
-            this._value = value;
-            return Ok(null);
+            this._value = value
+            return Ok(null)
         } else {
-            return Err(null);
+            return Err(null)
         }
     }
 
@@ -48,6 +45,6 @@ export class With<T> {
      * Get the current value
      */
     get(): T {
-        return this._value;
+        return this._value
     }
 }

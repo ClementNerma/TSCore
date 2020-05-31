@@ -2,17 +2,15 @@
  * @file Represent a value that is either of a type or another
  */
 
-import {Matchable, State, match} from "./match";
-import {None, Option, Some} from "./option";
+import { Matchable, State, match } from "./match"
+import { None, Option, Some } from "./option"
 
 /**
  * Either's pattern matching
  * @template L Left value type
  * @template R Right value type
  */
-export type EitherMatch<L, R> =
-    | State<"Left", L>
-    | State<"Right", R>;
+export type EitherMatch<L, R> = State<"Left", L> | State<"Right", R>
 
 /**
  * Union type
@@ -26,8 +24,8 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
     isLeft(): boolean {
         return match(this, {
             Left: () => true,
-            Right: () => false
-        });
+            Right: () => false,
+        })
     }
 
     /**
@@ -36,8 +34,8 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
     isRight(): boolean {
         return match(this, {
             Left: () => false,
-            Right: () => true
-        });
+            Right: () => true,
+        })
     }
 
     /**
@@ -45,9 +43,9 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
      */
     left(): Option<L> {
         return match(this, {
-            Left: value => Some(value),
-            Right: () => None()
-        });
+            Left: (value) => Some(value),
+            Right: () => None(),
+        })
     }
 
     /**
@@ -56,8 +54,8 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
     right(): Option<R> {
         return match(this, {
             Left: () => None(),
-            Right: value => Some(value)
-        });
+            Right: (value) => Some(value),
+        })
     }
 
     /**
@@ -65,9 +63,9 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
      */
     flip(): Either<R, L> {
         return match(this, {
-            Left: value => Right(value),
-            Right: value => Left(value)
-        });
+            Left: (value) => Right(value),
+            Right: (value) => Left(value),
+        })
     }
 
     /**
@@ -76,9 +74,9 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
      */
     mapLeft<U>(mapper: (value: L) => U): Either<U, R> {
         return match(this, {
-            Left: value => Left(mapper(value)),
-            Right: value => Right(value)
-        });
+            Left: (value) => Left(mapper(value)),
+            Right: (value) => Right(value),
+        })
     }
 
     /**
@@ -87,9 +85,9 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
      */
     mapRight<F>(mapper: (value: R) => F): Either<L, F> {
         return match(this, {
-            Left: value => Left(value),
-            Right: value => Right(mapper(value))
-        });
+            Left: (value) => Left(value),
+            Right: (value) => Right(mapper(value)),
+        })
     }
 
     /**
@@ -99,9 +97,9 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
      */
     either<U = void>(left: (value: L) => U, right: (value: R) => U): U {
         return match(this, {
-            Left: value => left(value),
-            Right: value => right(value)
-        });
+            Left: (value) => left(value),
+            Right: (value) => right(value),
+        })
     }
 
     /**
@@ -109,7 +107,7 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
      * @param value
      */
     static left<L, R>(value: L): Either<L, R> {
-        return new Either({ Left: value });
+        return new Either({ Left: value })
     }
 
     /**
@@ -117,7 +115,7 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
      * @param value
      */
     static right<L, R>(value: R): Either<L, R> {
-        return new Either({ Right: value });
+        return new Either({ Right: value })
     }
 }
 
@@ -126,7 +124,7 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
  * @param value
  */
 export function Left<L>(value: L): Either<L, any> {
-    return Either.left(value);
+    return Either.left(value)
 }
 
 /**
@@ -134,5 +132,5 @@ export function Left<L>(value: L): Either<L, any> {
  * @param value
  */
 export function Right<R>(value: R): Either<any, R> {
-    return Either.right(value);
+    return Either.right(value)
 }

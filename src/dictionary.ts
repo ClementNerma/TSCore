@@ -2,16 +2,18 @@
  * @file Represent collections in a type-safe way
  */
 
-import { Option, Some, None } from "./option";
-import { O } from "./objects";
-import { Result, Ok, Err } from "./result";
-import { Rewindable } from "./rewindable";
-import { forceType } from "./typecasting";
+import { Option, Some, None } from "./option"
+import { O } from "./objects"
+import { Result, Ok, Err } from "./result"
+import { Rewindable } from "./rewindable"
+import { forceType } from "./typecasting"
 
 /**
  * Convert a dictionary type to a collection type
  */
-export type DictionaryToCollection<K, V> = { [S in (K extends string | number | symbol ? K : string | number | symbol)]: V };
+export type DictionaryToCollection<K, V> = {
+    [S in K extends string | number | symbol ? K : string | number | symbol]: V
+}
 
 /**
  * Dictionary of values
@@ -20,14 +22,14 @@ export type DictionaryToCollection<K, V> = { [S in (K extends string | number | 
  */
 export class Dictionary<K, V> {
     /** Dictionary's content */
-    private readonly _content: Map<K, V>;
+    private readonly _content: Map<K, V>
 
     /**
      * Create a new dictionary from a list of entries
      * @param content
      */
     constructor(content?: Array<[K, V]>) {
-        this._content = new Map(content);
+        this._content = new Map(content)
     }
 
     /**
@@ -35,14 +37,14 @@ export class Dictionary<K, V> {
      * @param object
      */
     static fromObject<T extends object>(object: T): Dictionary<keyof T, T[keyof T]> {
-        return new Dictionary(forceType(O.entries(object)));
+        return new Dictionary(forceType(O.entries(object)))
     }
 
     /**
      * Get the number of entries
      */
     get size(): number {
-        return this._content.size;
+        return this._content.size
     }
 
     /**
@@ -50,7 +52,7 @@ export class Dictionary<K, V> {
      * @param key
      */
     has(key: K): boolean {
-        return this._content.has(key);
+        return this._content.has(key)
     }
 
     /**
@@ -58,7 +60,7 @@ export class Dictionary<K, V> {
      * @param key
      */
     get(key: K): Option<V> {
-        return this.has(key) ? Some(this._content.get(key) as V) : None();
+        return this.has(key) ? Some(this._content.get(key) as V) : None()
     }
 
     /**
@@ -67,8 +69,8 @@ export class Dictionary<K, V> {
      * @param value
      */
     set(key: K, value: V): this {
-        this._content.set(key, value);
-        return this;
+        this._content.set(key, value)
+        return this
     }
 
     /**
@@ -76,7 +78,7 @@ export class Dictionary<K, V> {
      * @param key
      */
     delete(key: K): boolean {
-        return this._content.delete(key);
+        return this._content.delete(key)
     }
 
     /**
@@ -84,10 +86,10 @@ export class Dictionary<K, V> {
      */
     clear(callback?: (value: V, key: K, dict: this) => void): void {
         if (callback) {
-            this.forEach(callback);
+            this.forEach(callback)
         }
 
-        this._content.clear();
+        this._content.clear()
     }
 
     /**
@@ -95,7 +97,7 @@ export class Dictionary<K, V> {
      * @param mapper
      */
     mapKeys<X>(mapper: (key: K, value: V) => X): Dictionary<X, V> {
-        return new Dictionary(Array.from(this._content.entries()).map(entry => [ mapper(entry[0], entry[1]), entry[1] ]));
+        return new Dictionary(Array.from(this._content.entries()).map((entry) => [mapper(entry[0], entry[1]), entry[1]]))
     }
 
     /**
@@ -103,7 +105,7 @@ export class Dictionary<K, V> {
      * @param mapper
      */
     mapValues<Y>(mapper: (value: V, key: K) => Y): Dictionary<K, Y> {
-        return new Dictionary(Array.from(this._content.entries()).map(entry => [ entry[0], mapper(entry[1], entry[0]) ]));
+        return new Dictionary(Array.from(this._content.entries()).map((entry) => [entry[0], mapper(entry[1], entry[0])]))
     }
 
     /**
@@ -111,7 +113,7 @@ export class Dictionary<K, V> {
      * @param mapper
      */
     map<X, Y>(mapper: (key: K, value: V) => [X, Y]): Dictionary<X, Y> {
-        return new Dictionary(Array.from(this._content.entries()).map(entry => mapper(entry[0], entry[1])));
+        return new Dictionary(Array.from(this._content.entries()).map((entry) => mapper(entry[0], entry[1])))
     }
 
     /**
@@ -119,7 +121,7 @@ export class Dictionary<K, V> {
      * @param mapper
      */
     mapKeysToCollection<X extends string | number | symbol>(mapper: (key: K, value: V) => X): { [S in X]: V } {
-        return O.fromEntries(Array.from(this._content.entries()).map(entry => [ mapper(entry[0], entry[1]), entry[1] ])) as { [S in X]: V };
+        return O.fromEntries(Array.from(this._content.entries()).map((entry) => [mapper(entry[0], entry[1]), entry[1]])) as { [S in X]: V }
     }
 
     /**
@@ -129,13 +131,19 @@ export class Dictionary<K, V> {
      */
     mapValuesToCollection<Y>(mapper: (value: V, key: K) => Y): Result<DictionaryToCollection<K, Y>, void> {
         if (this.size == 0) {
-            return Ok(forceType({}));
+            return Ok(forceType({}))
         }
 
-        if (this.keys().any(key => !['string', 'number', 'symbol'].includes(typeof key))) {
-            return Err(undefined);
+        if (this.keys().any((key) => !["string", "number", "symbol"].includes(typeof key))) {
+            return Err(undefined)
         } else {
-            return Ok(O.fromEntries(forceType <[number | string | symbol, Y][]>(Array.from(this._content.entries()).map(entry => [entry[0], mapper(entry[1], entry[0])]))) as DictionaryToCollection<K, Y>);
+            return Ok(
+                O.fromEntries(
+                    forceType<[number | string | symbol, Y][]>(
+                        Array.from(this._content.entries()).map((entry) => [entry[0], mapper(entry[1], entry[0])])
+                    )
+                ) as DictionaryToCollection<K, Y>
+            )
         }
     }
 
@@ -146,10 +154,12 @@ export class Dictionary<K, V> {
      * For a safe conversion, see .mapValuesToCollection()
      * This function's only advantage is it's faster to process than its safe counterpart as it does
      *   not check all keys in the dictionary.
-     * @param mapper 
+     * @param mapper
      */
     mapValuesToCollectionUnchecked<Y>(mapper: (value: V, key: K) => Y): DictionaryToCollection<K, Y> {
-        return O.fromEntries(forceType<[number | string | symbol, Y][]>(Array.from(this._content.entries()).map(entry => [entry[0], mapper(entry[1], entry[0])]))) as DictionaryToCollection<K, Y>;
+        return O.fromEntries(
+            forceType<[number | string | symbol, Y][]>(Array.from(this._content.entries()).map((entry) => [entry[0], mapper(entry[1], entry[0])]))
+        ) as DictionaryToCollection<K, Y>
     }
 
     /**
@@ -157,7 +167,7 @@ export class Dictionary<K, V> {
      * @param mapper
      */
     mapToCollection<X extends string | number | symbol, Y>(mapper: (key: K, value: V) => [X, Y]): { [S in X]: Y } {
-        return O.fromEntries(Array.from(this._content.entries()).map(entry => mapper(entry[0], entry[1]))) as { [S in X]: Y };
+        return O.fromEntries(Array.from(this._content.entries()).map((entry) => mapper(entry[0], entry[1]))) as { [S in X]: Y }
     }
 
     /**
@@ -165,7 +175,7 @@ export class Dictionary<K, V> {
      * @param mapper
      */
     mapToArray<U>(mapper: (key: K, value: V) => U): U[] {
-        return Array.from(this._content.entries()).map(entry => mapper(entry[0], entry[1]));
+        return Array.from(this._content.entries()).map((entry) => mapper(entry[0], entry[1]))
     }
 
     /**
@@ -175,20 +185,20 @@ export class Dictionary<K, V> {
      * @param tester
      */
     resultable<X, Y, E>(tester: (key: K, value: V, dict: this) => Result<[X, Y], E>): Result<Dictionary<X, Y>, E> {
-        const mapped = new Dictionary<X, Y>();
+        const mapped = new Dictionary<X, Y>()
 
         for (const [key, value] of this._content.entries()) {
-            const result = tester(key, value, this);
+            const result = tester(key, value, this)
 
             if (result.isOk()) {
-                const [mappedKey, mappedValue] = result.unwrap();
-                mapped.set(mappedKey, mappedValue);
+                const [mappedKey, mappedValue] = result.unwrap()
+                mapped.set(mappedKey, mappedValue)
             } else {
-                return Err(result.unwrapErr());
+                return Err(result.unwrapErr())
             }
         }
 
-        return Ok(mapped);
+        return Ok(mapped)
     }
 
     /**
@@ -198,19 +208,19 @@ export class Dictionary<K, V> {
      * @param tester
      */
     resultableValues<U, E>(tester: (key: K, value: V, dict: this) => Result<U, E>): Result<Dictionary<K, U>, E> {
-        const mapped = new Dictionary<K, U>();
+        const mapped = new Dictionary<K, U>()
 
         for (const [key, value] of this._content.entries()) {
-            const result = tester(key, value, this);
+            const result = tester(key, value, this)
 
             if (result.isOk()) {
-                mapped.set(key, result.unwrap());
+                mapped.set(key, result.unwrap())
             } else {
-                return Err(result.unwrapErr());
+                return Err(result.unwrapErr())
             }
         }
 
-        return Ok(mapped);
+        return Ok(mapped)
     }
 
     /**
@@ -219,41 +229,41 @@ export class Dictionary<K, V> {
      * @param thisArg
      */
     forEach(callback: (value: V, key: K, dict: this) => void, thisArg?: any): void {
-        this._content.forEach((value, key) => callback(value, key, this));
+        this._content.forEach((value, key) => callback(value, key, this))
     }
 
     /**
      * Iterate through the dictionary's keys
      */
     keys(): Rewindable<K> {
-        return new Rewindable(this._content.keys());
+        return new Rewindable(this._content.keys())
     }
 
     /**
      * Iterate through the dictionary's values
      */
     values(): Rewindable<V> {
-        return new Rewindable(this._content.values());
+        return new Rewindable(this._content.values())
     }
 
     /**
      * Iterate through the dictionary's entries
      */
     entries(): Rewindable<[K, V]> {
-        return new Rewindable(this._content.entries());
+        return new Rewindable(this._content.entries())
     }
 
     /**
      * Clone the dictionary
      */
     clone(): Dictionary<K, V> {
-        return new Dictionary(Array.from(this._content.entries()));
+        return new Dictionary(Array.from(this._content.entries()))
     }
 
     /**
      * Iterate through the dictionary's entries
      */
     [Symbol.iterator](): IterableIterator<[K, V]> {
-        return this._content.entries();
+        return this._content.entries()
     }
 }

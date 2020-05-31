@@ -2,15 +2,13 @@
  * @file Reference values to avoid cloning and share resources
  */
 
-import {Consumers} from "./list";
-import {match, Enum, AbstractMatchable, State, state} from "./match";
-import {Option, Some} from "./option";
-import {panic} from "./panic";
-import {Result} from "./result";
+import { Consumers } from "./list"
+import { match, Enum, AbstractMatchable, State, state } from "./match"
+import { Option, Some } from "./option"
+import { panic } from "./panic"
+import { Result } from "./result"
 
-export type RefMatch<T> =
-    | State<"Available", T>
-    | State<"Destroyed">;
+export type RefMatch<T> = State<"Available", T> | State<"Destroyed">
 
 /**
  * Reference
@@ -19,46 +17,52 @@ export type RefMatch<T> =
  * @template T Type of referred value
  */
 export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
-    private readonly _wrapper: Option<{ ref: T }>;
-    private _onDestroy: Consumers<void>;
+    private readonly _wrapper: Option<{ ref: T }>
+    private _onDestroy: Consumers<void>
 
     /**
      * Create a new reference
      * @param value Referred value
      */
     constructor(value: { ref: T }) {
-        super(() => match(this._wrapper, {
-            Some: ref => state('Available', ref.ref),
-            None: () => state('Destroyed')
-        }));
+        super(() =>
+            match(this._wrapper, {
+                Some: (ref) => state("Available", ref.ref),
+                None: () => state("Destroyed"),
+            })
+        )
 
-        this._wrapper = Some(value);
-        this._onDestroy = new Consumers();
+        this._wrapper = Some(value)
+        this._onDestroy = new Consumers()
     }
 
     /**
      * Is the reference available? (= has not been destroyed)
      */
-    get alive(): boolean { return this._wrapper.isSome(); }
+    get alive(): boolean {
+        return this._wrapper.isSome()
+    }
 
     /**
      * Has the reference been destroyed?
      */
-    get destroyed(): boolean { return this._wrapper.isNone(); }
+    get destroyed(): boolean {
+        return this._wrapper.isNone()
+    }
 
     /**
      * Read the reference's value
      * Panics if the reference has been destroyed
      */
     read(): T {
-        return this._wrapper.expect("Cannot read a destroyed reference!").ref;
+        return this._wrapper.expect("Cannot read a destroyed reference!").ref
     }
 
     /**
      * Try to read the reference's value
      */
     tryRead(): Option<T> {
-        return this._wrapper.map(ref => ref.ref);
+        return this._wrapper.map((ref) => ref.ref)
     }
 
     /**
@@ -67,8 +71,8 @@ export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
      * @param value The value to write
      */
     write(value: T): this {
-        this._wrapper.expect("Cannot write a destroyed reference!").ref = value;
-        return this;
+        this._wrapper.expect("Cannot write a destroyed reference!").ref = value
+        return this
     }
 
     /**
@@ -76,10 +80,12 @@ export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
      * @param value
      */
     tryWrite(value: T): Result<this, Enum<"Destroyed">> {
-        return this._wrapper.map(ref => {
-            ref.ref = value;
-            return this;
-        }).okOr(new Enum("Destroyed"));
+        return this._wrapper
+            .map((ref) => {
+                ref.ref = value
+                return this
+            })
+            .okOr(new Enum("Destroyed"))
     }
 
     /**
@@ -87,8 +93,8 @@ export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
      * @param core A function that returns the referred's new value
      */
     apply(core: (value: T) => T): this {
-        this._wrapper.expect("Cannot apply a callback inside a destroyed reference!").ref = core(this.read());
-        return this;
+        this._wrapper.expect("Cannot apply a callback inside a destroyed reference!").ref = core(this.read())
+        return this
     }
 
     /**
@@ -96,10 +102,12 @@ export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
      * @param core
      */
     tryApply(core: (value: T) => T): Result<this, Enum<"Destroyed">> {
-        return this._wrapper.map(ref => {
-            ref.ref = core(this.read());
-            return this;
-        }).okOr(new Enum("Destroyed"));
+        return this._wrapper
+            .map((ref) => {
+                ref.ref = core(this.read())
+                return this
+            })
+            .okOr(new Enum("Destroyed"))
     }
 
     /**
@@ -108,13 +116,13 @@ export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
      */
     destroy(): this {
         if (this._wrapper.isNone()) {
-            panic("Cannot destroy a reference twice!");
+            panic("Cannot destroy a reference twice!")
         }
 
-        this._wrapper.take();
-        this._onDestroy.resolve();
+        this._wrapper.take()
+        this._onDestroy.resolve()
 
-        return this;
+        return this
     }
 
     /**
@@ -125,10 +133,10 @@ export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
     onDestroy(callback: () => void): this {
         match(this, {
             Available: () => this._onDestroy.push(callback),
-            Destroyed: () => callback()
-        });
+            Destroyed: () => callback(),
+        })
 
-        return this;
+        return this
     }
 
     /**
@@ -136,7 +144,7 @@ export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
      * Panics if the reference has been destroyed
      */
     clone(): Ref<T> {
-        return new Ref(this._wrapper.expect("Cannot clone a destroyed reference!"));
+        return new Ref(this._wrapper.expect("Cannot clone a destroyed reference!"))
     }
 
     /**
@@ -144,13 +152,13 @@ export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
      * @param other
      */
     is(other: Ref<T>): boolean {
-        const alive = this.alive;
+        const alive = this.alive
 
         if (alive && alive === other.alive) {
-            return this._wrapper.unwrap() === other._wrapper.unwrap();
+            return this._wrapper.unwrap() === other._wrapper.unwrap()
         }
 
-        return false;
+        return false
     }
 
     /**
@@ -158,6 +166,6 @@ export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
      * @param data
      */
     static wrap<T>(data: T): Ref<T> {
-        return new Ref({ ref: data });
+        return new Ref({ ref: data })
     }
 }

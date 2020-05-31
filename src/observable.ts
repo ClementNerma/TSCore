@@ -2,13 +2,13 @@
  * @file Functional observable object
  */
 
-import {List} from "./list";
+import { List } from "./list"
 
 /**
  * Observer
  * @template T Type of observable data
  */
-export type Observer<T> = (prev: T, next: T) => boolean | void;
+export type Observer<T> = (prev: T, next: T) => boolean | void
 
 /**
  * Observable
@@ -16,24 +16,24 @@ export type Observer<T> = (prev: T, next: T) => boolean | void;
  */
 export class Observable<T> {
     /** Observed data */
-    protected _data: T;
+    protected _data: T
     /** Observers */
-    protected readonly _observers: List<Observer<T>>;
+    protected readonly _observers: List<Observer<T>>
 
     /**
      * Create an observable data
      * @param data
      */
     constructor(data: T) {
-        this._data = data;
-        this._observers = new List();
+        this._data = data
+        this._observers = new List()
     }
 
     /**
      * Get the observable's value
      */
     get value(): T {
-        return this._data;
+        return this._data
     }
 
     /**
@@ -44,11 +44,11 @@ export class Observable<T> {
     set value(newValue: T) {
         for (const observer of this._observers) {
             if (observer(this._data, newValue) === false) {
-                return ;
+                return
             }
         }
 
-        this._data = newValue;
+        this._data = newValue
     }
 
     /**
@@ -57,6 +57,6 @@ export class Observable<T> {
      * @param observer
      */
     observe(observer: Observer<T>): void {
-        this._observers.push(observer);
+        this._observers.push(observer)
     }
 }
