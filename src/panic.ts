@@ -57,12 +57,27 @@ export const proxies = {
     },
 
     /**
+     * A callback run after a panic occurred, just before throwing an error
+     * If you want to change the behaviour of a panic, directly modify the panic() proxy instead
+     * @param message Formatted panic message
+     * @param rawMessage Unformatted panic message
+     * @param rawparams Unformatted panic message's parameters
+     */
+    panicWatcher(message: string, rawMessage: MsgParam, rawParams: MsgParam[]) {
+        // Does nothing by default
+    },
+
+    /**
      * Panic. Message should be formatted using format()
      * @param message
      * @param params
      */
     panic(message: MsgParam, ...params: MsgParam[]): never {
-        throw new Error("Panicked! " + format(message, ...params) + "\n" + new Error().stack)
+        const formatted = "Panicked! " + format(message, ...params) + "\n" + new Error().stack
+
+        proxies.panicWatcher(formatted, message, params)
+
+        throw new Error(formatted)
     },
 
     /**
