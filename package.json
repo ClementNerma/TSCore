@@ -5,11 +5,11 @@
     "main": "build/index.js",
     "types": "build/index.d.ts",
     "scripts": {
+        "prepublishOnly": "tsc",
         "docs": "typedoc --out docs/types src"
     },
     "author": "Clément Nerma",
     "license": "Apache-2.0",
-    "prepublish": "tsc",
     "devDependencies": {
         "typedoc": "^0.17.7",
         "typescript": "^3.9.3"
