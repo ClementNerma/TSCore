@@ -6,22 +6,22 @@ If you are familiar this Rust, you will be able to use functional types (at leas
 
 ## Concept of matchables
 
-A **matchable** is a value that can has a specific *state* among a list of possible states. For instance, futures which allow to deal with promises are matchables that have at a T instant one state between `pending`, `fulfilled` or `failed`. A state can either be valueless (only a name) like `pending`, or carry a value, like `fulfilled` which carries the success value and `failed` which carries the error value.
+A **matchable** is a value that can has a specific _state_ among a list of possible states. For instance, futures which allow to deal with promises are matchables that have at a T instant one state between `pending`, `fulfilled` or `failed`. A state can either be valueless (only a name) like `pending`, or carry a value, like `fulfilled` which carries the success value and `failed` which carries the error value.
 
 Matchables are dealt with using the pattern-matching `match` function:
 
 ```ts
-import { Future, match } from "ts-core";
+import { Future, match } from "ts-core"
 
 // Create a future that resolves instantly
-let future = Future.resolve(2);
+let future = Future.resolve(2)
 
 // Match the future's state
 match(future, {
-    Pending: () => console.log('The future is pending...'),
-    Fulfilled: data => console.info('The future is fulfilled!', data),
-    Failed: err => console.error('The future has failed :(', err)
-});
+    Pending: () => console.log("The future is pending..."),
+    Fulfilled: (data) => console.info("The future is fulfilled!", data),
+    Failed: (err) => console.error("The future has failed :(", err),
+})
 ```
 
 Matching is exhaustive, meaning that if you omit to match any of the matchable's state, you will get an error:
@@ -29,8 +29,8 @@ Matching is exhaustive, meaning that if you omit to match any of the matchable's
 ```ts
 // ERROR: Pattern 'Failed' is not covered
 match(future, {
-    Pending: () => console.log('The future is pending...'),
-    Fulfilled: data => console.info('The future is fulfilled!', data)
+    Pending: () => console.log("The future is pending..."),
+    Fulfilled: (data) => console.info("The future is fulfilled!", data),
 })
 ```
 
@@ -40,10 +40,10 @@ Note that you can also match objects using the postfix method:
 
 ```ts
 future.match({
-    Pending: () => console.log('The future is pending...'),
-    Fulfilled: data => console.info('The future is fulfilled!', data),
-    Failed: err => console.error('The future has failed :(', err)
-});
+    Pending: () => console.log("The future is pending..."),
+    Fulfilled: (data) => console.info("The future is fulfilled!", data),
+    Failed: (err) => console.error("The future has failed :(", err),
+})
 ```
 
 The point of pattern-matching is to deal with all cases at once, as well as to prevent forgetting one of the states - you must deal with all them. If you only want to take a look at one specific state for instance, the matchable's class should provide you additional methods fulfilling this purpose.
