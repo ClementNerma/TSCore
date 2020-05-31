@@ -4,7 +4,7 @@
 
 import { Result, Ok, Err } from "./result"
 import { hasState, AbstractMatchable, state, State } from "./match"
-import { O } from "./objects"
+import { O, Collection } from "./objects"
 import { None, Option, Some } from "./option"
 import { List } from "./list"
 import { Dictionary } from "./dictionary"
@@ -12,6 +12,8 @@ import { panic, unreachable } from "./panic"
 import { Decoders as d, Decoder, DecodingError, DecodingErrorLine } from "./parse"
 
 export type JsonValuePrimitive = null | boolean | number | string
+
+export type NativeJsonValueType = JsonValuePrimitive | Array<NativeJsonValueType> | { [key: string]: NativeJsonValueType }
 
 export type JsonValueType =
     | JsonValuePrimitive
@@ -321,8 +323,19 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
         return this.getSpecific(child, decoder).isSome()
     }
 
+    toNativeJsonValue(): NativeJsonValueType {
+        return this.match<NativeJsonValueType>({
+            Null: () => null,
+            Boolean: (bool) => bool,
+            Number: (num) => num,
+            String: (str) => str,
+            Array: (arr) => arr.toArray().map((val) => val.toNativeJsonValue()),
+            Collection: (coll) => coll.mapToCollection((key, value) => [ key, value.toNativeJsonValue() ]),
+        })
+    }
+
     stringify(indent = 0): string {
-        return JSON.stringify(this.value, null, indent)
+        return JSON.stringify(this.toNativeJsonValue(), null, indent)
     }
 }
 
