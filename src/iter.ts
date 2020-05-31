@@ -367,6 +367,6 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
  * Create a rewindable iterator from an object's entries
  * @param object
  */
-export function iter<T extends object>(object: T): Iter<[keyof T, T[keyof T]]> {
+export function iter<T extends object>(object: T): Iter<[string, T[keyof T]]> {
     return new Iter(O.entries(object))
 }

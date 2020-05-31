@@ -61,8 +61,8 @@ export class O {
      * Get entries of an object
      * @param object
      */
-    static entries<T extends object>(object: T): Array<[keyof T, T[keyof T]]> {
-        return O.keys(object).map((key) => [key as keyof T, object[key]])
+    static entries<T extends object>(object: T): Array<[string, T[keyof T]]> {
+        return O.keys(object).map((key) => [key.toString(), object[key]])
     }
 
     /**
