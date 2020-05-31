@@ -3,7 +3,7 @@
  */
 
 import { Result, Ok, Err } from "./result"
-import { hasState, AbstractMatchable, state, State, Matchable } from "./match"
+import { hasState, AbstractMatchable, state, State } from "./match"
 import { O } from "./objects"
 import { None, Option, Some } from "./option"
 import { List } from "./list"
@@ -439,6 +439,10 @@ export namespace JsonDecoders {
 
     export function optional<T>(decoder: JsonDecoder<T>): JsonDecoder<Option<T>> {
         return (value) => (value.isNull() ? Ok(None()) : decoder(value).map((value) => Some(value)))
+    }
+
+    export function maybe<T>(decoder: JsonDecoder<T>): JsonDecoder<T | undefined> {
+        return (value) => (value.isNull() ? Ok(undefined) : decoder(value))
     }
 
     // prettier-ignore

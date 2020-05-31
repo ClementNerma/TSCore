@@ -440,6 +440,10 @@ export namespace Decoders {
         return (value) => Option.transpose(Option.nullable(value).map((value) => decoder(value)))
     }
 
+    export function maybe<F, T>(decoder: Decoder<F, T>): Decoder<F, T | undefined> {
+        return (value) => (value === undefined ? Ok(undefined) : decoder(value))
+    }
+
     export function either<F, T>(decoderA: Decoder<F, T>, decoderB: Decoder<F, T>): Decoder<F, T> {
         return (value) => {
             const aDecoded = decoderA(value)
