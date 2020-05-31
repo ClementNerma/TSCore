@@ -611,15 +611,15 @@ export class List<T> {
     /**
      * Iterate through the list
      */
-    iter(): Iter<T> {
-        return new Iter(this)
+    iter(): Rewindable<T> {
+        return new Rewindable(this)
     }
 
     /**
      * Enumerate the list
      */
-    enumerate(): Iter<[number, T]> {
-        return this.iter().enumerate()
+    enumerate(): Rewindable<[number, T]> {
+        return new Iter(this).enumerate().rewindable()
     }
 
     /**
