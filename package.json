@@ -1,14 +1,22 @@
 {
-	"name": "ts-core",
-	"version": "1.0.0",
+	"name": "typescript-core",
+	"version": "1.0.4",
 	"description": "Functional utilities for TypeScript",
+	"main": "build/index.js",
+	"types": "build/index.d.ts",
 	"scripts": {
 		"docs": "typedoc --out docs/types src"
 	},
 	"author": "Clément Nerma",
 	"license": "Apache-2.0",
+	"prepublish": "tsc",
 	"devDependencies": {
-		"typedoc": "^0.16.9",
-		"typescript": "^3.7.5"
-	}
+		"typedoc": "^0.17.7",
+		"typescript": "^3.9.3"
+	},
+	"files": [
+		"tsconfig.json",
+		"build",
+		"src/"
+	]
 }
