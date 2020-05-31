@@ -1,5 +1,7 @@
 # TS-Core
 
+[![npm version](https://badge.fury.io/js/typescript-core.svg)](https://badge.fury.io/js/typescript-core)
+
 This library aims to provide powerful pattern-matching to TypeScript, as well as some useful types & tools for handling repetitive or complex scenarios.
 This project was originally inspired by the [Rust programming language](https://www.rust-lang.org/).
 If you are familiar this Rust, you will be able to use functional types (at least) very quickly.
