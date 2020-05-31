@@ -8,6 +8,7 @@ import { Rewindable } from "./rewindable"
 import { panic } from "./panic"
 import { O } from "./objects"
 import { Result, Ok, Err } from "./result"
+import { Iter } from "./iter"
 
 export class List<T> {
     private _content: T[]
@@ -595,6 +596,20 @@ export class List<T> {
      */
     clone(): List<T> {
         return List.raw(this._content.slice())
+    }
+
+    /**
+     * Iterate through the list
+     */
+    iter(): Iter<T> {
+        return new Iter(this)
+    }
+
+    /**
+     * Enumerate the list
+     */
+    enumerate(): Iter<[number, T]> {
+        return this.iter().enumerate()
     }
 
     /**
