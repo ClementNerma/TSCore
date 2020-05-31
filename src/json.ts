@@ -333,6 +333,15 @@ export namespace JsonDecoders {
         return new DecodingError(state("CustomError", lines))
     }
 
+    export function parse(value: string): Result<JsonValue, DecodingError> {
+        return JsonValue.parse(value).mapErr((err) =>
+            _err([
+                ["s", "Failed to decode input JSON value:"],
+                ["s", err.message],
+            ])
+        )
+    }
+
     export function json(value: unknown): Result<JsonValue, DecodingError> {
         return value instanceof JsonValue ? Ok(value) : Err(_err([["s", "Value was expected to be a JSON value"]]))
     }
