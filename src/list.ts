@@ -549,6 +549,16 @@ export class List<T> {
     }
 
     /**
+     * Remove all values matching a predicate
+     * The provided index is before elements started to be removed
+     * @param predicate
+     */
+    removeWith(predicate: (value: T, index: number, list: this) => boolean): this {
+        this._content = this._content.filter((value, index) => !predicate(value, index, this))
+        return this
+    }
+
+    /**
      * Wrap this list in an outer list
      */
     wrap(): List<List<T>> {
