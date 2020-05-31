@@ -102,7 +102,7 @@ export class List<T> {
      * Get the last element of the list
      */
     last(): Option<T> {
-        return this.get(this.length)
+        return this.get(this.length - 1)
     }
 
     /**
