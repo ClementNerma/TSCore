@@ -34,7 +34,7 @@ export const proxies = {
                 return "<<< malformed parameter >>>"
             }
 
-            return param.toString()
+            return formatter(param)
         })
     },
 
