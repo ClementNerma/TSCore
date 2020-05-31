@@ -60,6 +60,32 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
     }
 
     /**
+     * Run a callback if this result is Ok()
+     * @param callback
+     */
+    withOk(callback: (data: T) => void): this {
+        match(this, {
+            Ok: (data) => callback(data),
+            Err: () => {},
+        })
+
+        return this
+    }
+
+    /**
+     * Run a callback if this result is Err()
+     * @param callback
+     */
+    withErr(callback: (err: E) => void): this {
+        match(this, {
+            Ok: () => {},
+            Err: (err) => callback(err),
+        })
+
+        return this
+    }
+
+    /**
      * Expect this result to be a success
      * Panics if it isn't
      * @param message Panic message
