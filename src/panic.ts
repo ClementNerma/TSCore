@@ -73,11 +73,10 @@ const _proxies = {
      * @param params
      */
     panic(message: MsgParam, ...params: MsgParam[]): never {
-        const formatted = "Panicked! " + format(message, ...params) + "\n" + new Error().stack
-
+        const formatted = format(message, ...params)
         _proxies.panicWatcher(formatted, message, params)
 
-        throw new Error(formatted)
+        throw new Error("Panicked! " + formatted + "\n" + new Error().stack)
     },
 
     /**
