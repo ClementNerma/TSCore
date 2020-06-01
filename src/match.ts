@@ -271,7 +271,9 @@ export function match<T extends object, U>(matchable: AbstractMatchable<T>, patt
  * @param patterns
  */
 export function matchState<T extends object, U>(state: T, patterns: MatchPatterns<T, U>): U {
-    const stateName = Object.keys(state)[0] as keyof T
+    let stateName: keyof T = null as any
+
+    for (const key in state) stateName = key
 
     if (havePatternsFallback(patterns)) {
         if (patterns.hasOwnProperty(stateName)) {
