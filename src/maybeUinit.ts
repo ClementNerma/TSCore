@@ -67,4 +67,37 @@ export class MaybeUninit<T> extends MappedMatchable<MaybeUninitMatch<T>, Option<
     value(): Option<T> {
         return this._under.clone()
     }
+
+    /**
+     * Expect the value to be initialized
+     * Panics otherwise
+     */
+    unwrap(): T {
+        return this._under.expect("Tried to unwrap an uninitialized value (MaybeUninit)")
+    }
+
+    /**
+     * Get the initialized value or fallback to another one if it has not been initialized yet
+     * @param fallback
+     */
+    unwrapOr(fallback: T): T {
+        return this._under.unwrapOr(fallback)
+    }
+
+    /**
+     * Get the initialized value or fallback to another one if it has not been initialized yet
+     * @param fallback
+     */
+    unwrapOrElse(fallback: () => T): T {
+        return this._under.unwrapOr(fallback())
+    }
+
+    /**
+     * Expect the value to be initialized
+     * Panics with a custom message otherwise
+     * @param message
+     */
+    expect(message: string): T {
+        return this._under.expect(message)
+    }
 }
