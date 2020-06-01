@@ -84,6 +84,14 @@ export class MaybeUninit<T> extends MappedMatchable<MaybeUninitMatch<T>, Option<
     }
 
     /**
+     * Do something with the initialized value
+     * Returns a None() if it has not been initialized yet
+     */
+    map<U>(mapper: (value: T) => U): Option<U> {
+        return this._under.map(mapper)
+    }
+
+    /**
      * Expect the value to be initialized
      * Panics otherwise
      */
