@@ -8,7 +8,7 @@ import { List } from "./list"
 import { Option } from "./option"
 import { Ref } from "./ref"
 import { Result } from "./result"
-import { MsgParam, panic } from "./panic"
+import { MsgParam, panic, format } from "./panic"
 import { O } from "./objects"
 import { forceType } from "./typecasting"
 
@@ -23,8 +23,8 @@ import { forceType } from "./typecasting"
 export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: string[] = []): void | never {
     // Beautified panic function
     const fail = (message: MsgParam, ...params: MsgParam[]): never =>
-        //panic((panicMessage || 'Assertion failed') + '(' + message + '\n' + _ctx.join('\n') + ')', ...params)
         panic(`{} (${message})\n{}`, panicMessage || "Assertion failed", ...params, _ctx.join("\n"))
+
     // Ensure values type are identical
     if (typeof left !== typeof right) {
         fail("Left value is a {} value while right value is a {}", typeof left, typeof right)
@@ -191,7 +191,7 @@ export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: stri
  */
 export function assertIs(left: unknown, right: unknown, panicMessage?: string, strict = true): void | never {
     if (strict ? left !== right : left != right) {
-        panic("{} (Left and right values are not {}identical)", panicMessage || "Assertion failed", strict ? "strictly " : "")
+        panic("{}", panicMessage || format("Assertion failed (Left and right values are not {}identical)", strict ? "strictly " : ""))
     }
 }
 
@@ -203,6 +203,6 @@ export function assertIs(left: unknown, right: unknown, panicMessage?: string, s
  */
 export function assert(predicate: boolean, panicMessage?: string): void | never {
     if (!predicate) {
-        panic("{} (Predicate was not satisfied)", panicMessage || "Assertion failed")
+        panic("{}", panicMessage || "Assertion failed")
     }
 }
