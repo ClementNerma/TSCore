@@ -61,6 +61,21 @@ export class MaybeUninit<T> extends MappedMatchable<MaybeUninitMatch<T>, Option<
     }
 
     /**
+     * Try to initialize the value using a function
+     * Returns an Err() if it has already been initialized
+     * The provided function won't be run if the value has already been initialized
+     * @param value
+     */
+    tryInitWith(init: () => T): Result<void, void> {
+        if (this._under.isSome()) {
+            return Err(undefined)
+        }
+
+        this._under = Some(init())
+        return Ok(undefined)
+    }
+
+    /**
      * Get the initialized value
      * Returns a None() if has not been initialized yet
      */
