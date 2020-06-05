@@ -255,7 +255,7 @@ export class List<T> {
     }
 
     /**
-     * Select items using a predicate
+     * Select the first items matching a predicate
      * Equivalent of `.filter(...).firstOnes(...)` but a lot faster
      * @param predicate
      * @param size
