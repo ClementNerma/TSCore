@@ -39,47 +39,47 @@ export class DecodingError extends Matchable<
 > {
     rawLines(): Array<DecodingErrorLine> {
         return this.match({
-            WrongType: (expected): DecodingErrorLine[] => [["f", `Value does not have expected type "{}"`, [expected]]],
+            WrongType: (expected) => [["f", `Value does not have expected type "{}"`, [expected]]],
 
-            ArrayItem: (err): DecodingErrorLine[] => [
+            ArrayItem: (err) => [
                 ["f", `Failed to decode item n°{} from array:`, [err[0] + 1]],
                 ["e", err[1]],
             ],
 
-            ListItem: (err): DecodingErrorLine[] => [
+            ListItem: (err) => [
                 ["f", `Failed to decode item n°{} from list:`, [err[0] + 1]],
                 ["e", err[1]],
             ],
 
-            CollectionItem: (err): DecodingErrorLine[] => [
+            CollectionItem: (err) => [
                 ["f", `Failed to decode field "{}":`, [err[0]]],
                 ["e", err[1]],
             ],
 
-            DictionaryKey: (err): DecodingErrorLine[] => [
+            DictionaryKey: (err) => [
                 ["f", `Failed to decode dictionary key "{}":`, [err[0]]],
                 ["e", err[1]],
             ],
 
-            DictionaryValue: (err): DecodingErrorLine[] => [
+            DictionaryValue: (err) => [
                 ["f", `Failed to decode dictionary value associated to key "{}":`, [err[0]]],
                 ["e", err[1]],
             ],
 
-            MissingTupleEntry: (pos): DecodingErrorLine[] => [["f", `Missing expected tuple entry n°{}`, [pos + 1]]],
+            MissingTupleEntry: (pos) => [["f", `Missing expected tuple entry n°{}`, [pos + 1]]],
 
-            MissingCollectionField: (field): DecodingErrorLine[] => [["f", `Missing expected collection field "{}"`, [field]]],
+            MissingCollectionField: (field) => [["f", `Missing expected collection field "{}"`, [field]]],
 
-            NoneOfEither: (err): DecodingErrorLine[] => [
+            NoneOfEither: (err) => [
                 ["s", `...failed to decode using either() with decoder A:`],
                 ["e", err[0]],
                 ["s", "...as well as with decoder B:"],
                 ["e", err[1]],
             ],
 
-            NoneOfCases: (candidates): DecodingErrorLine[] => [["f", `Value is not one of the candidate values: {}`, [candidates.join(", ")]]],
+            NoneOfCases: (candidates) => [["f", `Value is not one of the candidate values: {}`, [candidates.join(", ")]]],
 
-            NoneOfEnumStates: (err): DecodingErrorLine[] => [["f", `Value is not one of enumeration "{}"'s state: {}`, [err[0], err[1].join(", ")]]],
+            NoneOfEnumStates: (err) => [["f", `Value is not one of enumeration "{}"'s state: {}`, [err[0], err[1].join(", ")]]],
 
             CustomError: (err): DecodingErrorLine[] => [
                 ["s", "Failed to decode using custom decoder:"],
