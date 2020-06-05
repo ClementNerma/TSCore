@@ -108,8 +108,6 @@ export class Mutex<T> extends AbstractMatchable<MutexState> {
                     Some: (callback) => callback(Ok(this.lock().expect("Failed to lock mutex just after unlocking!"))),
                     None: () => {},
                 })
-
-                return true
             },
             None: () => panic("Cannot unlock an available mutex!"),
         })
