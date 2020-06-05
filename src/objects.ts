@@ -158,7 +158,7 @@ export class O {
      * @param add The object to add properties from
      */
     static merge<T extends object, A extends object>(from: T, add: A): T & A {
-        let out: T & A = {} as any
+        const out: T & A = {} as any
 
         for (const [key, value] of O.entries(from)) {
             out[key as keyof (T & A)] = value as (T & A)[keyof (T & A)]
@@ -177,7 +177,7 @@ export class O {
      * @param entries
      */
     static fromEntries<K extends string | number | symbol, V>(entries: Array<[K, V]>): { [key in K]: V } {
-        let obj: { [key in K]: V } = {} as any
+        const obj: { [key in K]: V } = {} as any
 
         for (const [key, value] of entries) {
             obj[key] = value
