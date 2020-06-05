@@ -50,6 +50,23 @@ export class O {
     }
 
     /**
+     * Get the keys of an object, as strings
+     * @param object
+     */
+    static strKeys<T extends object>(object: T): Array<Exclude<keyof T, number>> {
+        return O.keys(object).map((key) => key.toString()) as any
+    }
+
+    /**
+     * Get the keys of a collection with stricter typing
+     * This is better than using O.keys() as this function will always return an array of strings
+     * @param collection
+     */
+    static collKeys<T>(collection: Collection<T>): string[] {
+        return Reflect.ownKeys(collection) as string[]
+    }
+
+    /**
      * Get the values of an object
      * @param object
      */
