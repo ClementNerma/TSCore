@@ -91,4 +91,12 @@ export class Rewindable<T> extends Iter<T> {
 
         return joinLeft ? this.yielded() : this.yielded().slice(startIndex + 1)
     }
+
+    /**
+     * Collect all values of the iterator in an array
+     * @param joinLeft Join all previously-yielded values
+     */
+    collectArray(joinLeft = false): Array<T> {
+        return this.collect(joinLeft).toArray()
+    }
 }

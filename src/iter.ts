@@ -113,6 +113,20 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
     }
 
     /**
+     * Collect all yield values in an array
+     * Consumes the iterator
+     */
+    collectArray(): Array<T> {
+        const yielded: T[] = []
+
+        while (!this._done) {
+            this.next().some((value) => yielded.push(value))
+        }
+
+        return yielded
+    }
+
+    /**
      * Inspect elements without modifying them
      */
     inspect(inspector: (value: T) => void): this {
