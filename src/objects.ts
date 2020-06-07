@@ -3,6 +3,7 @@
  */
 
 import { forceType } from "./typecasting"
+import { Some, None, Option } from "./option"
 
 /**
  * Key-value object type
@@ -47,6 +48,24 @@ export class O {
      */
     static keys<T extends object>(object: T): Array<keyof T> {
         return Reflect.ownKeys(object) as Array<keyof T>
+    }
+
+    /**
+     * Get a property from a collection
+     * @param object
+     * @param prop
+     */
+    static getProp<T>(coll: Collection<T>, prop: string): Option<T> {
+        return coll.hasOwnProperty(prop) ? Some(coll[prop]) : None()
+    }
+
+    /**
+     * Get a value from an array
+     * @param arr
+     * @param index
+     */
+    static getArr<T>(arr: T[], index: number): Option<T> {
+        return arr.hasOwnProperty(index) ? Some(arr[index]) : None()
     }
 
     /**
