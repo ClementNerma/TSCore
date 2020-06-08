@@ -336,6 +336,13 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     }
 
     /**
+     * Extend this option to allow another type to be part of it
+     */
+    extend<U>(): Option<T | U> {
+        return this.clone()
+    }
+
+    /**
      * Transpose an Option<Result<T, E>> value to a Result<Option<T>, E>
      * @param option
      */
