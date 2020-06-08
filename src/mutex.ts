@@ -6,7 +6,7 @@ import { Ref } from "./ref"
 import { Err, Ok, Result } from "./result"
 import { None, Option } from "./option"
 import { state, match, AbstractMatchable, State, matchState } from "./match"
-import { Future } from "./future"
+import { Future, FailableFuture } from "./future"
 import { Consumers } from "./list"
 import { panic } from "./panic"
 
@@ -143,8 +143,8 @@ export class Mutex<T> extends AbstractMatchable<MutexState> {
      * Return a future holding a lock reference
      * The future will resolve when the current lock will have been
      */
-    futureLock(): Future<Ref<T>, MutexPoisonError> {
-        return new Future<Ref<T>, MutexPoisonError>((resolve, reject) => {
+    futureLock(): FailableFuture<Ref<T>, MutexPoisonError> {
+        return new FailableFuture<Ref<T>, MutexPoisonError>((resolve, reject) => {
             match(this.lock(), {
                 Ok: (ref) => resolve(ref),
                 Err: (err) =>

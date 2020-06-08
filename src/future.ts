@@ -10,71 +10,34 @@ import { panic } from "./panic"
 
 /**
  * Future's pattern matching
- * @template T Type of success value
- * @template E Type of error value
+ * @template T Type of the completion value
  */
-export type FutureMatch<T, E> = State<"Pending"> | State<"Fulfilled", T> | State<"Failed", E>
+export type FutureMatch<T> = State<"Pending"> | State<"Complete", T>
 
 /**
  * Future
- * @template T Type of success value
- * @template E Type of error value
+ * @template T Type of the completion value
  */
-export class Future<T, E> extends MappedMatchable<FutureMatch<T, E>, Option<Result<T, E>>> {
+export class Future<T> extends MappedMatchable<FutureMatch<T>, Option<T>> {
     // Event listeners
-    private readonly _successHandlers: Consumers<T>
-    private readonly _errorHandlers: Consumers<E>
-    private readonly _finalHandlers: Consumers<Result<T, E>>
+    private readonly _completionHandlers: Consumers<T>
 
-    constructor(core: (resolve: (data: T) => void, reject: (err: E) => void, complete: (result: Result<T, E>) => void) => void) {
+    constructor(core: (resolve: (data: T) => void) => void) {
         super(None(), () =>
             match(this._under, {
-                Some: (result) =>
-                    match(result, {
-                        Ok: (data) => state("Fulfilled", data),
-                        Err: (err) => state("Failed", err),
-                    }),
+                Some: (result) => state("Complete", result),
                 None: () => state("Pending"),
             })
         )
 
-        this._successHandlers = new Consumers()
-        this._errorHandlers = new Consumers()
-        this._finalHandlers = new Consumers()
+        this._completionHandlers = new Consumers()
 
-        core(
-            (data) => this._fulfill(data),
-            (err) => this._reject(err),
-            (result) =>
-                result.match({
-                    Ok: (data) => this._fulfill(data),
-                    Err: (err) => this._reject(err),
-                })
-        )
+        core((data) => this._complete(data))
     }
 
-    static completable<T, E>(core: (complete: (result: Result<T, E>) => void) => void): Future<T, E> {
-        return new Future((_, __, complete) => core(complete))
-    }
-
-    private _complete<Z extends T | E>(result: Result<T, E>, value: Z, handlers: Consumers<Z>): void {
-        this._under = Some(result)
-
-        handlers.resolve(value)
-        this._finalHandlers.resolve(result)
-
-        this._successHandlers.clear()
-        this._errorHandlers.clear()
-    }
-
-    private _fulfill(data: T): void {
-        this._under.expectNone("Tried to fulfill an already completed future!")
-        this._complete(Ok(data), data, this._successHandlers)
-    }
-
-    private _reject(err: E): void {
-        this._under.expectNone("Tried to fulfill an already completed future!")
-        this._complete(Err(err), err, this._errorHandlers)
+    private _complete(value: T): void {
+        this._under.replace(value).expectNone("Tried to resolve an already-resolved future!")
+        this._completionHandlers.resolve(value)
     }
 
     /**
@@ -92,210 +55,68 @@ export class Future<T, E> extends MappedMatchable<FutureMatch<T, E>, Option<Resu
     }
 
     /**
-     * Is the future fulfilled?
+     * Get the future's resolved value
+     * @param callback
      */
-    fulfilled(): boolean {
-        return this._under.andThen((result) => result.ok()).isSome()
-    }
-
-    /**
-     * Is the future failed?
-     */
-    failed(): boolean {
-        return this._under.andThen((result) => result.err()).isSome()
-    }
-
-    /**
-     * Get this future's result
-     */
-    result(): Option<Result<T, E>> {
-        return this._under
-    }
-
-    /**
-     * Get this future's success value
-     */
-    success(): Option<T> {
-        return this._under.andThen((result) => result.ok())
-    }
-
-    /**
-     * Get this future's error value
-     */
-    error(): Option<E> {
-        return this._under.andThen((result) => result.err())
+    value(): Option<T> {
+        return this._under.clone()
     }
 
     /**
      * Create a future that resolves through a callback taking this future's success value
      * @param callback
      */
-    then<U>(callback: (data: T) => U): Future<U, E> {
-        return new Future((resolve, reject) => {
-            match(this._under, {
-                Some: (result) =>
-                    match(result, {
-                        Ok: (data) => resolve(callback(data)),
-                        Err: reject,
-                    }),
-                None: () => {
-                    this._successHandlers.push((data) => resolve(callback(data)))
-                    this._errorHandlers.push(reject)
-                },
-            })
-        })
-    }
-
-    /**
-     * Create a future that creates an immediatly-resolving future based on this one's success
-     * @param callback
-     */
-    andThen<U>(callback: (data: T) => Result<U, E>): Future<U, E> {
-        return new Future((resolve, reject) => {
-            match(this._under, {
-                Some: (result) =>
-                    match(result, {
-                        Ok: (data) =>
-                            match(callback(data), {
-                                Ok: resolve,
-                                Err: reject,
-                            }),
-                        Err: reject,
-                    }),
-                None: () => {
-                    this._successHandlers.push((data) =>
-                        match(callback(data), {
-                            Ok: resolve,
-                            Err: reject,
-                        })
-                    )
-                    this._errorHandlers.push(reject)
-                },
-            })
-        })
-    }
-
-    /**
-     * Equivalent of .andThen(), but with an asynchronous callback
-     * If you want to change the error type as well, use .finally()
-     * @param callback
-     */
-    andThenAsync<U>(callback: (data: T) => Promise<Result<U, E>>): Future<U, E> {
-        return new Future((resolve, reject) => {
-            match(this._under, {
-                Some: (result) =>
-                    match(result, {
-                        Ok: async (data) =>
-                            match(await callback(data), {
-                                Ok: resolve,
-                                Err: reject,
-                            }),
-                        Err: reject,
-                    }),
-                None: () => {
-                    this._successHandlers.push(async (data) =>
-                        match(await callback(data), {
-                            Ok: resolve,
-                            Err: reject,
-                        })
-                    )
-                    this._errorHandlers.push(reject)
-                },
-            })
-        })
-    }
-
-    /**
-     * Create a future that rejects through a callback taking this future's error value
-     * @param callback
-     */
-    catch<F>(callback: (err: E) => F): Future<T, F> {
-        return new Future((resolve, reject) => {
-            match(this._under, {
-                Some: (result) =>
-                    match(result, {
-                        Ok: resolve,
-                        Err: (err) => reject(callback(err)),
-                    }),
-                None: () => {
-                    this._successHandlers.push(resolve)
-                    this._errorHandlers.push((err) => reject(callback(err)))
-                },
-            })
-        })
-    }
-
-    /**
-     * Create a future that resolves through a callback taking this future's result
-     * @param callback
-     */
-    finally<U>(callback: (result: Result<T, E>) => U): Future<U, any> {
+    then<U>(callback: (data: T) => U): Future<U> {
         return new Future((resolve) => {
             match(this._under, {
-                Some: (result) => resolve(callback(result)),
-                None: () => this._finalHandlers.push((result) => resolve(callback(result))),
+                Some: (data) => resolve(callback(data)),
+                None: () => this._completionHandlers.push((data) => resolve(callback(data))),
             })
         })
     }
 
     /**
-     * Equivalent of .then() but unwraps the result value once it is complete
+     * Creates a future that resolves through an asynchronous callback taking this future's success value
+     * Equivalent of .then() but using an async. callback
      * @param callback
-     * @param panicMessage
      */
-    finallyUnwrap<U>(callback: (value: T) => U, panicMessage?: string): Future<U, any> {
-        // TODO: Use a callback that generates the panic message from the error message?
+    thenAsync<U>(callback: (data: T) => Future<U>): Future<U> {
         return new Future((resolve) => {
             match(this._under, {
-                Some: (result) => resolve(callback(panicMessage ? result.expect(panicMessage) : result.unwrap())),
-                None: () => this._finalHandlers.push((result) => resolve(callback(panicMessage ? result.expect(panicMessage) : result.unwrap()))),
+                Some: async (data) => resolve(await callback(data).promise()),
+                None: () => this._completionHandlers.push(async (data) => resolve(await callback(data).promise())),
             })
         })
     }
 
-    andFinally<U, X>(callback: (result: Result<T, E>) => Result<U, X>): Future<U, X> {
-        return new Future((resolve, reject) => {
-            match(this._under, {
-                Some: (result) =>
-                    callback(result).match({
-                        Ok: (success) => resolve(success),
-                        Err: (err) => reject(err),
-                    }),
-
-                None: () =>
-                    this._finalHandlers.push((result) =>
-                        callback(result).match({
-                            Ok: (success) => resolve(success),
-                            Err: (err) => reject(err),
-                        })
-                    ),
-            })
+    /**
+     * Inspect this future's result without changing it
+     * @param callback
+     */
+    inspect(callback: (data: T) => void): this {
+        match(this._under, {
+            Some: (data) => callback(data),
+            None: () => this._completionHandlers.push(callback),
         })
+
+        return this
     }
 
     /**
      * Get a promise that won't reject from the current future
      */
-    promise(): Promise<Result<T, E>> {
-        return new Promise((resolve) => this.finally(resolve))
-    }
-
-    /**
-     * Equivalent of .finallyUnwrap().promise()
-     * @param panicMessage
-     */
-    promiseUnwrap(panicMessage?: string): Promise<T> {
-        return new Promise((resolve) => this.finallyUnwrap(resolve, panicMessage))
+    promise(): Promise<T> {
+        return new Promise((resolve) => this.then(resolve))
     }
 
     /**
      * Create a future object from a fallible promise
      * @param promise
      */
-    static fromPromise<T>(promise: Promise<T>): Future<T, unknown> {
-        return new Future((resolve, reject) => {
-            promise.then(resolve)
-            promise.catch(reject)
+    static fromPromise<T>(promise: Promise<T>): Future<Result<T, unknown>> {
+        return new Future((resolve) => {
+            promise.then((data) => resolve(Ok(data)))
+            promise.catch((err) => resolve(Err(err)))
         })
     }
 
@@ -303,13 +124,13 @@ export class Future<T, E> extends MappedMatchable<FutureMatch<T, E>, Option<Resu
      * Create a future object from a failure-free promise
      * @param promise
      */
-    static fromStablePromise<T, E>(promise: Promise<Result<T, E>>): Future<T, E> {
-        return new Future((resolve, reject) => {
+    static fromStablePromise<T, E>(promise: Promise<Result<T, E>>): Future<Result<T, E>> {
+        return new Future((resolve) => {
             promise
                 .then((result) => {
                     match(result, {
-                        Ok: (data) => resolve(data),
-                        Err: (err) => reject(err),
+                        Ok: (data) => resolve(Ok(data)),
+                        Err: (err) => resolve(Err(err)),
                     })
                 })
                 .catch((_) => panic("Promise unexpectedly failed while a future was built upon it!"))
@@ -317,31 +138,127 @@ export class Future<T, E> extends MappedMatchable<FutureMatch<T, E>, Option<Resu
     }
 
     /**
+     * Create a complete future
+     * @param data Success value
+     */
+    static complete<T>(data: T): Future<T> {
+        return new Future((resolve) => resolve(data))
+    }
+}
+
+/**
+ * Failable future
+ * @template T Type of success value
+ * @template E Type of error value
+ */
+export class FailableFuture<T, E> extends Future<Result<T, E>> {
+    constructor(core: (resolve: (data: T) => void, reject: (err: E) => void, complete: (result: Result<T, E>) => void) => void) {
+        super((resolve) =>
+            core(
+                (data) => resolve(Ok(data)),
+                (err) => resolve(Err(err)),
+                (result) => resolve(result)
+            )
+        )
+    }
+
+    /**
+     * Is the future fulfilled? (completed with an Ok() value)
+     */
+    fulfilled(): boolean {
+        return this._under.mapOr((value) => value.isOk(), false)
+    }
+
+    /**
+     * Is the future failed? (completed with an Err() value)
+     * @param callback
+     */
+    failed(): boolean {
+        return this._under.mapOr((value) => value.isErr(), false)
+    }
+
+    /**
+     * Get the future's success value
+     */
+    ok(): Option<T> {
+        return this._under.andThen((value) => value.ok())
+    }
+
+    /**
+     * Get the future's error value
+     */
+    err(): Option<E> {
+        return this._under.andThen((value) => value.err())
+    }
+
+    /**
+     * Create a future that resolves through a callback taking this future's success value
+     * @param callback
+     */
+    success<U>(callback: (data: T) => U): FailableFuture<U, E> {
+        return new FailableFuture((_, __, complete) => this.then((result) => complete(result.map((data) => callback(data)))))
+    }
+
+    /**
+     * Create a future that rejects through a callback taking this future's error value
+     * @param callback
+     */
+    catch<F>(callback: (err: E) => F): FailableFuture<T, F> {
+        return new FailableFuture((_, __, complete) => this.then((result) => complete(result.mapErr((err) => callback(err)))))
+    }
+
+    /**
+     * Inspect this future's success value once it resolves, without changing it
+     * @param callback
+     */
+    inspectOk(callback: (data: T) => void): this {
+        this.then((result) => result.withOk(callback))
+        return this
+    }
+
+    /**
+     * Inspect this future's error value once it rejects, without changing it
+     * @param callback
+     */
+    inspectErr(callback: (data: E) => void): this {
+        this.then((result) => result.withErr(callback))
+        return this
+    }
+
+    /**
      * Create a fulfilled future
      * @param data Success value
      */
-    static resolve<T>(data: T): Future<T, any> {
-        return new Future((resolve) => resolve(data))
+    static resolve<T>(data: T): FailableFuture<T, any> {
+        return new FailableFuture((resolve) => resolve(data))
     }
 
     /**
      * Create a failed future
      * @param err Error value
      */
-    static reject<E>(err: E): Future<any, E> {
-        return new Future<any, E>((resolve, reject) => reject(err))
+    static reject<E>(err: E): FailableFuture<any, E> {
+        return new FailableFuture<any, E>((resolve, reject) => reject(err))
+    }
+
+    /**
+     * Create a failable future from a basic one
+     * @param future
+     */
+    static fromFuture<T, E>(future: Future<Result<T, E>>): FailableFuture<T, E> {
+        return new FailableFuture((_, __, complete) => future.then(complete))
     }
 
     /**
      * Ensure any of the provided futures fulfills
      * @param futures
      */
-    static any<T, E>(futures: Array<Future<T, E>>): Future<T, E> {
-        return new Future((resolve, reject) => {
+    static any<T, E>(futures: Array<FailableFuture<T, E>>): FailableFuture<T, E> {
+        return new FailableFuture((resolve, reject) => {
             let completed = false
 
             futures.forEach((future) =>
-                future.finally((result) => {
+                future.then((result) => {
                     if (completed) {
                         return
                     }
@@ -361,14 +278,14 @@ export class Future<T, E> extends MappedMatchable<FutureMatch<T, E>, Option<Resu
      * Ensure every provided future fulfills
      * @param futures
      */
-    static all<T, E>(futures: Array<Future<T, E>>): Future<T[], E> {
+    static all<T, E>(futures: Array<FailableFuture<T, E>>): FailableFuture<T[], E> {
         const success = new Array<T>()
         let remaining = futures.length
         let failed = false
 
-        return new Future((resolve, reject) =>
+        return new FailableFuture((resolve, reject) =>
             futures.forEach((future) =>
-                future.finally((result) => {
+                future.then((result) => {
                     if (!remaining || failed) {
                         return
                     }

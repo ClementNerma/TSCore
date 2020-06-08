@@ -4,7 +4,7 @@
 
 import { hasState, match, Matchable, State, state } from "./match"
 import { Err, Ok, Result } from "./result"
-import { Future } from "./future"
+import { Future, FailableFuture } from "./future"
 import { None, Option, Some } from "./option"
 import { panic } from "./panic"
 import { TaskCluster, TaskClusterReducer } from "./cluster"
@@ -35,7 +35,7 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
     /** Task's content (iterator) */
     private readonly _iter: TaskIterator<T, E>
     /** Completion future that resolves when the task completes */
-    private readonly _completionFuture: Future<T, E>
+    private readonly _completionFuture: FailableFuture<T, E>
     /** Time during which the task was running */
     private _elapsed: number
     /** Mark the task as completed */
@@ -52,7 +52,7 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
         this._core = core
         this._iter = core()
         this.__completeFuture = () => {} // FIX requirement to init. properties in constructor
-        this._completionFuture = new Future((_, __, complete) => (this.__completeFuture = (result) => complete(result)))
+        this._completionFuture = new FailableFuture((_, __, complete) => (this.__completeFuture = (result) => complete(result)))
         this._elapsed = 0
         this._state = state("Created")
     }
@@ -98,7 +98,7 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
      * Start the task
      * @returns A future resolving when the first step ended
      */
-    start(): Future<Option<Result<T, E>>, void> {
+    start(): Future<Option<Result<T, E>>> {
         if (hasState(this, "Created")) {
             this._state = state("Pending")
             return this.next()
@@ -112,7 +112,7 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
      * @param startImplicitly Start the task if it did not start yet
      * @returns A future resolving when the step ended
      */
-    next(startImplicitly = true): Future<Option<Result<T, E>>, void> {
+    next(startImplicitly = true): Future<Option<Result<T, E>>> {
         return new Future(async (resolve) => {
             if (startImplicitly && hasState(this, "Created")) {
                 this._state = state("Pending")
@@ -159,20 +159,20 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
     /**
      * Perform all remaining steps of the task
      */
-    complete(): Future<T, E> {
-        return new Future(async (_, __, complete) => {
+    complete(): FailableFuture<T, E> {
+        return new FailableFuture(async (_, __, complete) => {
             while (!this.completed) {
                 await this.next().promise()
             }
 
-            this._completionFuture.finally(complete)
+            this._completionFuture.then(complete)
         })
     }
 
     /**
      * Get a future that resolves when the task is completed
      */
-    future(): Future<T, E> {
+    future(): FailableFuture<T, E> {
         return this._completionFuture
     }
 
@@ -226,7 +226,7 @@ export class Task<T, E> extends Matchable<TaskState<T, E>> {
      * Create a task from a one-step asynchronous callback
      * @param callback
      */
-    static async<T, E>(callback: () => Future<T, E>): Task<T, E> {
+    static async<T, E>(callback: () => FailableFuture<T, E>): Task<T, E> {
         return new Task(async function* (): TaskIterator<T, E> {
             return await callback().promise()
         })
