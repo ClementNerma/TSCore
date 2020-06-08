@@ -2,9 +2,10 @@
  * @file Represent optional values in a type-safe, functional and combinable way
  */
 
+import { AbstractMatchable, KeyOfUnion, Matchable, State, ValOfKeyOfUnion, match, state } from "./match"
 import { Err, Ok, Result } from "./result"
-import { Matchable, State, match, state } from "./match"
 
+import { O } from "./objects"
 import { panic } from "./panic"
 
 /**
@@ -424,4 +425,21 @@ export function Some<T>(value: T): Option<T> {
  */
 export function None<T = unknown>(): Option<T> {
     return new Option(state("None"))
+}
+
+/**
+ * Get the value from a single state
+ * @param key
+ */
+export function getStateValue<T extends object, K extends string & KeyOfUnion<T>, U>(
+    matchable: AbstractMatchable<T>,
+    key: K
+): Option<ValOfKeyOfUnion<T, K>> {
+    let state = matchable._getState()
+
+    if (O.keys(state)[0] !== key) {
+        return None()
+    } else {
+        return Some(O.values(state)[0]) as ValOfKeyOfUnion<T, K>
+    }
 }

@@ -2,14 +2,15 @@
  * @file JSON parsing and decoding
  */
 
-import { Result, Ok, Err } from "./result"
-import { hasState, AbstractMatchable, state, State } from "./match"
-import { O } from "./objects"
-import { None, Option, Some } from "./option"
-import { List } from "./list"
-import { Dictionary } from "./dictionary"
+import { AbstractMatchable, State, hasState, state } from "./match"
+import { Decoder, DecodingError, DecodingErrorLine, Decoders as d } from "./parse"
+import { Err, Ok, Result } from "./result"
+import { None, Option, Some, getStateValue } from "./option"
 import { panic, unreachable } from "./panic"
-import { Decoders as d, Decoder, DecodingError, DecodingErrorLine } from "./parse"
+
+import { Dictionary } from "./dictionary"
+import { List } from "./list"
+import { O } from "./objects"
 
 export type JsonValuePrimitive = null | boolean | number | string
 
@@ -97,7 +98,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
         if (size === undefined) {
             return hasState(this, "Array")
         } else {
-            return this.getStateValue("Array")
+            return getStateValue(this, "Array")
                 .map((list) => list.length === size)
                 .unwrapOr(false)
         }
@@ -126,27 +127,27 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
     }
 
     asNull(): Option<null> {
-        return this.getStateValue("Null")
+        return getStateValue(this, "Null")
     }
 
     asBoolean(): Option<boolean> {
-        return this.getStateValue("Boolean")
+        return getStateValue(this, "Boolean")
     }
 
     asNumber(): Option<number> {
-        return this.getStateValue("Number")
+        return getStateValue(this, "Number")
     }
 
     asString(): Option<string> {
-        return this.getStateValue("String")
+        return getStateValue(this, "String")
     }
 
     asArray(size?: number): Option<List<JsonValue>> {
-        return this.getStateValue("Array").filter((list) => size === undefined || list.length === size)
+        return getStateValue(this, "Array").filter((list) => size === undefined || list.length === size)
     }
 
     asCollection(): Option<Dictionary<string, JsonValue>> {
-        return this.getStateValue("Collection")
+        return getStateValue(this, "Collection")
     }
 
     asParsableNumber(base = 10): Option<number> {
@@ -165,27 +166,27 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
     }
 
     expectToBeNull(): null {
-        return this.getStateValue("Null").expect('JSON value has not "Null" type!')
+        return getStateValue(this, "Null").expect('JSON value has not "Null" type!')
     }
 
     expectToBeBoolean(): boolean {
-        return this.getStateValue("Boolean").expect('JSON value has not "Boolean" type!')
+        return getStateValue(this, "Boolean").expect('JSON value has not "Boolean" type!')
     }
 
     expectToBeNumber(): number {
-        return this.getStateValue("Number").expect('JSON value has not "Number" type!')
+        return getStateValue(this, "Number").expect('JSON value has not "Number" type!')
     }
 
     expectToBeString(): string {
-        return this.getStateValue("String").expect('JSON value has not "String" type!')
+        return getStateValue(this, "String").expect('JSON value has not "String" type!')
     }
 
     expectToBeArray(): List<JsonValue> {
-        return this.getStateValue("Array").expect('JSON value has not "Array" type!')
+        return getStateValue(this, "Array").expect('JSON value has not "Array" type!')
     }
 
     expectToBeCollection(): Dictionary<string, JsonValue> {
-        return this.getStateValue("Collection").expect('JSON value has not "Collection" type!')
+        return getStateValue(this, "Collection").expect('JSON value has not "Collection" type!')
     }
 
     expectToBeParsableNumber(base?: number): number {
@@ -205,27 +206,27 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
     }
 
     getNull(child: string): Option<null> {
-        return this.get(child).andThen((child) => child.getStateValue("Null"))
+        return this.get(child).andThen((child) => getStateValue(child, "Null"))
     }
 
     getBoolean(child: string): Option<boolean> {
-        return this.get(child).andThen((child) => child.getStateValue("Boolean"))
+        return this.get(child).andThen((child) => getStateValue(child, "Boolean"))
     }
 
     getNumber(child: string): Option<number> {
-        return this.get(child).andThen((child) => child.getStateValue("Number"))
+        return this.get(child).andThen((child) => getStateValue(child, "Number"))
     }
 
     getString(child: string): Option<string> {
-        return this.get(child).andThen((child) => child.getStateValue("String"))
+        return this.get(child).andThen((child) => getStateValue(child, "String"))
     }
 
     getArray(child: string): Option<List<JsonValue>> {
-        return this.get(child).andThen((child) => child.getStateValue("Array"))
+        return this.get(child).andThen((child) => getStateValue(child, "Array"))
     }
 
     getCollection(child: string): Option<Dictionary<string, JsonValue>> {
-        return this.get(child).andThen((child) => child.getStateValue("Collection"))
+        return this.get(child).andThen((child) => getStateValue(child, "Collection"))
     }
 
     getSpecific<T>(child: string, decoder: JsonDecoder<T>): Option<Result<T, DecodingError>> {
@@ -263,27 +264,27 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
     }
 
     expectNull(child: string): null {
-        return this.expect(child).getStateValue("Null").expect(`Child value "${child}" has not type "Null"`)
+        return getStateValue(this.expect(child), "Null").expect(`Child value "${child}" has not type "Null"`)
     }
 
     expectBoolean(child: string): boolean {
-        return this.expect(child).getStateValue("Boolean").expect(`Child value "${child}" has not type "Boolean"`)
+        return getStateValue(this.expect(child), "Boolean").expect(`Child value "${child}" has not type "Boolean"`)
     }
 
     expectNumber(child: string): number {
-        return this.expect(child).getStateValue("Number").expect(`Child value "${child}" has not type "Number"`)
+        return getStateValue(this.expect(child), "Number").expect(`Child value "${child}" has not type "Number"`)
     }
 
     expectString(child: string): string {
-        return this.expect(child).getStateValue("String").expect(`Child value "${child}" has not type "String"`)
+        return getStateValue(this.expect(child), "String").expect(`Child value "${child}" has not type "String"`)
     }
 
     expectArray(child: string): List<JsonValue> {
-        return this.expect(child).getStateValue("Array").expect(`Child value "${child}" has not type "Array"`)
+        return getStateValue(this.expect(child), "Array").expect(`Child value "${child}" has not type "Array"`)
     }
 
     expectCollection(child: string): Dictionary<string, JsonValue> {
-        return this.expect(child).getStateValue("Collection").expect(`Child value "${child}" has not type "Collection"`)
+        return getStateValue(this.expect(child), "Collection").expect(`Child value "${child}" has not type "Collection"`)
     }
 
     expectSpecific<T>(child: string, decoder: JsonDecoder<T>): T {

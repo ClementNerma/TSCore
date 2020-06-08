@@ -2,8 +2,6 @@
  * @file Core library for pattern-matching and base matchable types
  */
 
-import { None, Option, Some } from "./option"
-
 import { O } from "./objects"
 
 /**
@@ -80,20 +78,6 @@ export abstract class AbstractMatchable<T extends object> {
      */
     match<U>(patterns: MatchPatterns<T, U>): U {
         return matchState(this.__getState(), patterns)
-    }
-
-    /**
-     * Get the value from a single state
-     * @param key
-     */
-    getStateValue<K extends string & KeyOfUnion<T>, U>(key: K): Option<ValOfKeyOfUnion<T, K>> {
-        let state = this.__getState()
-
-        if (O.keys(state)[0] !== key) {
-            return None()
-        } else {
-            return Some(O.values(state)[0] as ValOfKeyOfUnion<T, K>)
-        }
     }
 }
 
