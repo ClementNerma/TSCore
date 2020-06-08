@@ -328,6 +328,16 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     }
 
     /**
+     * Convert this value to a nullable one
+     */
+    toNullable(): T | null {
+        return match(this, {
+            Some: (value) => value,
+            None: () => null,
+        })
+    }
+
+    /**
      * Cast this option's inner value to a parent type
      * If the provided type is not a parent of the inner value's one, the option will be returned but typechecking will fail
      */
