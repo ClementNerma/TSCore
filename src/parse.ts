@@ -3,7 +3,7 @@
  */
 
 import { Result, Ok, Err } from "./result"
-import { Matchable, State, VoidStates, state, stateStr } from "./match"
+import { Matchable, State, VoidStates, state, enumStr } from "./match"
 import { Collection, O } from "./objects"
 import { List } from "./list"
 import { Dictionary } from "./dictionary"
@@ -501,7 +501,7 @@ export namespace Decoders {
     export function enumState<S extends object, T extends Matchable<S>>(cstr: new (state: S) => T, cases: Array<VoidStates<S>>): Decoder<string, T> {
         return (value) =>
             cases.includes(value as any)
-                ? Ok(new cstr(stateStr(value) as any))
+                ? Ok(new cstr(enumStr(value) as any))
                 : Err(new DecodingError(state("NoneOfEnumStates", [cstr.name, cases.map((c) => _stringify(c))])))
     }
 }

@@ -248,11 +248,11 @@ export function state<T extends object, K extends KeyOfUnion<T>>(name: K, value?
 }
 
 /**
- * Create a matchable string instance
+ * Create a matchable string instance, used for Enum<> types
  * The double template is a trick to avoid having to use the `.into()` method
  * @param name
  */
-export function stateStr<K extends string, U extends string>(name: K): Enum<K | U> {
+export function enumStr<K extends string, U extends string>(name: K): Enum<K | U> {
     return new Enum<K | U>(name)
 }
 

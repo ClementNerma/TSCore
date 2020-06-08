@@ -7,7 +7,7 @@ import { Future } from "./future"
 import { Dictionary } from "./dictionary"
 import { List, StringBuffer } from "./list"
 import { Err, Ok, Result } from "./result"
-import { Enum, stateStr } from "./match"
+import { Enum, enumStr } from "./match"
 
 /**
  * Content of a comparative benchmark
@@ -50,11 +50,7 @@ interface CBAverage {
  * @param timeout Time allocated for each function
  * @param waitPromises Wait for promises to complete
  */
-export function comparativeBenchmark(
-    content: ComparativeBenchmarkContent,
-    timeout = 5000,
-    waitPromises = true
-): Future<ComparativeBenchmarkResult, void> {
+export function comparativeBenchmark(content: ComparativeBenchmarkContent, timeout = 5000, waitPromises = true): Future<ComparativeBenchmarkResult> {
     return new Future(async (resolve) => {
         const averages = new Dictionary<string, CBAverage>()
 
@@ -130,7 +126,7 @@ export function tableFromComparativeResults(
 // TODO: TO OPTIMIZE!
 export function tablify(rows: List<List<string>>, titleRow = true): Result<string, Enum<"EmptyTable" | "InconsistentRowSize">> {
     if (rows.length === 0) {
-        return Err(stateStr("EmptyTable"))
+        return Err(enumStr("EmptyTable"))
     }
 
     const colSize = rows.getUnwrap(0).map((_, i) => rows.max((row) => row.getUnwrap(i).length))
@@ -151,7 +147,7 @@ export function tablify(rows: List<List<string>>, titleRow = true): Result<strin
 
     for (const [i, row] of rows.entries()) {
         if (row.length !== colSize.length) {
-            return Err(stateStr("InconsistentRowSize"))
+            return Err(enumStr("InconsistentRowSize"))
         }
 
         output.newLine()
