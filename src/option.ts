@@ -2,8 +2,9 @@
  * @file Represent optional values in a type-safe, functional and combinable way
  */
 
-import { match, Matchable, state, State } from "./match"
-import { Result, Ok, Err } from "./result"
+import { Err, Ok, Result } from "./result"
+import { Matchable, State, match, state } from "./match"
+
 import { panic } from "./panic"
 
 /**

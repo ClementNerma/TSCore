@@ -3,11 +3,12 @@
  */
 
 import { Collection, O } from "./objects"
-import { Future } from "./future"
-import { Dictionary } from "./dictionary"
-import { List, StringBuffer } from "./list"
-import { Err, Ok, Result } from "./result"
 import { Enum, enumStr } from "./match"
+import { Err, Ok, Result } from "./result"
+import { List, StringBuffer } from "./list"
+
+import { Dictionary } from "./dictionary"
+import { Future } from "./future"
 
 /**
  * Content of a comparative benchmark

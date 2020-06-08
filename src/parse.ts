@@ -2,13 +2,14 @@
  * @file Parser library for decoding data
  */
 
-import { Result, Ok, Err } from "./result"
-import { Matchable, State, VoidStates, state, enumStr } from "./match"
 import { Collection, O } from "./objects"
-import { List } from "./list"
+import { Err, Ok, Result } from "./result"
+import { Matchable, State, VoidStates, enumStr, state } from "./match"
+import { MsgParam, formatCustom } from "./panic"
+
 import { Dictionary } from "./dictionary"
+import { List } from "./list"
 import { Option } from "./option"
-import { formatCustom, MsgParam } from "./panic"
 
 export type Decoder<F, T> = (value: F) => Result<T, DecodingError>
 export type GDecoder<T> = Decoder<unknown, T>

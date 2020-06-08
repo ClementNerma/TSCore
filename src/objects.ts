@@ -2,8 +2,9 @@
  * @file Utility functions for objects
  */
 
+import { None, Option, Some } from "./option"
+
 import { forceType } from "./typecasting"
-import { Some, None, Option } from "./option"
 
 /**
  * Key-value object type

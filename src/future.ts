@@ -3,8 +3,9 @@
  */
 
 import { Err, Ok, Result } from "./result"
-import { MappedMatchable, match, state, State } from "./match"
+import { MappedMatchable, State, match, state } from "./match"
 import { None, Option, Some } from "./option"
+
 import { Consumers } from "./list"
 import { panic } from "./panic"
 

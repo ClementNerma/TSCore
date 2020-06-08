@@ -2,11 +2,12 @@
  * @file Reference values to avoid cloning and share resources
  */
 
-import { Consumers } from "./list"
-import { match, Enum, AbstractMatchable, State, state } from "./match"
+import { AbstractMatchable, Enum, State, match, state } from "./match"
 import { Option, Some } from "./option"
-import { panic } from "./panic"
+
+import { Consumers } from "./list"
 import { Result } from "./result"
+import { panic } from "./panic"
 
 export type RefMatch<T> = State<"Available", T> | State<"Destroyed">
 

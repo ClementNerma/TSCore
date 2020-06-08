@@ -2,12 +2,13 @@
  * @file Mutual exclusion
  */
 
-import { Ref } from "./ref"
+import { AbstractMatchable, State, match, matchState, state } from "./match"
 import { Err, Ok, Result } from "./result"
+import { FailableFuture, Future } from "./future"
 import { None, Option } from "./option"
-import { state, match, AbstractMatchable, State, matchState } from "./match"
-import { Future, FailableFuture } from "./future"
+
 import { Consumers } from "./list"
+import { Ref } from "./ref"
 import { panic } from "./panic"
 
 /**

@@ -1,6 +1,6 @@
-import { Option, None, Some } from "./option"
-import { State, MappedMatchable, state } from "./match"
-import { Result, Err, Ok } from "./result"
+import { Err, Ok, Result } from "./result"
+import { MappedMatchable, State, state } from "./match"
+import { None, Option, Some } from "./option"
 
 /**
  * MaybeUninit's pattern matching

@@ -4,7 +4,7 @@
 
 import { Result, Ok, Err } from "./result"
 import { hasState, AbstractMatchable, state, State } from "./match"
-import { O, Collection } from "./objects"
+import { O } from "./objects"
 import { None, Option, Some } from "./option"
 import { List } from "./list"
 import { Dictionary } from "./dictionary"
@@ -330,7 +330,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
             Number: (num) => num,
             String: (str) => str,
             Array: (arr) => arr.toArray().map((val) => val.toNativeJsonValue()),
-            Collection: (coll) => coll.mapToCollection((key, value) => [ key, value.toNativeJsonValue() ]),
+            Collection: (coll) => coll.mapToCollection((key, value) => [key, value.toNativeJsonValue()]),
         })
     }
 

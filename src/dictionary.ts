@@ -2,11 +2,12 @@
  * @file Represent collections in a type-safe way
  */
 
-import { Option, Some, None } from "./option"
-import { O } from "./objects"
-import { Result, Ok, Err } from "./result"
-import { forceType } from "./typecasting"
+import { Err, Ok, Result } from "./result"
+import { None, Option, Some } from "./option"
+
 import { Iter } from "./iter"
+import { O } from "./objects"
+import { forceType } from "./typecasting"
 
 /**
  * Convert a dictionary type to a collection type

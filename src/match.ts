@@ -2,8 +2,9 @@
  * @file Core library for pattern-matching and base matchable types
  */
 
+import { None, Option, Some } from "./option"
+
 import { O } from "./objects"
-import { Option, Some, None } from "./option"
 
 /**
  * Get the key types of an union type
