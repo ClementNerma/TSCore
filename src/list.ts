@@ -46,6 +46,13 @@ export class List<T> {
     }
 
     /**
+     * Check if the list is empty
+     */
+    empty(): boolean {
+        return this._content.length === 0
+    }
+
+    /**
      * Check if an item with a given index exists
      * @param index
      */

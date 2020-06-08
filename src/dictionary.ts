@@ -49,6 +49,13 @@ export class Dictionary<K, V> {
     }
 
     /**
+     * Check if the dictionary is empty
+     */
+    empty(): boolean {
+        return this._content.size === 0
+    }
+
+    /**
      * Check if a given key exists
      * @param key
      */
