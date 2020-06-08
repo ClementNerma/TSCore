@@ -4,7 +4,6 @@
 
 import { None, Option, Some } from "./option"
 import { Comparator } from "./comparison"
-import { Rewindable } from "./rewindable"
 import { panic } from "./panic"
 import { O } from "./objects"
 import { Result, Ok, Err } from "./result"
@@ -576,22 +575,22 @@ export class List<T> {
     /**
      * Iterate over the list's indexes
      */
-    keys(): Rewindable<number> {
-        return new Rewindable(this._content.keys())
+    keys(): Iter<number> {
+        return new Iter(this._content.keys())
     }
 
     /**
      * Iterate over the list's values
      */
-    values(): Rewindable<T> {
-        return new Rewindable(this._content.values())
+    values(): Iter<T> {
+        return new Iter(this._content.values())
     }
 
     /**
      * Iterate over the list's entries (key-value pairs)
      */
-    entries(): Rewindable<[number, T]> {
-        return new Rewindable(this._content.entries())
+    entries(): Iter<[number, T]> {
+        return new Iter(this._content.entries())
     }
 
     /**
@@ -611,15 +610,15 @@ export class List<T> {
     /**
      * Iterate through the list
      */
-    iter(): Rewindable<T> {
-        return new Rewindable(this)
+    iter(): Iter<T> {
+        return new Iter(this)
     }
 
     /**
      * Enumerate the list
      */
-    enumerate(): Rewindable<[number, T]> {
-        return new Iter(this).enumerate().rewindable()
+    enumerate(): Iter<[number, T]> {
+        return new Iter(this).enumerate()
     }
 
     /**
@@ -720,9 +719,6 @@ export class StringBuffer extends List<string> {
 
         return counter
     }
-
-    // TODO: getLines(): string[]
-    // TODO: getLine(index: number): Option<string>
 
     newLine(style = "\r\n"): number {
         return this.push(style)

@@ -5,8 +5,8 @@
 import { Option, Some, None } from "./option"
 import { O } from "./objects"
 import { Result, Ok, Err } from "./result"
-import { Rewindable } from "./rewindable"
 import { forceType } from "./typecasting"
+import { Iter } from "./iter"
 
 /**
  * Convert a dictionary type to a collection type
@@ -235,22 +235,22 @@ export class Dictionary<K, V> {
     /**
      * Iterate through the dictionary's keys
      */
-    keys(): Rewindable<K> {
-        return new Rewindable(this._content.keys())
+    keys(): Iter<K> {
+        return new Iter(this._content.keys())
     }
 
     /**
      * Iterate through the dictionary's values
      */
-    values(): Rewindable<V> {
-        return new Rewindable(this._content.values())
+    values(): Iter<V> {
+        return new Iter(this._content.values())
     }
 
     /**
      * Iterate through the dictionary's entries
      */
-    entries(): Rewindable<[K, V]> {
-        return new Rewindable(this._content.entries())
+    entries(): Iter<[K, V]> {
+        return new Iter(this._content.entries())
     }
 
     /**
