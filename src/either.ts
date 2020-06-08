@@ -69,6 +69,32 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
     }
 
     /**
+     * Run a callback if this Either is Left()
+     * @param callback
+     */
+    withLeft(callback: (value: L) => void): this {
+        match(this, {
+            Left: (value) => callback(value),
+            Right: () => {},
+        })
+
+        return this
+    }
+
+    /**
+     * Run a callback if this Either is Right()
+     * @param callback
+     */
+    withRight(callback: (value: R) => void): this {
+        match(this, {
+            Left: () => {},
+            Right: (value) => callback(value),
+        })
+
+        return this
+    }
+
+    /**
      * Map the union's left member
      * @param mapper
      */
