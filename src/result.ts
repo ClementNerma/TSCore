@@ -231,6 +231,16 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
     }
 
     /**
+     * Clone this result
+     */
+    clone(): Result<T, E> {
+        return match(this, {
+            Ok: (value) => Ok(value),
+            Err: (err) => Err(err),
+        })
+    }
+
+    /**
      * Create a result from a fallible function (= function which may throw())
      * @param core
      */

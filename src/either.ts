@@ -103,6 +103,16 @@ export class Either<L, R> extends Matchable<EitherMatch<L, R>> {
     }
 
     /**
+     * Clone this Either
+     */
+    clone(): Either<L, R> {
+        return match(this, {
+            Left: (value) => Left(value),
+            Right: (value) => Right(value),
+        })
+    }
+
+    /**
      * Create a left union value
      * @param value
      */
