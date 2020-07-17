@@ -29,8 +29,8 @@ export class Dictionary<K, V> {
      * Create a new dictionary from a list of entries
      * @param content
      */
-    constructor(content?: Array<[K, V]>) {
-        this._content = new Map(content)
+    constructor(content?: Array<[K, V]> | Map<K, V>) {
+        this._content = content instanceof Map ? content : new Map(content)
     }
 
     /**
@@ -294,6 +294,13 @@ export class Dictionary<K, V> {
     }
 
     /**
+     * Get a dictionary's internal map
+     */
+    internalMap(): Map<K, V> {
+        return this._content
+    }
+
+    /**
      * Iterate through the dictionary's entries
      */
     [Symbol.iterator](): IterableIterator<[K, V]> {
@@ -335,9 +342,18 @@ export class RecordDict<V> extends Dictionary<string, V> {
     }
 
     /**
+     * Cast a string dictionary to a record (faster than .from())
+     * All changes made to the original dictionary will be repercuted on this dictionary
+     * The opposite is also true
+     */
+    static cast<V>(dict: Dictionary<string, V>): RecordDict<V> {
+        return new this(dict.internalMap())
+    }
+
+    /**
      * Convert a string dictionary to a record
      */
     static from<V>(dict: Dictionary<string, V>): RecordDict<V> {
-        return new this([...dict.entries()])
+        return new this([...dict.internalMap()])
     }
 }
