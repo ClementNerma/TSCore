@@ -2,7 +2,7 @@
  * @file Parser library for decoding data
  */
 
-import { Dictionary } from './dictionary'
+import { Dictionary, RecordDict } from './dictionary'
 import { List } from './list'
 import { Matchable, State, VoidStates, enumStr, state } from './match'
 import { Collection, O } from './objects'
@@ -233,6 +233,20 @@ export namespace Decoders {
                             .map((value) => [key, value])
                     )
             )
+        )
+    }
+
+    export function recordOf<V>(valueDecoder: GDecoder<V>): GDecoder<RecordDict<V>> {
+        return then(instanceOf(RecordDict), (dict) =>
+            dict.resultable((key, value) =>
+                string(key)
+                    .mapErr((err) => new DecodingError(state("DictionaryKey", [_stringify(key), err])))
+                    .andThen((key) =>
+                        valueDecoder(value)
+                            .mapErr((err) => new DecodingError(state("DictionaryValue", [_stringify(key), err])))
+                            .map((value) => [key, value])
+                    )
+            ).map(dict => RecordDict.cast(dict))
         )
     }
 

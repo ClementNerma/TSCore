@@ -2,7 +2,7 @@
  * @file JSON parsing and decoding
  */
 
-import { Dictionary } from './dictionary'
+import { Dictionary, RecordDict } from './dictionary'
 import { List } from './list'
 import { AbstractMatchable, State, hasState, state } from './match'
 import { O } from './objects'
@@ -21,6 +21,7 @@ export type JsonValueType =
     | List<JsonValueType>
     | { [key: string]: JsonValueType }
     | Dictionary<string, JsonValueType>
+    | RecordDict<JsonValueType>
 
 export type MatchableJsonValue =
     | State<"Null", null>
@@ -28,7 +29,7 @@ export type MatchableJsonValue =
     | State<"Number", number>
     | State<"String", string>
     | State<"Array", List<JsonValue>>
-    | State<"Collection", Dictionary<string, JsonValue>>
+    | State<"Collection", RecordDict<JsonValue>>
 
 export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
     private readonly value: JsonValueType
@@ -50,21 +51,15 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
                     this.value.map((value) => new JsonValue(value))
                 )
             } else if (this.value instanceof Dictionary) {
-                return state(
-                    "Collection",
-                    this.value.mapValues((value) => new JsonValue(value))
-                )
+                return state("Collection", RecordDict.cast(this.value.mapValues((value) => new JsonValue(value))))
             } else if (O.isArray(this.value)) {
                 return state(
                     "Array",
                     new List(this.value).map((value) => new JsonValue(value))
                 )
             } else if (O.isCollection(this.value)) {
-                const dict = Dictionary.fromObject(this.value) as Dictionary<string, JsonValueType>
-                return state(
-                    "Collection",
-                    dict.mapValues((value) => new JsonValue(value))
-                )
+                const dict = RecordDict.fromCollection(this.value)
+                return state("Collection", RecordDict.cast(dict.mapValues((value) => new JsonValue(value))))
             } else {
                 unreachable()
             }
@@ -145,7 +140,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
         return getStateValue(this, "Array").filter((list) => size === undefined || list.length === size)
     }
 
-    asCollection(): Option<Dictionary<string, JsonValue>> {
+    asCollection(): Option<RecordDict<JsonValue>> {
         return getStateValue(this, "Collection")
     }
 
@@ -184,7 +179,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
         return getStateValue(this, "Array").expect('JSON value has not "Array" type!')
     }
 
-    expectToBeCollection(): Dictionary<string, JsonValue> {
+    expectToBeCollection(): RecordDict<JsonValue> {
         return getStateValue(this, "Collection").expect('JSON value has not "Collection" type!')
     }
 
@@ -224,7 +219,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
         return this.get(child).andThen((child) => getStateValue(child, "Array"))
     }
 
-    getCollection(child: string): Option<Dictionary<string, JsonValue>> {
+    getCollection(child: string): Option<RecordDict<JsonValue>> {
         return this.get(child).andThen((child) => getStateValue(child, "Collection"))
     }
 
@@ -282,7 +277,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
         return getStateValue(this.expect(child), "Array").expect(`Child value "${child}" has not type "Array"`)
     }
 
-    expectCollection(child: string): Dictionary<string, JsonValue> {
+    expectCollection(child: string): RecordDict<JsonValue> {
         return getStateValue(this.expect(child), "Collection").expect(`Child value "${child}" has not type "Collection"`)
     }
 
@@ -379,7 +374,7 @@ export namespace JsonDecoders {
         return arrayOf((value) => Ok(value))(value)
     }
 
-    export function collection(value: JsonValue): Result<Dictionary<string, JsonValue>, DecodingError> {
+    export function collection(value: JsonValue): Result<RecordDict<JsonValue>, DecodingError> {
         return collectionOf((value) => Ok(value))(value)
     }
 
@@ -391,7 +386,7 @@ export namespace JsonDecoders {
                 .unwrapOr(Err(_err([["s", "JSON value was expected to be an array"]])))
     }
 
-    export function collectionOf<T>(decoder: JsonDecoder<T>): JsonDecoder<Dictionary<string, T>> {
+    export function collectionOf<T>(decoder: JsonDecoder<T>): JsonDecoder<RecordDict<T>> {
         return (value) =>
             value
                 .asCollection()
@@ -399,6 +394,7 @@ export namespace JsonDecoders {
                     coll.resultableValues((key, value) => decoder(value).mapErr((err) => new DecodingError(state("CollectionItem", [key, err]))))
                 )
                 .unwrapOr(Err(_err([["s", "JSON value was expected to be a collection"]])))
+                .map((dict) => RecordDict.cast(dict))
     }
 
     export function untypedTuple(decoders: Array<JsonDecoder<any>>): JsonDecoder<unknown> {
