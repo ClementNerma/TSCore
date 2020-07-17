@@ -81,6 +81,31 @@ export class Dictionary<K, V> {
     }
 
     /**
+     * Get the value related to a key, or set it if it does not exist yet
+     * @param key
+     * @param value
+     */
+    getOrSet(key: K, value: V): V {
+        return this.get(key).unwrapOrElse(() => {
+            this.set(key, value)
+            return value
+        })
+    }
+
+    /**
+     * Get the value related to a key, or set it if it using a callback if it does not exist
+     * @param key
+     * @param setter
+     */
+    getOrSetWith(key: K, setter: (key: K, dict: this) => V): V {
+        return this.get(key).unwrapOrElse(() => {
+            const value = setter(key, this)
+            this.set(key, value)
+            return value
+        })
+    }
+
+    /**
      * Remove a given key
      * @param key
      */
