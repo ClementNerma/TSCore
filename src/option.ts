@@ -259,6 +259,18 @@ export class Option<T> extends Matchable<OptMatch<T>> {
     }
 
     /**
+     * Turn the option into a boolean value
+     * @param cond The condition function
+     * @param fallback The boolean value to return if the option is a 'None'
+     */
+    condition(cond: (value: T) => boolean, fallback = false): boolean {
+        return match(this, {
+            Some: (value) => cond(value),
+            None: () => fallback,
+        })
+    }
+
+    /**
      * Get this option's value or insert another if it's 'None'
      * @param value The value to insert
      */
