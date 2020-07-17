@@ -2,11 +2,10 @@
  * @file Represent optional values in a type-safe, functional and combinable way
  */
 
-import { AbstractMatchable, KeyOfUnion, Matchable, State, ValOfKeyOfUnion, match, state } from "./match"
-import { Err, Ok, Result } from "./result"
-
-import { O } from "./objects"
-import { panic } from "./panic"
+import { AbstractMatchable, KeyOfUnion, Matchable, State, ValOfKeyOfUnion, match, state } from './match'
+import { O } from './objects'
+import { panic } from './panic'
+import { Err, Ok, Result } from './result'
 
 /**
  * Option's pattern matching

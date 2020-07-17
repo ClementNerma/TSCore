@@ -2,13 +2,12 @@
  * @file Type-safe arrays with functional and iterable capabilities
  */
 
-import { Err, Ok, Result } from "./result"
-import { None, Option, Some } from "./option"
-
-import { Comparator } from "./comparison"
-import { Iter } from "./iter"
-import { O } from "./objects"
-import { panic } from "./panic"
+import { Comparator } from './comparison'
+import { Iter } from './iter'
+import { O } from './objects'
+import { None, Option, Some } from './option'
+import { panic } from './panic'
+import { Err, Ok, Result } from './result'
 
 export class List<T> {
     private _content: T[]

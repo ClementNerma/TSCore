@@ -2,11 +2,10 @@
  * @file Powered-up iterators
  */
 
-import { AbstractMatchable, State, state } from "./match"
-import { Consumers, List } from "./list"
-import { None, Option, Some } from "./option"
-
-import { O } from "./objects"
+import { Consumers, List } from './list'
+import { AbstractMatchable, State, state } from './match'
+import { O } from './objects'
+import { None, Option, Some } from './option'
 
 export type IterState = State<"Created"> | State<"AtStep", number> | State<"Done">
 

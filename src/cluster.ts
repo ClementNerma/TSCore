@@ -2,15 +2,14 @@
  * @file Parallel tasks management with concurrent executor and load balancer
  */
 
-import { Err, Ok, Result } from "./result"
-import { FailableFuture, Future } from "./future"
-import { Matchable, State, hasState, match, state } from "./match"
-import { None, Option, Some } from "./option"
-import { Task, parallel } from "./task"
-
-import { List } from "./list"
-import { Mutex } from "./mutex"
-import { panic } from "./panic"
+import { FailableFuture } from './future'
+import { List } from './list'
+import { Matchable, State, hasState, match, state } from './match'
+import { Mutex } from './mutex'
+import { None, Option, Some } from './option'
+import { panic } from './panic'
+import { Err, Ok, Result } from './result'
+import { Task, parallel } from './task'
 
 /**
  * State of a tasks cluster

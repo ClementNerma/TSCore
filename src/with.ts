@@ -2,9 +2,8 @@
  * @file Constrained type
  */
 
-import { Err, Ok, Result } from "./result"
-
-import { assert } from "./assert"
+import { assert } from './assert'
+import { Err, Ok, Result } from './result'
 
 /**
  * Constrained type

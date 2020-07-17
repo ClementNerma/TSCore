@@ -2,7 +2,7 @@
  * @file Some little utilities
  */
 
-import { Err, Ok, Result } from "./result"
+import { Err, Ok, Result } from './result'
 
 export function tryParseInt(str: string, base: number = 10): Result<number, void> {
     const parsed = parseInt(str, base)

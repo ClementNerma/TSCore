@@ -2,14 +2,13 @@
  * @file Asynchronous and abortable multi-steps tasks
  */
 
-import { Err, Ok, Result } from "./result"
-import { FailableFuture, Future } from "./future"
-import { Matchable, State, hasState, match, state } from "./match"
-import { None, Option, Some } from "./option"
-import { TaskCluster, TaskClusterReducer } from "./cluster"
-
-import { List } from "./list"
-import { panic } from "./panic"
+import { TaskCluster, TaskClusterReducer } from './cluster'
+import { FailableFuture, Future } from './future'
+import { List } from './list'
+import { Matchable, State, hasState, match, state } from './match'
+import { None, Option, Some } from './option'
+import { panic } from './panic'
+import { Err, Ok, Result } from './result'
 
 /**
  * State of a task

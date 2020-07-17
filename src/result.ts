@@ -2,10 +2,9 @@
  * @file Result values that are either a success or an error
  */
 
-import { Matchable, State, match, state } from "./match"
-import { None, Option, Some } from "./option"
-
-import { panic } from "./panic"
+import { Matchable, State, match, state } from './match'
+import { None, Option, Some } from './option'
+import { panic } from './panic'
 
 /**
  * Result's pattern matching

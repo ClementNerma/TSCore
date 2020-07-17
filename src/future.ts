@@ -2,12 +2,11 @@
  * @file Future results management (based on promises)
  */
 
-import { Err, Ok, Result } from "./result"
-import { MappedMatchable, State, match, state } from "./match"
-import { None, Option, Some } from "./option"
-
-import { Consumers } from "./list"
-import { panic } from "./panic"
+import { Consumers } from './list'
+import { MappedMatchable, State, match, state } from './match'
+import { None, Option, Some } from './option'
+import { panic } from './panic'
+import { Err, Ok, Result } from './result'
 
 /**
  * Future's pattern matching
