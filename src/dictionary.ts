@@ -4,7 +4,7 @@
 
 import { Iter } from './iter'
 import { List } from './list'
-import { O } from './objects'
+import { Collection, O } from './objects'
 import { None, Option, Some } from './option'
 import { Err, Ok, Result } from './result'
 import { forceType } from './typecasting'
@@ -355,5 +355,12 @@ export class RecordDict<V> extends Dictionary<string, V> {
      */
     static from<V>(dict: Dictionary<string, V>): RecordDict<V> {
         return new this([...dict.internalMap()])
+    }
+
+    /**
+     * Create a record from a collection
+     */
+    static fromCollection<V>(collection: Collection<V>): RecordDict<V> {
+        return new this(O.entries(collection))
     }
 }
