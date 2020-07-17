@@ -40,6 +40,14 @@ const _proxies = {
     },
 
     /**
+     * Log a message
+     * This function is called during calls to println(), eprintln(), debug(), warn(), panic(), unreachable() and implemented()
+     */
+    logger(message: MsgParam, ...params: MsgParam[]): void {
+        // Does nothing by default
+    },
+
+    /**
      * Print a message to STDOUT. Message should be formatted using format()
      * @param message
      * @param params
@@ -148,6 +156,7 @@ export function formatCustom(formatter: (data: MsgParam) => string, message: Msg
  * @param params Its parameters
  */
 export function println(message: MsgParam, ...params: MsgParam[]): void {
+    _proxies.logger(message, ...params)
     return _proxies.println(message, ...params)
 }
 
@@ -157,6 +166,7 @@ export function println(message: MsgParam, ...params: MsgParam[]): void {
  * @param params Its parameters
  */
 export function eprintln(message: MsgParam, ...params: MsgParam[]): void {
+    _proxies.logger(message, ...params)
     return _proxies.eprintln(message, ...params)
 }
 
@@ -166,6 +176,7 @@ export function eprintln(message: MsgParam, ...params: MsgParam[]): void {
  * @param params Its parameters
  */
 export function debug(message: MsgParam, ...params: MsgParam[]): void {
+    _proxies.logger(message, ...params)
     return _proxies.debug(message, ...params)
 }
 
@@ -175,6 +186,7 @@ export function debug(message: MsgParam, ...params: MsgParam[]): void {
  * @param params Its parameters
  */
 export function warn(message: MsgParam, ...params: MsgParam[]): void {
+    _proxies.logger(message, ...params)
     return _proxies.warn(message, ...params)
 }
 
@@ -184,6 +196,7 @@ export function warn(message: MsgParam, ...params: MsgParam[]): void {
  * @param params Its parameters
  */
 export function panic(message: MsgParam, ...params: MsgParam[]): never {
+    _proxies.logger(message, ...params)
     return _proxies.panic(message, ...params)
 }
 
@@ -193,6 +206,7 @@ export function panic(message: MsgParam, ...params: MsgParam[]): never {
  * @param params Its parameters
  */
 export function unimplemented(message?: MsgParam, ...params: MsgParam[]): never {
+    _proxies.logger(message || "Unimplemented!", ...params)
     return _proxies.unimplemented(message, ...params)
 }
 
@@ -202,5 +216,6 @@ export function unimplemented(message?: MsgParam, ...params: MsgParam[]): never 
  * @param params Its parameters
  */
 export function unreachable(message?: MsgParam, ...params: MsgParam[]): never {
+    _proxies.logger(message || "Unreachable!", ...params)
     return _proxies.unreachable(message, ...params)
 }
