@@ -2,9 +2,9 @@
  * @file Represent optional values in a type-safe, functional and combinable way
  */
 
+import { panic } from './console'
 import { AbstractMatchable, KeyOfUnion, Matchable, State, ValOfKeyOfUnion, match, state } from './match'
 import { O } from './objects'
-import { panic } from './panic'
 import { Err, Ok, Result } from './result'
 
 /**

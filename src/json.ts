@@ -2,13 +2,13 @@
  * @file JSON parsing and decoding
  */
 
+import { panic, unreachable } from './console'
+import { Decoder, Decoders as d, DecodingError, DecodingErrorLine } from './decode'
 import { Dictionary, RecordDict } from './dictionary'
 import { List } from './list'
 import { AbstractMatchable, State, hasState, state } from './match'
 import { O } from './objects'
 import { None, Option, Some, getStateValue } from './option'
-import { panic, unreachable } from './panic'
-import { Decoder, Decoders as d, DecodingError, DecodingErrorLine } from './parse'
 import { Err, Ok, Result } from './result'
 
 export type JsonValuePrimitive = null | boolean | number | string

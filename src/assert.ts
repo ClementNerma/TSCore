@@ -2,12 +2,12 @@
  * @file Assertion utilities
  */
 
+import { MsgParam, format, panic } from './console'
 import { Dictionary } from './dictionary'
 import { Either } from './either'
 import { List } from './list'
 import { O } from './objects'
 import { Option } from './option'
-import { MsgParam, format, panic } from './panic'
 import { Ref } from './ref'
 import { Result } from './result'
 import { forceType } from './typecasting'

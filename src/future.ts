@@ -2,10 +2,10 @@
  * @file Future results management (based on promises)
  */
 
+import { panic } from './console'
 import { Consumers } from './list'
 import { MappedMatchable, State, match, state } from './match'
 import { None, Option, Some } from './option'
-import { panic } from './panic'
 import { Err, Ok, Result } from './result'
 
 /**

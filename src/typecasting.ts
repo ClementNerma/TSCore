@@ -2,7 +2,7 @@
  * @file Typecasting utilities
  */
 
-import { panic } from './panic'
+import { panic } from './console'
 
 /**
  * Force the type of a data

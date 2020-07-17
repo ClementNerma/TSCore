@@ -3,10 +3,10 @@
  */
 
 import { Comparator } from './comparison'
+import { panic } from './console'
 import { Iter } from './iter'
 import { O } from './objects'
 import { None, Option, Some } from './option'
-import { panic } from './panic'
 import { Err, Ok, Result } from './result'
 
 export class List<T> {

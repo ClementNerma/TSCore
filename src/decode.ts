@@ -2,12 +2,12 @@
  * @file Parser library for decoding data
  */
 
+import { MsgParam, formatCustom } from './console'
 import { Dictionary, RecordDict } from './dictionary'
 import { List } from './list'
 import { Matchable, State, VoidStates, enumStr, state } from './match'
 import { Collection, O } from './objects'
 import { Option } from './option'
-import { MsgParam, formatCustom } from './panic'
 import { Err, Ok, Result } from './result'
 
 export type Decoder<F, T> = (value: F) => Result<T, DecodingError>
@@ -238,15 +238,17 @@ export namespace Decoders {
 
     export function recordOf<V>(valueDecoder: GDecoder<V>): GDecoder<RecordDict<V>> {
         return then(instanceOf(RecordDict), (dict) =>
-            dict.resultable((key, value) =>
-                string(key)
-                    .mapErr((err) => new DecodingError(state("DictionaryKey", [_stringify(key), err])))
-                    .andThen((key) =>
-                        valueDecoder(value)
-                            .mapErr((err) => new DecodingError(state("DictionaryValue", [_stringify(key), err])))
-                            .map((value) => [key, value])
-                    )
-            ).map(dict => RecordDict.cast(dict))
+            dict
+                .resultable((key, value) =>
+                    string(key)
+                        .mapErr((err) => new DecodingError(state("DictionaryKey", [_stringify(key), err])))
+                        .andThen((key) =>
+                            valueDecoder(value)
+                                .mapErr((err) => new DecodingError(state("DictionaryValue", [_stringify(key), err])))
+                                .map((value) => [key, value])
+                        )
+                )
+                .map((dict) => RecordDict.cast(dict))
         )
     }
 

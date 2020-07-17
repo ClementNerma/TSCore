@@ -2,11 +2,11 @@
  * @file Mutual exclusion
  */
 
+import { panic } from './console'
 import { FailableFuture } from './future'
 import { Consumers } from './list'
 import { AbstractMatchable, State, match, matchState, state } from './match'
 import { None, Option } from './option'
-import { panic } from './panic'
 import { Ref } from './ref'
 import { Err, Ok, Result } from './result'
 

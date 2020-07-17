@@ -3,11 +3,11 @@
  */
 
 import { TaskCluster, TaskClusterReducer } from './cluster'
+import { panic } from './console'
 import { FailableFuture, Future } from './future'
 import { List } from './list'
 import { Matchable, State, hasState, match, state } from './match'
 import { None, Option, Some } from './option'
-import { panic } from './panic'
 import { Err, Ok, Result } from './result'
 
 /**
