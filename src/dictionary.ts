@@ -3,6 +3,7 @@
  */
 
 import { Iter } from './iter'
+import { List } from './list'
 import { O } from './objects'
 import { None, Option, Some } from './option'
 import { Err, Ok, Result } from './result'
@@ -22,7 +23,7 @@ export type DictionaryToCollection<K, V> = {
  */
 export class Dictionary<K, V> {
     /** Dictionary's content */
-    private readonly _content: Map<K, V>
+    protected readonly _content: Map<K, V>
 
     /**
      * Create a new dictionary from a list of entries
@@ -304,4 +305,39 @@ export class Dictionary<K, V> {
  * Record (dictionary with string keys)
  * @template V Type of values
  */
-export type RecordDict<V> = Dictionary<string, V>
+export class RecordDict<V> extends Dictionary<string, V> {
+    /**
+     * Converts the record to a collection
+     * If any key has a collection-illegal name (e.g. 'hasOwnProperty'), an error is returned
+     *   with a collection containing all keys excluding illegal ones as well as the list of faulty keys
+     */
+    toCollection(): Result<{ [key: string]: V }, [{ [key: string]: V }, List<string>]> {
+        const coll: { [key: string]: V } = {}
+        const faulty = new List<string>()
+
+        for (const [key, value] of this._content.entries()) {
+            if (key in {}) {
+                faulty.push(key)
+            } else {
+                coll[key] = value
+            }
+        }
+
+        return faulty.empty() ? Ok(coll) : Err([coll, faulty])
+    }
+
+    /**
+     * Converts the record to a collection
+     * Unlike .toCollection(), it does not fail when a collection-illegal name is encountered (e.g. 'hasOwnProperty')
+     */
+    toUnsafeCollection(): { [key: string]: V } {
+        return Object.fromEntries(this._content.entries())
+    }
+
+    /**
+     * Convert a string dictionary to a record
+     */
+    static from<V>(dict: Dictionary<string, V>): RecordDict<V> {
+        return new this([...dict.entries()])
+    }
+}
