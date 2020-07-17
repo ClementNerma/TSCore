@@ -314,6 +314,30 @@ export class Dictionary<K, V> {
  */
 export class RecordDict<V> extends Dictionary<string, V> {
     /**
+     * Create a new dictionary with mapped keys
+     * @param mapper
+     */
+    mapRecordKeys(mapper: (key: string, value: V) => string): RecordDict<V> {
+        return new RecordDict(Array.from(this._content.entries()).map((entry) => [mapper(entry[0], entry[1]), entry[1]]))
+    }
+
+    /**
+     * Create a new dictionary with mapped values
+     * @param mapper
+     */
+    mapRecordValues<Y>(mapper: (value: V, key: string) => Y): RecordDict<Y> {
+        return new RecordDict(Array.from(this._content.entries()).map((entry) => [entry[0], mapper(entry[1], entry[0])]))
+    }
+
+    /**
+     * Create a new dictionary with mapped entries
+     * @param mapper
+     */
+    mapRecord<Y>(mapper: (key: string, value: V) => [string, Y]): RecordDict<Y> {
+        return new RecordDict(Array.from(this._content.entries()).map((entry) => mapper(entry[0], entry[1])))
+    }
+
+    /**
      * Converts the record to a collection
      * If any key has a collection-illegal name (e.g. 'hasOwnProperty'), an error is returned
      *   with a collection containing all keys excluding illegal ones as well as the list of faulty keys
