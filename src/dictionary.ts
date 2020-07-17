@@ -274,3 +274,9 @@ export class Dictionary<K, V> {
         return this._content.entries()
     }
 }
+
+/**
+ * Record (dictionary with string keys)
+ * @template V Type of values
+ */
+export type RecordDict<V> = Dictionary<string, V>
