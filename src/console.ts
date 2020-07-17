@@ -9,6 +9,7 @@ declare const console: {
     debug: (message: unknown) => void
     log: (message: unknown) => void
     info: (message: unknown) => void
+    warn: (message: unknown) => void
     error: (message: unknown) => void
 }
 
@@ -54,6 +55,24 @@ const _proxies = {
      */
     eprintln(message: MsgParam, ...params: MsgParam[]): void {
         console.error(format(message, ...params))
+    },
+
+    /**
+     * Print a debug message to STDOUT. Message should be formatted using format()
+     * @param message
+     * @param params
+     */
+    debug(message: MsgParam, ...params: MsgParam[]): void {
+        console.debug(format(message, ...params))
+    },
+
+    /**
+     * Print a warning message to STDOUT. Message should be formatted using format()
+     * @param message
+     * @param params
+     */
+    warn(message: MsgParam, ...params: MsgParam[]): void {
+        console.warn(format(message, ...params))
     },
 
     /**
@@ -139,6 +158,24 @@ export function println(message: MsgParam, ...params: MsgParam[]): void {
  */
 export function eprintln(message: MsgParam, ...params: MsgParam[]): void {
     return _proxies.eprintln(message, ...params)
+}
+
+/**
+ * Print a debug message to the standard output
+ * @param message The message to format
+ * @param params Its parameters
+ */
+export function debug(message: MsgParam, ...params: MsgParam[]): void {
+    return _proxies.debug(message, ...params)
+}
+
+/**
+ * Print a warning message to the standard output
+ * @param message The message to format
+ * @param params Its parameters
+ */
+export function warn(message: MsgParam, ...params: MsgParam[]): void {
+    return _proxies.warn(message, ...params)
 }
 
 /**
