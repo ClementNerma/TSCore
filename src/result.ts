@@ -255,6 +255,14 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
 
         return Ok(value)
     }
+
+    /**
+     * Create an Err() variant from an Error
+     * @param error
+     */
+    static fromError(error: Error): Result<any, string> {
+        return Err(error.message)
+    }
 }
 
 /**
