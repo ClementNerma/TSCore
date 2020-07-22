@@ -16,9 +16,11 @@ export class List<T> {
      * Create a new list
      * @param content (Optional) Existing array of set
      */
-    constructor(content?: T[] | Set<T>) {
+    constructor(content?: T[] | Set<T> | List<T>) {
         if (!content) {
             content = []
+        } else if (content instanceof List) {
+            content = content._content.slice()
         } else if (content instanceof Set) {
             content = Array.from(content.values())
         } else {
