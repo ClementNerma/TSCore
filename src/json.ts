@@ -130,7 +130,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
             return O.mapValues(value, JsonValue.extendedToNative)
         }
 
-        unreachable()
+        unreachable('Provided value is not a valid encodable JSON value (are you using "as any" when calling this function?)')
     }
 
     static stringify(value: EncodableJsonValue, pretty = false): string {
