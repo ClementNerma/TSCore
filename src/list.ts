@@ -275,6 +275,21 @@ export class List<T> {
     }
 
     /**
+     * Filter and map a list asynchronously
+     * @param func
+     */
+    async filterMapAsync<U>(func: (value: T, index: number, list: this) => Promise<Option<U>>): Promise<List<U>> {
+        const out = new List<U>()
+
+        for (let i = 0; i < this._content.length; i++) {
+            const filteredMapped = await func(this._content[i], i, this)
+            filteredMapped.some((mapped) => out.push(mapped))
+        }
+
+        return out
+    }
+
+    /**
      * Select the first items matching a predicate
      * Equivalent of `.filter(...).firstOnes(...)` but a lot faster
      * @param predicate
