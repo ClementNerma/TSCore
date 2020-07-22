@@ -667,6 +667,24 @@ export class List<T> {
     static toArray<T>(arr: Array<T> | List<T>): Array<T> {
         return O.isArray(arr) ? arr : arr.toArray()
     }
+
+    /**
+     * Create a range
+     * @param from
+     * @param to
+     */
+    static range(from: number, to: number): List<number> {
+        return List.raw([...new Array(to - from + 1)].map((_, i) => i + from))
+    }
+
+    /**
+     * Create a range using a generation function
+     * @param from
+     * @param to
+     */
+    static rangeWith<T>(from: number, to: number, generator: (value: number, from: number, to: number) => T) {
+        return List.raw([...new Array(to - from + 1)].map((_, i) => generator(i + from, from, to)))
+    }
 }
 
 /**
