@@ -10,7 +10,7 @@ import { Iter } from './iter'
 import { List } from './list'
 import { AbstractMatchable, State, hasState, state } from './match'
 import { MaybeUninit } from './maybeUinit'
-import { O } from './objects'
+import { Collection, O } from './objects'
 import { None, Option, Some, getStateValue } from './option'
 import { Err, Ok, Result } from './result'
 
@@ -133,8 +133,85 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
         unreachable('Provided value is not a valid encodable JSON value (are you using "as any" when calling this function?)')
     }
 
-    static stringify(value: EncodableJsonValue, pretty = false): string {
-        return JSON.stringify(JsonValue.extendedToNative(value), null, pretty ? 4 : 0)
+    static tryEncode(value: unknown): Result<NativeJsonValueType, string> {
+        if (value === undefined) {
+            return Err('Cannot encode "undefined" to JSON')
+        }
+
+        if (value === null || value === false || value === true || typeof value === "number" || typeof value === "string") {
+            return Ok(value)
+        }
+
+        if (value instanceof List) {
+            return value.resultable(JsonValue.tryEncode).map((list) => list.toArray())
+        }
+
+        if (value instanceof Dictionary) {
+            const out: Collection<NativeJsonValueType> = {}
+
+            for (const [key, val] of value) {
+                if (typeof key !== "string") return Err('Key "' + key + '" from dictionary must be a string')
+
+                const encodedVal = JsonValue.tryEncode(val)
+                if (encodedVal.isErr()) return Err('Failed to unwrap value of key "' + key + '": ' + encodedVal.unwrapErr())
+
+                out[key] = encodedVal.unwrap()
+            }
+
+            return Ok(out)
+        }
+
+        if (value instanceof Option) {
+            return value.match({
+                Some: JsonValue.tryEncode,
+                None: () => Ok(null),
+            })
+        }
+
+        if (value instanceof Result) {
+            return value.mapErr(() => "Cannot encode Err() variants of Result<T, E> values").andThen(JsonValue.tryEncode)
+        }
+
+        if (value instanceof Either) {
+            return value.match({
+                Left: JsonValue.tryEncode,
+                Right: JsonValue.tryEncode,
+            })
+        }
+
+        if (value instanceof Iter) {
+            return value
+                .collect()
+                .resultable(JsonValue.tryEncode)
+                .map((list) => list.toArray())
+        }
+
+        if (value instanceof MaybeUninit) {
+            return JsonValue.tryEncode(value.value())
+        }
+
+        if (O.isArray(value)) {
+            return new List(value).resultable(JsonValue.tryEncode).map((list) => list.toArray())
+        }
+
+        if (O.isCollection(value)) {
+            const out: Collection<NativeJsonValueType> = {}
+
+            for (const [key, val] of O.entries(value)) {
+                const encodedVal = JsonValue.tryEncode(val)
+                if (encodedVal.isErr()) return Err('Failed to unwrap value of key "' + key + '": ' + encodedVal.unwrapErr())
+
+                out[key] = encodedVal.unwrap()
+            }
+
+            return Ok(out)
+        }
+
+        unreachable('Provided value is not a valid encodable JSON value (are you using "as any" when calling this function?)')
+    }
+
+    static stringify(value: unknown, indent = 0): Result<string, string> {
+        return JsonValue.tryEncode(value).map((json) => JSON.stringify(json, null, indent))
     }
 
     isNull(): boolean {
