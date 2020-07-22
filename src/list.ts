@@ -321,6 +321,20 @@ export class List<T> {
     }
 
     /**
+     * Map items through an asynchronous function
+     * @param mapper
+     */
+    async mapAsync<U>(mapper: (value: T, index: number, list: this) => Promise<U>): Promise<List<U>> {
+        const out = new List<U>()
+
+        for (const [index, value] of this.entries()) {
+            out.push(await mapper(value, index, this))
+        }
+
+        return out
+    }
+
+    /**
      * Reduce items to a single value
      * @param callback
      * @param initial
