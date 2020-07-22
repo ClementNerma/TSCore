@@ -729,6 +729,24 @@ export class List<T> {
     static rangeWith<T>(from: number, to: number, generator: (value: number, from: number, to: number) => T) {
         return List.raw([...new Array(to - from + 1)].map((_, i) => generator(i + from, from, to)))
     }
+
+    /**
+     * Convert a list of results to a single result holding a list in case of success
+     * @param list A list of results
+     */
+    static resultable<T, E>(list: List<Result<T, E>> | Array<Result<T, E>>): Result<List<T>, E> {
+        const out = new List<T>()
+
+        for (const item of list) {
+            if (item.isErr()) {
+                return Err(item.unwrapErr())
+            }
+
+            out.push(item.unwrap())
+        }
+
+        return Ok(out)
+    }
 }
 
 /**
