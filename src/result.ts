@@ -122,6 +122,17 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
 
     /**
      * Unwrap this result's success value
+     * Panics if the result is not a success and displays the Err() variant's value
+     */
+    unwrapDebug(): T {
+        return match(this, {
+            Ok: (value) => value,
+            Err: (err) => panic("Tried to unwrap an 'Err' value: " + err),
+        })
+    }
+
+    /**
+     * Unwrap this result's success value
      * @param fallback Fallback value in case this result is an error
      */
     unwrapOr(fallback: T): T {
