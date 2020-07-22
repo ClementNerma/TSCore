@@ -747,6 +747,29 @@ export class List<T> {
 
         return Ok(out)
     }
+
+    /**
+     * Convert a list of results to a single result holding a list in case of success
+     * Returns all encountered errors (slower than .resultable())
+     * @param list A list of results
+     */
+    static fullResultable<T, E>(list: List<Result<T, E>> | Array<Result<T, E>>): Result<List<T>, List<E>> {
+        const ok = new List<T>()
+        const err = new List<E>()
+
+        for (const value of list) {
+            value.match({
+                Ok: (value) => {
+                    if (err.empty()) ok.push(value)
+                },
+                Err: (value) => {
+                    err.push(value)
+                },
+            })
+        }
+
+        return err.empty() ? Ok(ok) : Err(err)
+    }
 }
 
 /**
