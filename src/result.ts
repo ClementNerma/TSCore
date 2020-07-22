@@ -2,7 +2,7 @@
  * @file Result values that are either a success or an error
  */
 
-import { panic } from './console'
+import { MsgParam, panic } from './console'
 import { Matchable, State, match, state } from './match'
 import { None, Option, Some } from './option'
 
@@ -128,6 +128,26 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
         return match(this, {
             Ok: (value) => value,
             Err: (err) => panic("Tried to unwrap an 'Err' value: " + err),
+        })
+    }
+
+    /**
+     * Unwrap this result's success value
+     * Panics if the result is not a success and displays the message provided by the formatter
+     * @param formatter
+     */
+    unwrapWith(formatter: (err: E) => string | [string, MsgParam[]]): T {
+        return match(this, {
+            Ok: (value) => value,
+            Err: (err) => {
+                const message = formatter(err)
+
+                if (Array.isArray(message)) {
+                    panic(message[0], ...message[1])
+                } else {
+                    panic(message)
+                }
+            },
         })
     }
 
