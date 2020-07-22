@@ -454,8 +454,7 @@ export class List<T> {
      * Add items at the end of the list if they are not currently in the list
      */
     pushNew(...items: T[]): number {
-        let newItems = items.filter((item) => !this.includes(item))
-        return this.push(...items)
+        return this.push(...items.filter((item) => !this.includes(item)))
     }
 
     /**
