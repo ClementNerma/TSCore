@@ -5,8 +5,11 @@
 import { panic, unreachable } from './console'
 import { Decoder, Decoders as d, DecodingError, DecodingErrorLine } from './decode'
 import { Dictionary, RecordDict } from './dictionary'
+import { Either } from './either'
+import { Iter } from './iter'
 import { List } from './list'
 import { AbstractMatchable, State, hasState, state } from './match'
+import { MaybeUninit } from './maybeUinit'
 import { O } from './objects'
 import { None, Option, Some, getStateValue } from './option'
 import { Err, Ok, Result } from './result'
@@ -30,6 +33,18 @@ export type MatchableJsonValue =
     | State<"String", string>
     | State<"Array", List<JsonValue>>
     | State<"Collection", RecordDict<JsonValue>>
+
+export type EncodableJsonValue =
+    | JsonValuePrimitive
+    | Array<EncodableJsonValue>
+    | List<EncodableJsonValue>
+    | { [key: string]: EncodableJsonValue }
+    | Dictionary<string, EncodableJsonValue>
+    | RecordDict<EncodableJsonValue>
+    | Option<EncodableJsonValue>
+    | Either<EncodableJsonValue, EncodableJsonValue>
+    | Iter<EncodableJsonValue>
+    | MaybeUninit<EncodableJsonValue>
 
 export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
     private readonly value: JsonValueType
@@ -70,6 +85,56 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
 
     static parse(source: string): Result<JsonValue, Error> {
         return Result.fallible(() => JSON.parse(source) as JsonValueType).map((json) => new JsonValue(json))
+    }
+
+    static extendedToNative(value: EncodableJsonValue): NativeJsonValueType {
+        if (value === null || value === false || value === true || typeof value === "number" || typeof value === "string") {
+            return value
+        }
+
+        if (value instanceof List) {
+            return value.toArray().map(JsonValue.extendedToNative)
+        }
+
+        if (value instanceof Dictionary) {
+            return value.mapValuesToCollectionUnchecked(JsonValue.extendedToNative)
+        }
+
+        if (value instanceof Option) {
+            return value.match({
+                Some: JsonValue.extendedToNative,
+                None: () => null,
+            })
+        }
+
+        if (value instanceof Either) {
+            return value.match({
+                Left: JsonValue.extendedToNative,
+                Right: JsonValue.extendedToNative,
+            })
+        }
+
+        if (value instanceof Iter) {
+            return value.collectArray().map(JsonValue.extendedToNative)
+        }
+
+        if (value instanceof MaybeUninit) {
+            return JsonValue.extendedToNative(value.value())
+        }
+
+        if (O.isArray(value)) {
+            return value.map(JsonValue.extendedToNative)
+        }
+
+        if (O.isCollection(value)) {
+            return O.mapValues(value, JsonValue.extendedToNative)
+        }
+
+        unreachable()
+    }
+
+    static stringify(value: EncodableJsonValue, pretty = false): string {
+        return JSON.stringify(JsonValue.extendedToNative(value), null, pretty ? 4 : 0)
     }
 
     isNull(): boolean {
