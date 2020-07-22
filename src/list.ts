@@ -794,11 +794,24 @@ export class Consumers<T> extends List<(data: T) => void> {
     }
 }
 
+/**
+ * Constructable string buffer
+ * A lot faster than a traditional string when constructing it piece by piece
+ *   as it avoids copying the same string over and over
+ */
 export class StringBuffer extends List<string> {
+    /**
+     * Create a buffer from a list of strings
+     * @param strings
+     */
     constructor(...strings: string[]) {
         super(strings)
     }
 
+    /**
+     * Count the number of times a string appears in the buffer
+     * @param str
+     */
     countStr(str: string): number {
         const full = this.join("")
         let counter = 0
@@ -813,6 +826,9 @@ export class StringBuffer extends List<string> {
         return counter
     }
 
+    /**
+     * Count the number of lines in the buffer
+     */
     countLines(): number {
         const full = this.join("")
         let counter = 0
@@ -830,10 +846,16 @@ export class StringBuffer extends List<string> {
         return counter
     }
 
+    /**
+     * Add a line break at the end of the buffer
+     */
     newLine(style = "\r\n"): number {
         return this.push(style)
     }
 
+    /**
+     * Append another string buffer to the current one
+     */
     append(buffer: StringBuffer): this {
         for (const part of buffer) {
             this.push(part)
@@ -842,6 +864,9 @@ export class StringBuffer extends List<string> {
         return this
     }
 
+    /**
+     * Convert the buffer to a single string
+     */
     finalize(): string {
         return this.join("")
     }
