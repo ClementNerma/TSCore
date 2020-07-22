@@ -261,6 +261,20 @@ export class List<T> {
     }
 
     /**
+     * Filter and map a list
+     * @param func
+     */
+    filterMap<U>(func: (value: T, index: number, list: this) => Option<U>): List<U> {
+        const out = new List<U>()
+
+        for (let i = 0; i < this._content.length; i++) {
+            func(this._content[i], i, this).some((mapped) => out.push(mapped))
+        }
+
+        return out
+    }
+
+    /**
      * Select the first items matching a predicate
      * Equivalent of `.filter(...).firstOnes(...)` but a lot faster
      * @param predicate
