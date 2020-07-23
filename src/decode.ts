@@ -101,10 +101,7 @@ export class DecodingError extends Matchable<
 
             NoneOfEnumStates: (err) => [["f", `Value is not one of enumeration "{}"'s state: {}`, [err[0], err[1].join(", ")]]],
 
-            CustomError: (err): DecodingErrorLine[] => [
-                ["s", "Failed to decode using custom decoder:"],
-                ["l", err],
-            ],
+            CustomError: (err): DecodingErrorLine[] => [["l", err]],
         })
     }
 
