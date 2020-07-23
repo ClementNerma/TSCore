@@ -62,6 +62,20 @@ export type EncodableJsonValue =
     | MaybeUninit<EncodableJsonValue>
 
 /**
+ * JSON encoding error
+ */
+export interface JsonEncodingError {
+    /** Error message */
+    error: string
+
+    /** Value that cannot be encoded */
+    faultyValue: unknown
+
+    /** Data path to reach this value */
+    path: string[]
+}
+
+/**
  * Typed JSON value
  */
 export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
@@ -167,7 +181,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
      * Fails if the provided value contains a non-encodable JSON value
      * @param value
      */
-    static tryEncode(value: unknown, path: string[] = []): Result<NativeJsonValueType, { error: string; faultyValue: unknown; path: string[] }> {
+    static tryEncode(value: unknown, path: string[] = []): Result<NativeJsonValueType, JsonEncodingError> {
         const _err = (message: string, faultyValue: unknown) => Err({ error: message, path, faultyValue })
 
         if (value === undefined) {
@@ -188,7 +202,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
             for (const [key, val] of value) {
                 if (typeof key !== "string") return _err("Key from dictionary must be a string", key)
 
-                const encodedVal = JsonValue.tryEncode(val)
+                const encodedVal = JsonValue.tryEncode(val, path.concat(["Collection key: " + key]))
                 if (encodedVal.isErr()) return _err("Failed to encode key: " + encodedVal.unwrapErr(), key)
 
                 out[key] = encodedVal.unwrap()
@@ -198,8 +212,8 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
         }
 
         if (value instanceof Option) {
-            return value.match({
-                Some: JsonValue.tryEncode,
+            return value.match<Result<NativeJsonValueType, JsonEncodingError>>({
+                Some: (value) => JsonValue.tryEncode(value, path.concat(["Some() variant of Option<T>"])),
                 None: () => Ok(null),
             })
         }
@@ -212,8 +226,8 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
 
         if (value instanceof Either) {
             return value.match({
-                Left: JsonValue.tryEncode,
-                Right: JsonValue.tryEncode,
+                Left: (value) => JsonValue.tryEncode(value, path.concat([ 'Left() variant of Either<L, R>' ])),
+                Right: (value) => JsonValue.tryEncode(value, path.concat([ 'Right() variant of Either<L, R>' ])),
             })
         }
 
@@ -238,7 +252,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
             const out: Collection<NativeJsonValueType> = {}
 
             for (const [key, val] of O.entries(value)) {
-                const encodedVal = JsonValue.tryEncode(val)
+                const encodedVal = JsonValue.tryEncode(val, path.concat([ 'Collection key: ' + key ]))
                 if (encodedVal.isErr()) return _err("Failed to unwrap value of key :" + encodedVal.unwrapErr(), key)
                 out[key] = encodedVal.unwrap()
             }
