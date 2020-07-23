@@ -849,7 +849,7 @@ export class StringBuffer extends List<string> {
     /**
      * Add a line break at the end of the buffer
      */
-    newLine(style = "\r\n"): number {
+    newLine(style = "\n"): number {
         return this.push(style)
     }
 
@@ -867,7 +867,7 @@ export class StringBuffer extends List<string> {
     /**
      * Append a new line to the current line
      */
-    appendLine(line: string, newLine = "\r\n"): this {
+    appendLine(line: string, newLine = "\n"): this {
         this.push(line + newLine)
         return this
     }
