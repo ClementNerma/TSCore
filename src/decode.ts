@@ -172,12 +172,30 @@ export namespace Decoders {
         return typeof value === "string" ? Ok(value) : Err(new DecodingError(state("WrongType", "string")))
     }
 
+    export function list(value: unknown): Result<List<unknown>, DecodingError> {
+        return value instanceof List ? Ok(value) : Err(new DecodingError(state("WrongType", "List")))
+    }
+
     export function array(value: unknown): Result<Array<unknown>, DecodingError> {
-        return O.isArray(value) ? Ok(value) : Err(new DecodingError(state("WrongType", "array")))
+        return O.isArray(value) ? Ok(value) : Err(new DecodingError(state("WrongType", "Array")))
+    }
+
+    export function dictionary(value: unknown): Result<Dictionary<unknown, unknown>, DecodingError> {
+        return value instanceof Dictionary ? Ok(value) : Err(new DecodingError(state("WrongType", "Dictionary")))
+    }
+
+    export function record(value: unknown): Result<RecordDict<unknown>, DecodingError> {
+        return value instanceof RecordDict ? Ok(value) : Err(new DecodingError(state("WrongType", "RecordDict")))
     }
 
     export function collection(value: unknown): Result<Collection<unknown>, DecodingError> {
-        return O.isCollection(value) ? Ok(value) : Err(new DecodingError(state("WrongType", "collection")))
+        return O.isCollection(value) ? Ok(value) : Err(new DecodingError(state("WrongType", "Collection")))
+    }
+
+    export function listOf<T>(decoder: GDecoder<T>): GDecoder<List<T>> {
+        return then(instanceOf(List), (list) =>
+            list.resultable((item, i) => decoder(item).mapErr((err) => new DecodingError(state("ListItem", [i, err]))))
+        )
     }
 
     export function arrayOf<T>(decoder: GDecoder<T>): GDecoder<Array<T>> {
@@ -189,30 +207,6 @@ export namespace Decoders {
 
                 if (decoded.isErr()) {
                     return Err(new DecodingError(state("ArrayItem", [i, decoded.unwrapErr()])))
-                }
-
-                out.push(decoded.unwrap())
-            }
-
-            return Ok(out)
-        })
-    }
-
-    export function listOf<T>(decoder: GDecoder<T>): GDecoder<List<T>> {
-        return then(instanceOf(List), (list) =>
-            list.resultable((item, i) => decoder(item).mapErr((err) => new DecodingError(state("ListItem", [i, err]))))
-        )
-    }
-
-    export function collectionOf<T>(decoder: GDecoder<T>): GDecoder<Array<T>> {
-        return then(collection, (arr) => {
-            let out = []
-
-            for (const [field, value] of O.entries(arr)) {
-                const decoded = decoder(value)
-
-                if (decoded.isErr()) {
-                    return Err(new DecodingError(state("CollectionItem", [field.toString(), decoded.unwrapErr()])))
                 }
 
                 out.push(decoded.unwrap())
@@ -250,6 +244,24 @@ export namespace Decoders {
                 )
                 .map((dict) => RecordDict.cast(dict))
         )
+    }
+
+    export function collectionOf<T>(decoder: GDecoder<T>): GDecoder<Array<T>> {
+        return then(collection, (arr) => {
+            let out = []
+
+            for (const [field, value] of O.entries(arr)) {
+                const decoded = decoder(value)
+
+                if (decoded.isErr()) {
+                    return Err(new DecodingError(state("CollectionItem", [field.toString(), decoded.unwrapErr()])))
+                }
+
+                out.push(decoded.unwrap())
+            }
+
+            return Ok(out)
+        })
     }
 
     export function untypedTuple<F>(decoders: Array<Decoder<F, unknown>>): Decoder<F[] | List<F>, unknown[]> {

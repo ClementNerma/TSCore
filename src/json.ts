@@ -512,15 +512,23 @@ export namespace JsonDecoders {
         return value.asString().okOr(_err([["s", "JSON value was expected to be a string"]]))
     }
 
-    export function array(value: JsonValue): Result<List<JsonValue>, DecodingError> {
+    export function list(value: JsonValue): Result<List<JsonValue>, DecodingError> {
+        return listOf((value) => Ok(value))(value)
+    }
+
+    export function array(value: JsonValue): Result<Array<JsonValue>, DecodingError> {
         return arrayOf((value) => Ok(value))(value)
     }
 
-    export function collection(value: JsonValue): Result<RecordDict<JsonValue>, DecodingError> {
+    export function record(value: JsonValue): Result<RecordDict<JsonValue>, DecodingError> {
+        return recordOf((value) => Ok(value))(value)
+    }
+
+    export function collection(value: JsonValue): Result<Collection<JsonValue>, DecodingError> {
         return collectionOf((value) => Ok(value))(value)
     }
 
-    export function arrayOf<T>(decoder: JsonDecoder<T>): JsonDecoder<List<T>> {
+    export function listOf<T>(decoder: JsonDecoder<T>): JsonDecoder<List<T>> {
         return (value) =>
             value
                 .asArray()
@@ -528,7 +536,11 @@ export namespace JsonDecoders {
                 .unwrapOr(Err(_err([["s", "JSON value was expected to be an array"]])))
     }
 
-    export function collectionOf<T>(decoder: JsonDecoder<T>): JsonDecoder<RecordDict<T>> {
+    export function arrayOf<T>(decoder: JsonDecoder<T>): JsonDecoder<Array<T>> {
+        return (value) => listOf(decoder)(value).map((list) => list.toArray())
+    }
+
+    export function recordOf<T>(decoder: JsonDecoder<T>): JsonDecoder<RecordDict<T>> {
         return (value) =>
             value
                 .asCollection()
@@ -539,8 +551,12 @@ export namespace JsonDecoders {
                 .map((dict) => RecordDict.cast(dict))
     }
 
+    export function collectionOf<T>(decoder: JsonDecoder<T>): JsonDecoder<Collection<T>> {
+        return (value) => recordOf(decoder)(value).map((record) => record.toUnsafeCollection())
+    }
+
     export function untypedTuple(decoders: Array<JsonDecoder<any>>): JsonDecoder<unknown> {
-        return d.then(array, (list) => {
+        return d.then(list, (list) => {
             let out = []
             let i = 0
 
@@ -565,7 +581,7 @@ export namespace JsonDecoders {
     }
 
     export function untypedMapped(mappings: Array<[string, JsonDecoder<any>]>): JsonDecoder<{ [key: string]: unknown }> {
-        return d.then(collection, (dict) => {
+        return d.then(record, (dict) => {
             let out: { [key: string]: unknown } = {}
 
             for (const [field, decoder] of mappings) {
