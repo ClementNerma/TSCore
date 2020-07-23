@@ -492,41 +492,17 @@ export namespace JsonDecoders {
         )
     }
 
-    export function json(value: unknown): Result<JsonValue, DecodingError> {
-        return value instanceof JsonValue ? Ok(value) : Err(_err([["s", "Value was expected to be a JSON value"]]))
-    }
+    export const json: Decoder<unknown, JsonValue> = (json) =>
+        json instanceof JsonValue ? Ok(json) : Err(_err([["s", "Value was expected to be a JSON value"]]))
 
-    export function nil(value: JsonValue): Result<null, DecodingError> {
-        return value.asNull().okOr(_err([["s", "JSON value was expected to be null"]]))
-    }
-
-    export function boolean(value: JsonValue): Result<boolean, DecodingError> {
-        return value.asBoolean().okOr(_err([["s", "JSON value was expected to be a boolean"]]))
-    }
-
-    export function number(value: JsonValue): Result<number, DecodingError> {
-        return value.asNumber().okOr(_err([["s", "JSON value was expected to be a number"]]))
-    }
-
-    export function string(value: JsonValue): Result<string, DecodingError> {
-        return value.asString().okOr(_err([["s", "JSON value was expected to be a string"]]))
-    }
-
-    export function list(value: JsonValue): Result<List<JsonValue>, DecodingError> {
-        return listOf((value) => Ok(value))(value)
-    }
-
-    export function array(value: JsonValue): Result<Array<JsonValue>, DecodingError> {
-        return arrayOf((value) => Ok(value))(value)
-    }
-
-    export function record(value: JsonValue): Result<RecordDict<JsonValue>, DecodingError> {
-        return recordOf((value) => Ok(value))(value)
-    }
-
-    export function collection(value: JsonValue): Result<Collection<JsonValue>, DecodingError> {
-        return collectionOf((value) => Ok(value))(value)
-    }
+    export const nil: JsonDecoder<null> = (json) => json.asNull().okOr(_err([["s", "JSON value was expected to be null"]]))
+    export const boolean: JsonDecoder<boolean> = (json) => json.asBoolean().okOr(_err([["s", "JSON value was expected to be a boolean"]]))
+    export const number: JsonDecoder<number> = (json) => json.asNumber().okOr(_err([["s", "JSON value was expected to be a number"]]))
+    export const string: JsonDecoder<string> = (json) => json.asString().okOr(_err([["s", "JSON value was expected to be a string"]]))
+    export const list: JsonDecoder<List<JsonValue>> = (json) => listOf((value) => Ok(value))(json)
+    export const array: JsonDecoder<Array<JsonValue>> = (json) => arrayOf((value) => Ok(value))(json)
+    export const record: JsonDecoder<RecordDict<JsonValue>> = (json) => recordOf((value) => Ok(value))(json)
+    export const collection: JsonDecoder<Collection<JsonValue>> = (json) => collectionOf((value) => Ok(value))(json)
 
     export function listOf<T>(decoder: JsonDecoder<T>): JsonDecoder<List<T>> {
         return (value) =>

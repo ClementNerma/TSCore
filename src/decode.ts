@@ -148,49 +148,37 @@ function _stringify(value: unknown): string {
 }
 
 export namespace Decoders {
-    export function exactlyUndefined(value: unknown): Result<undefined, DecodingError> {
-        return value === undefined ? Ok(undefined) : Err(new DecodingError(state("WrongType", "undefined")))
-    }
+    export const exactlyUndefined: Decoder<unknown, undefined> = (value) =>
+        value === undefined ? Ok(undefined) : Err(new DecodingError(state("WrongType", "undefined")))
 
-    export function exactlyNull(value: unknown): Result<null, DecodingError> {
-        return value === null ? Ok(null) : Err(new DecodingError(state("WrongType", "null")))
-    }
+    export const exactlyNull: Decoder<unknown, null> = (value) => (value === null ? Ok(null) : Err(new DecodingError(state("WrongType", "null"))))
 
-    export function nil(value: unknown): Result<null | undefined, DecodingError> {
-        return value === null || value === undefined ? Ok(value as null | undefined) : Err(new DecodingError(state("WrongType", "nil")))
-    }
+    export const nil: Decoder<unknown, null | undefined> = (value) =>
+        value === null || value === undefined ? Ok(value as null | undefined) : Err(new DecodingError(state("WrongType", "nil")))
 
-    export function bool(value: unknown): Result<boolean, DecodingError> {
-        return value === true || value === false ? Ok(value) : Err(new DecodingError(state("WrongType", "boolean")))
-    }
+    export const bool: Decoder<unknown, boolean> = (value) =>
+        value === true || value === false ? Ok(value) : Err(new DecodingError(state("WrongType", "boolean")))
 
-    export function number(value: unknown): Result<number, DecodingError> {
-        return typeof value === "number" ? Ok(value) : Err(new DecodingError(state("WrongType", "number")))
-    }
+    export const number: Decoder<unknown, number> = (value) =>
+        typeof value === "number" ? Ok(value) : Err(new DecodingError(state("WrongType", "number")))
 
-    export function string(value: unknown): Result<string, DecodingError> {
-        return typeof value === "string" ? Ok(value) : Err(new DecodingError(state("WrongType", "string")))
-    }
+    export const string: Decoder<unknown, string> = (value) =>
+        typeof value === "string" ? Ok(value) : Err(new DecodingError(state("WrongType", "string")))
 
-    export function list(value: unknown): Result<List<unknown>, DecodingError> {
-        return value instanceof List ? Ok(value) : Err(new DecodingError(state("WrongType", "List")))
-    }
+    export const list: Decoder<unknown, List<unknown>> = (value) =>
+        value instanceof List ? Ok(value) : Err(new DecodingError(state("WrongType", "List")))
 
-    export function array(value: unknown): Result<Array<unknown>, DecodingError> {
-        return O.isArray(value) ? Ok(value) : Err(new DecodingError(state("WrongType", "Array")))
-    }
+    export const array: Decoder<unknown, Array<unknown>> = (value) =>
+        O.isArray(value) ? Ok(value) : Err(new DecodingError(state("WrongType", "Array")))
 
-    export function dictionary(value: unknown): Result<Dictionary<unknown, unknown>, DecodingError> {
-        return value instanceof Dictionary ? Ok(value) : Err(new DecodingError(state("WrongType", "Dictionary")))
-    }
+    export const dictionary: Decoder<unknown, Dictionary<unknown, unknown>> = (value) =>
+        value instanceof Dictionary ? Ok(value) : Err(new DecodingError(state("WrongType", "Dictionary")))
 
-    export function record(value: unknown): Result<RecordDict<unknown>, DecodingError> {
-        return value instanceof RecordDict ? Ok(value) : Err(new DecodingError(state("WrongType", "RecordDict")))
-    }
+    export const record: Decoder<unknown, RecordDict<unknown>> = (value) =>
+        value instanceof RecordDict ? Ok(value) : Err(new DecodingError(state("WrongType", "RecordDict")))
 
-    export function collection(value: unknown): Result<Collection<unknown>, DecodingError> {
-        return O.isCollection(value) ? Ok(value) : Err(new DecodingError(state("WrongType", "Collection")))
-    }
+    export const collection: Decoder<unknown, Collection<unknown>> = (value) =>
+        O.isCollection(value) ? Ok(value) : Err(new DecodingError(state("WrongType", "Collection")))
 
     export function listOf<T>(decoder: GDecoder<T>): GDecoder<List<T>> {
         return then(instanceOf(List), (list) =>
