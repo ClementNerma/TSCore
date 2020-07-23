@@ -489,6 +489,14 @@ export class List<T> {
     }
 
     /**
+     * Append all elements from another list to the end of this one
+     */
+    append(list: Array<T> | Set<T> | List<T>): this {
+        this.push(...list)
+        return this
+    }
+
+    /**
      * Move all elements from another list to the end of this one
      * @param list
      */
