@@ -6,6 +6,8 @@ This library aims to provide powerful pattern-matching to TypeScript, as well as
 This project was originally inspired by the [Rust programming language](https://www.rust-lang.org/).
 If you are familiar this Rust, you will be able to use functional types (at least) very quickly.
 
+**WARNING: This library is NOT READY for production yet as it does not have any test and does not follow semantic versioning. A stable version will ship soon.**
+
 ## Concept of matchables
 
 A **matchable** is a value that can has a specific _state_ among a list of possible states. For instance, futures which allow to deal with promises are matchables that have at a T instant one state between `pending`, `fulfilled` or `failed`. A state can either be valueless (only a name) like `pending`, or carry a value, like `fulfilled` which carries the success value and `failed` which carries the error value.
