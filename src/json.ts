@@ -167,9 +167,11 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
      * Fails if the provided value contains a non-encodable JSON value
      * @param value
      */
-    static tryEncode(value: unknown): Result<NativeJsonValueType, { error: string; faultyValue: unknown }> {
+    static tryEncode(value: unknown, path: string[] = []): Result<NativeJsonValueType, { error: string; faultyValue: unknown; path: string[] }> {
+        const _err = (message: string, faultyValue: unknown) => Err({ error: message, path, faultyValue })
+
         if (value === undefined) {
-            return Err({ error: 'Cannot encode "undefined" to JSON', faultyValue: undefined })
+            return _err('Cannot encode "undefined" to JSON', undefined)
         }
 
         if (value === null || value === false || value === true || typeof value === "number" || typeof value === "string") {
@@ -177,17 +179,17 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
         }
 
         if (value instanceof List) {
-            return value.resultable(JsonValue.tryEncode).map((list) => list.toArray())
+            return value.resultable((value, i) => JsonValue.tryEncode(value, path.concat([`Item n°${i + 1} of list`]))).map((list) => list.toArray())
         }
 
         if (value instanceof Dictionary) {
             const out: Collection<NativeJsonValueType> = {}
 
             for (const [key, val] of value) {
-                if (typeof key !== "string") return Err({ error: "Key from dictionary must be a string", faultyValue: key })
+                if (typeof key !== "string") return _err("Key from dictionary must be a string", key)
 
                 const encodedVal = JsonValue.tryEncode(val)
-                if (encodedVal.isErr()) return Err({ error: "Failed to unwrap value of key: " + encodedVal.unwrapErr(), faultyValue: key })
+                if (encodedVal.isErr()) return _err("Failed to encode key: " + encodedVal.unwrapErr(), key)
 
                 out[key] = encodedVal.unwrap()
             }
@@ -204,8 +206,8 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
 
         if (value instanceof Result) {
             return value
-                .mapErr((err) => ({ error: "Cannot encode Err() variants of Result<T, E> values", faultyValue: err }))
-                .andThen(JsonValue.tryEncode)
+                .mapErr((err) => _err("Cannot encode Err() variants of Result<T, E> values", err).unwrapErr())
+                .andThen((value) => JsonValue.tryEncode(value, path.concat(["Ok() variant of Result<T, E>"])))
         }
 
         if (value instanceof Either) {
@@ -218,16 +220,18 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
         if (value instanceof Iter) {
             return value
                 .collect()
-                .resultable(JsonValue.tryEncode)
+                .resultable((value, i) => JsonValue.tryEncode(value, path.concat([`Yield value n°${i + 1} from Iter<T>`])))
                 .map((list) => list.toArray())
         }
 
         if (value instanceof MaybeUninit) {
-            return JsonValue.tryEncode(value.value())
+            return JsonValue.tryEncode(value.value(), path.concat(["MaybeUninit<T>"]))
         }
 
         if (O.isArray(value)) {
-            return new List(value).resultable(JsonValue.tryEncode).map((list) => list.toArray())
+            return new List(value)
+                .resultable((value, i) => JsonValue.tryEncode(value, path.concat([`Item n°${i + 1} from array`])))
+                .map((list) => list.toArray())
         }
 
         if (O.isCollection(value)) {
@@ -235,14 +239,14 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
 
             for (const [key, val] of O.entries(value)) {
                 const encodedVal = JsonValue.tryEncode(val)
-                if (encodedVal.isErr()) return Err({ error: "Failed to unwrap value of key :" + encodedVal.unwrapErr(), faultyValue: key })
+                if (encodedVal.isErr()) return _err("Failed to unwrap value of key :" + encodedVal.unwrapErr(), key)
                 out[key] = encodedVal.unwrap()
             }
 
             return Ok(out)
         }
 
-        return Err({ error: "Provided value is not a valid encodable JSON value", faultyValue: value })
+        return _err("Provided value is not a valid encodable JSON value", value)
     }
 
     /**
@@ -251,7 +255,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
      * @param value
      * @param indent
      */
-    static stringify(value: unknown, indent = 0): Result<string, { error: string; faultyValue: unknown }> {
+    static stringify(value: unknown, indent = 0): Result<string, { error: string; faultyValue: unknown; path: string[] }> {
         return JsonValue.tryEncode(value).map((json) => JSON.stringify(json, null, indent))
     }
 
