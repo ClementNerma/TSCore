@@ -865,6 +865,14 @@ export class StringBuffer extends List<string> {
     }
 
     /**
+     * Append a new line to the current line
+     */
+    appendLine(line: string, newLine = "\r\n"): this {
+        this.push(line + newLine)
+        return this
+    }
+
+    /**
      * Convert the buffer to a single string
      */
     finalize(): string {
