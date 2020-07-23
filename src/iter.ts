@@ -126,6 +126,18 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
     }
 
     /**
+     * Join values to a string
+     * Consumes the iterator
+     * @param str Joint
+     * @param stringifyer (Optional) Stringifyer for values
+     */
+    join(str: string, stringifyer?: (value: T) => string): string {
+        return this.collect()
+            .map((val) => (stringifyer ? stringifyer(val) : val))
+            .join(str)
+    }
+
+    /**
      * Inspect elements without modifying them
      */
     inspect(inspector: (value: T) => void): this {
