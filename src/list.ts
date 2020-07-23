@@ -854,21 +854,21 @@ export class StringBuffer extends List<string> {
     }
 
     /**
-     * Append another string buffer to the current one
+     * Append a new line to the current line
      */
-    append(buffer: StringBuffer): this {
-        for (const part of buffer) {
-            this.push(part)
-        }
-
+    addLine(line: string, newLine = "\n"): this {
+        this.push(line + newLine)
         return this
     }
 
     /**
-     * Append a new line to the current line
+     * Append another string buffer to the current one
      */
-    appendLine(line: string, newLine = "\n"): this {
-        this.push(line + newLine)
+    appendBuffer(buffer: StringBuffer): this {
+        for (const part of buffer) {
+            this.push(part)
+        }
+
         return this
     }
 
