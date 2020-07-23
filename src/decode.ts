@@ -514,13 +514,13 @@ export namespace Decoders {
         return (value) => decoder(value).andThen(mapper)
     }
 
-    /** Decode an optional value */
-    export function optional<F, T>(decoder: Decoder<F, T>): Decoder<F, Option<T>> {
+    /** Decode an optional value to an Option<T> */
+    export function maybe<F, T>(decoder: Decoder<F, T>): Decoder<F, Option<T>> {
         return (value) => Option.transpose(Option.nullable(value).map((value) => decoder(value)))
     }
 
-    /** Decode an optional value to an Option<T> */
-    export function maybe<F, T>(decoder: Decoder<F, T>): Decoder<F, T | undefined> {
+    /** Decode an optional value */
+    export function optional<F, T>(decoder: Decoder<F, T>): Decoder<F, T | undefined> {
         return (value) => (value === undefined ? Ok(undefined) : decoder(value))
     }
 

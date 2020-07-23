@@ -734,13 +734,13 @@ export namespace JsonDecoders {
         })
     }
 
-    /** Decode an optional value */
-    export function optional<T>(decoder: JsonDecoder<T>): JsonDecoder<Option<T>> {
+    /** Decode an optional value to an Option<T> */
+    export function maybe<T>(decoder: JsonDecoder<T>): JsonDecoder<Option<T>> {
         return (value) => (value.isNull() ? Ok(None()) : decoder(value).map((value) => Some(value)))
     }
 
-    /** Decode an optional value to an Option<T> */
-    export function maybe<T>(decoder: JsonDecoder<T>): JsonDecoder<T | undefined> {
+    /** Decode an optional value */
+    export function optional<T>(decoder: JsonDecoder<T>): JsonDecoder<T | undefined> {
         return (value) => (value.isNull() ? Ok(undefined) : decoder(value))
     }
 
