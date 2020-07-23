@@ -496,6 +496,12 @@ export namespace Decoders {
         return (value) => (value instanceof cstr ? Ok(value) : Err(new DecodingError(state("WrongType", `constructor[${cstr.name}]`))))
     }
 
+    /** Sub-type a value to a primitive type */
+    export function typedPrimitive<P extends null | boolean | number | string>(primitive: P): Decoder<unknown, P> {
+        return (value) =>
+            value === primitive ? Ok(value as P) : Err(new DecodingError(state("WrongType", `primitive[${JSON.stringify(primitive)}]`)))
+    }
+
     /** Sub-type a value to a more precise type using a type predicate function */
     export function withType<F, T extends F>(typename: string, predicate: (value: F) => value is T): Decoder<F, T> {
         return (value) => (predicate(value) ? Ok(value) : Err(new DecodingError(state("WrongType", typename))))
