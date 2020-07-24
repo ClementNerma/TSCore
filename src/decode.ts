@@ -49,7 +49,7 @@ export class DecodingError extends Matchable<
     | State<"DictionaryValue", [string, DecodingError]>
     | State<"MissingTupleEntry", number>
     | State<"MissingCollectionField", string>
-    | State<"NoneOfEither", [DecodingError, DecodingError]>
+    | State<"NoneOfEither", DecodingError[]>
     | State<"NoneOfCases", string[]>
     | State<"NoneOfEnumStates", [string, string[]]>
     | State<"CustomError", DecodingErrorLine[]>
@@ -90,11 +90,15 @@ export class DecodingError extends Matchable<
 
             MissingCollectionField: (field) => [["f", `Missing expected collection field "{}"`, [field]]],
 
-            NoneOfEither: (err) => [
-                ["s", `...failed to decode using either() with decoder A:`],
-                ["e", err[0]],
-                ["s", "...as well as with decoder B:"],
-                ["e", err[1]],
+            NoneOfEither: (errors) => [
+                ["s", `...failed to decode using either() with decoder 1:`],
+                ["e", errors[0]],
+                ...errors
+                    .map<DecodingErrorLine[]>((err, i) => [
+                        ["s", `...as well as with decoder ${i + 2}:`],
+                        ["e", err],
+                    ])
+                    .flat(),
             ],
 
             NoneOfCases: (candidates) => [["f", `Value is not one of the candidate values: {}`, [candidates.join(", ")]]],
@@ -393,25 +397,6 @@ export namespace Decoders {
         return (value) => (value === undefined ? Ok(undefined) : decoder(value))
     }
 
-    /** Decode an Either<L, R> value */
-    export function either<F, T>(decoderA: Decoder<F, T>, decoderB: Decoder<F, T>): Decoder<F, T> {
-        return (value) => {
-            const aDecoded = decoderA(value)
-
-            if (aDecoded.isOk()) {
-                return Ok(aDecoded.unwrap())
-            }
-
-            const bDecoded = decoderB(value)
-
-            if (bDecoded.isOk()) {
-                return Ok(bDecoded.unwrap())
-            }
-
-            return Err(new DecodingError(state("NoneOfEither", [aDecoded.unwrapErr(), bDecoded.unwrapErr()])))
-        }
-    }
-
     /** Expect a value to be one of the provided values */
     export function oneOf<F, T extends F>(candidates: T[]): Decoder<F, T> {
         return (value) => {
@@ -456,6 +441,23 @@ export namespace Decoders {
             cases.includes(value as any)
                 ? Ok(new cstr(enumStr(value) as any))
                 : Err(new DecodingError(state("NoneOfEnumStates", [cstr.name, cases.map((c) => _stringify(c))])))
+    }
+
+    /** Decode an Either<L, R> value */
+    export function either<F, T>(...decoders: Array<Decoder<F, T>>): Decoder<F, T> {
+        return (value) => {
+            const errors = []
+
+            for (const decoder of decoders) {
+                const decoded = decoder(value)
+
+                if (decoded.isOk()) return Ok(decoded.unwrap())
+
+                errors.push(decoded.unwrapErr())
+            }
+
+            return Err(new DecodingError(state("NoneOfEither", errors)))
+        }
     }
 
     /* prettier-ignore */ export function tuple<_F,A>(d:[Decoder<_F,A>]):Decoder<_F[]|List<_F>,[A]>;
