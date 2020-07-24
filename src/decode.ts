@@ -61,29 +61,29 @@ export class DecodingError extends Matchable<
         return this.match({
             WrongType: (expected) => [["f", `Value does not have expected type "{}"`, [expected]]],
 
-            ArrayItem: (err) => [
-                ["f", `Failed to decode item n°{} from array:`, [err[0] + 1]],
-                ["e", err[1]],
+            ArrayItem: ([i, err]) => [
+                ["f", `Failed to decode item n°{} from array:`, [i + 1]],
+                ["e", err],
             ],
 
-            ListItem: (err) => [
-                ["f", `Failed to decode item n°{} from list:`, [err[0] + 1]],
-                ["e", err[1]],
+            ListItem: ([i, err]) => [
+                ["f", `Failed to decode item n°{} from list:`, [i + 1]],
+                ["e", err],
             ],
 
-            CollectionItem: (err) => [
-                ["f", `Failed to decode field "{}":`, [err[0]]],
-                ["e", err[1]],
+            CollectionItem: ([key, err]) => [
+                ["f", `Failed to decode field "{}":`, [key]],
+                ["e", err],
             ],
 
-            DictionaryKey: (err) => [
-                ["f", `Failed to decode dictionary key "{}":`, [err[0]]],
-                ["e", err[1]],
+            DictionaryKey: ([key, err]) => [
+                ["f", `Failed to decode dictionary key "{}":`, [key]],
+                ["e", err],
             ],
 
-            DictionaryValue: (err) => [
-                ["f", `Failed to decode dictionary value associated to key "{}":`, [err[0]]],
-                ["e", err[1]],
+            DictionaryValue: ([i, err]) => [
+                ["f", `Failed to decode dictionary value associated to key "{}":`, [i]],
+                ["e", err],
             ],
 
             MissingTupleEntry: (pos) => [["f", `Missing expected tuple entry n°{}`, [pos + 1]]],
@@ -103,7 +103,7 @@ export class DecodingError extends Matchable<
 
             NoneOfCases: (candidates) => [["f", `Value is not one of the candidate values: {}`, [candidates.join(", ")]]],
 
-            NoneOfEnumStates: (err) => [["f", `Value is not one of enumeration "{}"'s state: {}`, [err[0], err[1].join(", ")]]],
+            NoneOfEnumStates: ([enumName, states]) => [["f", `Value is not one of enumeration "{}"'s state: {}`, [enumName, states.join(", ")]]],
 
             CustomError: (err): DecodingErrorLine[] => [["l", err]],
         })
