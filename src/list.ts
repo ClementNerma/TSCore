@@ -887,3 +887,9 @@ export class StringBuffer extends List<string> {
         return this.join("")
     }
 }
+
+/**
+ * List-like structure
+ * @template T Type of values
+ */
+export type ListLike<T> = List<T> | Array<T> | Set<T>
