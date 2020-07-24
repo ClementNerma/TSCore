@@ -198,8 +198,9 @@ export function isStringifyableLinear(stri: RawStringifyable): boolean {
             return stri.content ? isStringifyableLinear(stri.content) : true
 
         case "collection":
-            return stri.content.every(
-                ({ key, value }) => isStringifyableLinear(value) && (typeof key === "number" ? true : isStringifyableLinear(key))
+            return (
+                stri.content.length >= 1 &&
+                stri.content.every(({ key, value }) => isStringifyableLinear(value) && (typeof key === "number" ? true : isStringifyableLinear(key)))
             )
 
         case "prefixed":
