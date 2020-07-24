@@ -9,6 +9,7 @@ import { Matchable, State, VoidStates, enumStr, state } from './match'
 import { Collection, O } from './objects'
 import { Option } from './option'
 import { Err, Ok, Result } from './result'
+import { stringify } from './stringify'
 
 /**
  * A function that handles decoding of a given type to another,
@@ -163,35 +164,6 @@ export class DecodingError extends Matchable<
 }
 
 /**
- * (Internal) Stringify a value whose type is not known
- * @param value
- */
-function _stringify(value: unknown): string {
-    if (value === null) {
-        return "<null>"
-    } else if (value === undefined) {
-        return "<undefined>"
-    } else if ((value as any).toString) {
-        if (typeof (value as any).toString === "function") {
-            const stringifed = (value as any).toString()
-
-            if (typeof stringifed === "string") {
-                // Avoid vertical overflow when displaying
-                const lines = stringifed.split(/\r\n|\r|\n/)
-                // Avoid horizontal overflow too
-                return lines[0].length > 64 ? lines[0] + "..." : lines[0]
-            } else {
-                return "<not stringifyable (.toString() did not return a string)>"
-            }
-        } else {
-            return "<not stringifyable (.toString() method not found)>"
-        }
-    } else {
-        return "<not stringifyable (.toString property not found)>"
-    }
-}
-
-/**
  * Common decoders
  */
 export namespace Decoders {
@@ -269,10 +241,10 @@ export namespace Decoders {
         return then(instanceOf(Dictionary), (dict) =>
             dict.resultable((key, value) =>
                 keyDecoder(key)
-                    .mapErr((err) => new DecodingError(state("DictionaryKey", [_stringify(key), err])))
+                    .mapErr((err) => new DecodingError(state("DictionaryKey", [stringify(key, false), err])))
                     .andThen((key) =>
                         valueDecoder(value)
-                            .mapErr((err) => new DecodingError(state("DictionaryValue", [_stringify(key), err])))
+                            .mapErr((err) => new DecodingError(state("DictionaryValue", [stringify(key, false), err])))
                             .map((value) => [key, value])
                     )
             )
@@ -285,10 +257,10 @@ export namespace Decoders {
             dict
                 .resultable((key, value) =>
                     string(key)
-                        .mapErr((err) => new DecodingError(state("DictionaryKey", [_stringify(key), err])))
+                        .mapErr((err) => new DecodingError(state("DictionaryKey", [stringify(key, false), err])))
                         .andThen((key) =>
                             valueDecoder(value)
-                                .mapErr((err) => new DecodingError(state("DictionaryValue", [_stringify(key), err])))
+                                .mapErr((err) => new DecodingError(state("DictionaryValue", [stringify(key, false), err])))
                                 .map((value) => [key, value])
                         )
                 )
@@ -323,7 +295,7 @@ export namespace Decoders {
     /** Sub-type a value to a primitive type */
     export function typedPrimitive<P extends null | boolean | number | string>(primitive: P): Decoder<unknown, P> {
         return (value) =>
-            value === primitive ? Ok(value as P) : Err(new DecodingError(state("WrongType", `primitive[${JSON.stringify(primitive)}]`)))
+            value === primitive ? Ok(value as P) : Err(new DecodingError(state("WrongType", `primitive[${stringify(primitive, false)}]`)))
     }
 
     /** Sub-type a value to a more precise type using a type predicate function */
@@ -361,7 +333,7 @@ export namespace Decoders {
                     new DecodingError(
                         state(
                             "NoneOfCases",
-                            candidates.map((c) => _stringify(c))
+                            candidates.map((c) => stringify(c, false))
                         )
                     )
                 )
@@ -394,7 +366,7 @@ export namespace Decoders {
         return (value) =>
             cases.includes(value as any)
                 ? Ok(new cstr(enumStr(value) as any))
-                : Err(new DecodingError(state("NoneOfEnumStates", [cstr.name, cases.map((c) => _stringify(c))])))
+                : Err(new DecodingError(state("NoneOfEnumStates", [cstr.name, cases.map((c) => stringify(c, false))])))
     }
 
     /** Decode an Either<L, R> value */
@@ -422,7 +394,7 @@ export namespace Decoders {
             for (const [i, decoder] of decoders.entries()) {
                 const decoded = decoder(value)
 
-                if (decoded.isErr()) return Err(new DecodingError(state('FailedCombining', [ i, decoded.unwrapErr() ])))
+                if (decoded.isErr()) return Err(new DecodingError(state("FailedCombining", [i, decoded.unwrapErr()])))
 
                 values.push(decoded.unwrap())
             }
