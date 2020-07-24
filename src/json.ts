@@ -80,42 +80,42 @@ export interface JsonEncodingError {
  */
 export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
     /** Internal value */
-    private readonly value: JsonValueType
+    private readonly _value: JsonValueType
 
     /**
      * Create a new JSON value from a convertable one
      */
     constructor(value: JsonValueType) {
         super(() => {
-            if (this.value === null) {
-                return state("Null", this.value)
-            } else if (this.value === true || this.value === false) {
-                return state("Boolean", this.value)
-            } else if (this.value.constructor === Number) {
-                return state("Number", this.value as number)
-            } else if (this.value.constructor === String) {
-                return state("String", this.value as string)
-            } else if (this.value instanceof List) {
+            if (this._value === null) {
+                return state("Null", this._value)
+            } else if (this._value === true || this._value === false) {
+                return state("Boolean", this._value)
+            } else if (this._value.constructor === Number) {
+                return state("Number", this._value as number)
+            } else if (this._value.constructor === String) {
+                return state("String", this._value as string)
+            } else if (this._value instanceof List) {
                 return state(
                     "Array",
-                    this.value.map((value) => new JsonValue(value))
+                    this._value.map((value) => new JsonValue(value))
                 )
-            } else if (this.value instanceof Dictionary) {
-                return state("Collection", RecordDict.cast(this.value.mapValues((value) => new JsonValue(value))))
-            } else if (O.isArray(this.value)) {
+            } else if (this._value instanceof Dictionary) {
+                return state("Collection", RecordDict.cast(this._value.mapValues((value) => new JsonValue(value))))
+            } else if (O.isArray(this._value)) {
                 return state(
                     "Array",
-                    new List(this.value).map((value) => new JsonValue(value))
+                    new List(this._value).map((value) => new JsonValue(value))
                 )
-            } else if (O.isCollection(this.value)) {
-                const dict = RecordDict.fromCollection(this.value)
+            } else if (O.isCollection(this._value)) {
+                const dict = RecordDict.fromCollection(this._value)
                 return state("Collection", RecordDict.cast(dict.mapValues((value) => new JsonValue(value))))
             } else {
                 unreachable()
             }
         })
 
-        this.value = value
+        this._value = value
     }
 
     /**
@@ -271,6 +271,13 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
      */
     static stringify(value: unknown, indent = 0): Result<string, JsonEncodingError> {
         return JsonValue.tryEncode(value).map((json) => JSON.stringify(json, null, indent))
+    }
+
+    /**
+     * Get the inner value
+     */
+    inner(): JsonValueType {
+        return this._value
     }
 
     /** Check if the value is null */

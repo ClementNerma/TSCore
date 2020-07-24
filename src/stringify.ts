@@ -3,6 +3,7 @@ import { Dictionary } from './dictionary'
 import { Either } from './either'
 import { Future } from './future'
 import { Iter } from './iter'
+import { JsonValue } from './json'
 import { List } from './list'
 import { matchString } from './match'
 import { MaybeUninit } from './maybeUinit'
@@ -161,6 +162,14 @@ export function makeStringifyable(value: unknown, numberFormat: StringifyNumberF
                 Fulfilled: (value) => ({ type: "prefixed", prefix: "Fulfilled", value: _nested(value) }),
                 Failed: (err) => ({ type: "prefixed", prefix: "Failed", value: _nested(err) }),
             }),
+        }
+    }
+
+    if (value instanceof JsonValue) {
+        return {
+            type: "wrapped",
+            typename: "JsonValue",
+            content: _nested(value.inner()),
         }
     }
 
