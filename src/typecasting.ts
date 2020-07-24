@@ -21,9 +21,5 @@ export function forceType<T>(value: unknown): T {
  * @param message
  */
 export function expect<T>(value: T | null | undefined, message?: string): NonNullable<T> {
-    if (value === undefined || value === null) {
-        panic(message || "Tried to use a null or undefined value as non-nullable!")
-    }
-
-    return forceType(value)
+    return value ?? panic(message || "Tried to use a null or undefined value as non-nullable!")
 }
