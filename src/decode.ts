@@ -309,58 +309,6 @@ export namespace Decoders {
         })
     }
 
-    /** Decode arrays/lists to moderately-typed tuples as arrays with a common decoder for each member of the tuple */
-    export function untypedTuple<F>(decoders: Array<Decoder<F, unknown>>): Decoder<F[] | List<F>, unknown[]> {
-        return (encoded) => {
-            const arr = encoded instanceof List ? encoded.toArray() : encoded
-
-            let out: unknown[] = []
-            let i = 0
-
-            if (arr.length < decoders.length) {
-                return Err(new DecodingError(state("MissingTupleEntry", decoders.length)))
-            }
-
-            for (const decoder of decoders) {
-                let decoded = decoder(arr[i++])
-
-                if (decoded.isErr()) {
-                    return Err(new DecodingError(state("ArrayItem", [i - 1, decoded.unwrapErr()])))
-                }
-
-                out.push(decoded.unwrap())
-            }
-
-            return Ok(out)
-        }
-    }
-
-    /** Decode key/value pairs to moderately-typed collections with a common decoder for each member of the mapping */
-    export function untypedMapped<F>(
-        mappings: Array<[string, Decoder<F, unknown>]>
-    ): Decoder<Collection<F> | Dictionary<string, F>, Collection<unknown>> {
-        return (encoded) => {
-            const coll = encoded instanceof Dictionary ? encoded.mapKeysToCollection((k) => k) : encoded
-            let out: Collection<unknown> = {}
-
-            for (const [field, decoder] of mappings) {
-                if (!coll.hasOwnProperty(field)) {
-                    return Err(new DecodingError(state("MissingCollectionField", field)))
-                }
-
-                let decoded = decoder(coll[field])
-
-                if (decoded.isErr()) {
-                    return Err(new DecodingError(state("CollectionItem", [field, decoded.unwrapErr()])))
-                }
-
-                out[field] = decoded.unwrap()
-            }
-
-            return Ok(out)
-        }
-    }
-
     /** Expect the value to be an instance of the provided constructor */
     export function instanceOf<F, T>(cstr: new (...args: any[]) => T): Decoder<F, T> {
         return (value) => (value instanceof cstr ? Ok(value) : Err(new DecodingError(state("WrongType", `constructor[${cstr.name}]`))))
@@ -457,6 +405,58 @@ export namespace Decoders {
             }
 
             return Err(new DecodingError(state("NoneOfEither", errors)))
+        }
+    }
+
+    /** Decode arrays/lists to moderately-typed tuples as arrays with a common decoder for each member of the tuple */
+    export function untypedTuple<F>(decoders: Array<Decoder<F, unknown>>): Decoder<F[] | List<F>, unknown[]> {
+        return (encoded) => {
+            const arr = encoded instanceof List ? encoded.toArray() : encoded
+
+            let out: unknown[] = []
+            let i = 0
+
+            if (arr.length < decoders.length) {
+                return Err(new DecodingError(state("MissingTupleEntry", decoders.length)))
+            }
+
+            for (const decoder of decoders) {
+                let decoded = decoder(arr[i++])
+
+                if (decoded.isErr()) {
+                    return Err(new DecodingError(state("ArrayItem", [i - 1, decoded.unwrapErr()])))
+                }
+
+                out.push(decoded.unwrap())
+            }
+
+            return Ok(out)
+        }
+    }
+
+    /** Decode key/value pairs to moderately-typed collections with a common decoder for each member of the mapping */
+    export function untypedMapped<F>(
+        mappings: Array<[string, Decoder<F, unknown>]>
+    ): Decoder<Collection<F> | Dictionary<string, F>, Collection<unknown>> {
+        return (encoded) => {
+            const coll = encoded instanceof Dictionary ? encoded.mapKeysToCollection((k) => k) : encoded
+            let out: Collection<unknown> = {}
+
+            for (const [field, decoder] of mappings) {
+                if (!coll.hasOwnProperty(field)) {
+                    return Err(new DecodingError(state("MissingCollectionField", field)))
+                }
+
+                let decoded = decoder(coll[field])
+
+                if (decoded.isErr()) {
+                    return Err(new DecodingError(state("CollectionItem", [field, decoded.unwrapErr()])))
+                }
+
+                out[field] = decoded.unwrap()
+            }
+
+            return Ok(out)
         }
     }
 
