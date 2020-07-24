@@ -212,7 +212,7 @@ export function isStringifyableLinear(stri: RawStringifyable): boolean {
 
 export function stringifyRaw(stri: RawStringifyable, pretty?: boolean, highlighters: StringifyHighlighter = (_, str) => str): string {
     // pretty ??= isStringifyableLinear(stri)
-    pretty = pretty ?? isStringifyableLinear(stri)
+    pretty = pretty ?? !isStringifyableLinear(stri)
 
     switch (stri.type) {
         case "text":
