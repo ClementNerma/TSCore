@@ -29,7 +29,7 @@ export type RawStringifyable =
     | { type: "wrapped"; typename: string; content?: RawStringifyable }
     | { type: "collection"; typename: string; content: Array<{ key: RawStringifyable; value: RawStringifyable }> }
     | { type: "prefixed"; prefix: string; value?: RawStringifyable }
-    | { type: "unknown" }
+    | { type: "unknown"; typename: string | undefined }
 
 /**
  * Convert a value to a stringifyable format
@@ -179,13 +179,13 @@ export function makeStringifyable(value: unknown): RawStringifyable {
                 // Avoid horizontal overflow too
                 return { type: "text", text: lines[0].length > 64 ? lines[0] + "..." : lines[0] }
             } else {
-                return { type: "unknown" }
+                return { type: "unknown", typename: (value as any).constructor?.name }
             }
         } else {
-            return { type: "unknown" }
+            return { type: "unknown", typename: (value as any).constructor?.name }
         }
     } else {
-        return stringifyExt(value) ?? { type: "unknown" }
+        return stringifyExt(value) ?? { type: "unknown", typename: (value as any).constructor?.name }
     }
 }
 
@@ -280,7 +280,7 @@ export function stringifyRaw(stri: RawStringifyable, pretty?: boolean, highlight
             )
 
         case "unknown":
-            return highlighters("unknown", "<unknown>")
+            return highlighters("unknown", `<${stri.typename ?? "unknown type"}>`)
     }
 }
 
