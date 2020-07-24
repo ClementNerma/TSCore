@@ -5,6 +5,7 @@
 import { MsgParam, panic } from './console'
 import { Matchable, State, match, state } from './match'
 import { None, Option, Some } from './option'
+import { StringifyHighlighter, stringify } from './stringify'
 
 /**
  * Result's pattern matching
@@ -112,22 +113,12 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
     /**
      * Unwrap this result's success value
      * Panics if the result is not a success
+     * @param highlighter Custom highlighter for the stringified value
      */
-    unwrap(): T {
+    unwrap(highlighter?: StringifyHighlighter): T {
         return match(this, {
             Ok: (value) => value,
-            Err: () => panic("Tried to unwrap an 'Err' value!"),
-        })
-    }
-
-    /**
-     * Unwrap this result's success value
-     * Panics if the result is not a success and displays the Err() variant's value
-     */
-    unwrapDebug(): T {
-        return match(this, {
-            Ok: (value) => value,
-            Err: (err) => panic("Tried to unwrap an 'Err' value: " + err),
+            Err: (err) => panic("Tried to unwrap an 'Err' value: {}", stringify(err, true, highlighter)),
         })
     }
 
