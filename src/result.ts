@@ -2,10 +2,9 @@
  * @file Result values that are either a success or an error
  */
 
-import { MsgParam, panic } from './console'
+import { panic } from './env'
 import { Matchable, State, match, state } from './match'
 import { None, Option, Some } from './option'
-import { StringifyHighlighter, stringify } from './stringify'
 
 /**
  * Result's pattern matching
@@ -113,12 +112,11 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
     /**
      * Unwrap this result's success value
      * Panics if the result is not a success
-     * @param highlighter Custom highlighter for the stringified value
      */
-    unwrap(highlighter?: StringifyHighlighter): T {
+    unwrap(): T {
         return match(this, {
             Ok: (value) => value,
-            Err: (err) => panic("Tried to unwrap an 'Err' value: {}", stringify(err, true, highlighter)),
+            Err: (err) => panic("Tried to unwrap an 'Err' value: {}", err),
         })
     }
 
@@ -127,18 +125,10 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
      * Panics if the result is not a success and displays the message provided by the formatter
      * @param formatter
      */
-    unwrapWith(formatter: (err: E) => string | [string, MsgParam[]]): T {
+    unwrapWith(formatter: (err: E) => string): T {
         return match(this, {
             Ok: (value) => value,
-            Err: (err) => {
-                const message = formatter(err)
-
-                if (Array.isArray(message)) {
-                    panic(message[0], ...message[1])
-                } else {
-                    panic(message)
-                }
-            },
+            Err: (err) => panic(formatter(err)),
         })
     }
 

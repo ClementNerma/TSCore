@@ -2,10 +2,10 @@
  * @file JSON parsing and decoding
  */
 
-import { panic, unreachable } from './console'
 import { Decoder, Decoders as d, DecodingError, DecodingErrorLine } from './decode'
 import { Dictionary, RecordDict } from './dictionary'
 import { Either } from './either'
+import { panic, unreachable } from './env'
 import { Iter } from './iter'
 import { List } from './list'
 import { AbstractMatchable, State, hasState, state } from './match'

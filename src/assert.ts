@@ -2,9 +2,9 @@
  * @file Assertion utilities
  */
 
-import { MsgParam, format, panic } from './console'
 import { Dictionary } from './dictionary'
 import { Either } from './either'
+import { format, panic } from './env'
 import { List } from './list'
 import { O } from './objects'
 import { Option } from './option'
@@ -22,7 +22,7 @@ import { forceType } from './typecasting'
  */
 export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: string[] = []): void | never {
     // Beautified panic function
-    const fail = (message: MsgParam, ...params: MsgParam[]): never =>
+    const fail = (message: string, ...params: unknown[]): never =>
         panic(`{} (${message})\n{}`, panicMessage || "Assertion failed", ...params, _ctx.join("\n"))
 
     // Ensure values type are identical

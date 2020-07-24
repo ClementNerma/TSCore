@@ -4,6 +4,7 @@ import { Either } from './either'
 import { Future } from './future'
 import { Iter } from './iter'
 import { List } from './list'
+import { matchString } from './match'
 import { MaybeUninit } from './maybeUinit'
 import { O } from './objects'
 import { Option } from './option'
@@ -13,12 +14,14 @@ import { Task } from './task'
 
 export type StringifyHighlighter = (type: "typename" | "prefix" | "collKey" | "collValue" | "text" | "unknown" | "punctuation", str: string) => string
 
+export type StringifyNumberFormat = "b" | "d" | "o" | "x" | "X"
+
 /**
  * Stringify a value to a human-readable string
  * @param value
  */
-export function stringify(value: unknown, prettify?: boolean, highlighters?: StringifyHighlighter): string {
-    return stringifyRaw(makeStringifyable(value), prettify, highlighters)
+export function stringify(value: unknown, prettify?: boolean, numberFormat?: StringifyNumberFormat, highlighter?: StringifyHighlighter): string {
+    return stringifyRaw(makeStringifyable(value, numberFormat), prettify, highlighter)
 }
 
 /**
@@ -33,8 +36,12 @@ export type RawStringifyable =
 
 /**
  * Convert a value to a stringifyable format
+ * @param value
+ * @param numberFormat
  */
-export function makeStringifyable(value: unknown): RawStringifyable {
+export function makeStringifyable(value: unknown, numberFormat: StringifyNumberFormat = "d"): RawStringifyable {
+    const _nested = (value: unknown) => makeStringifyable(value, numberFormat)
+
     if (value === null) {
         return { type: "text", text: "<null>" }
     }
@@ -45,22 +52,22 @@ export function makeStringifyable(value: unknown): RawStringifyable {
 
     if (value instanceof Option) {
         return value.match({
-            Some: (value) => ({ type: "wrapped", typename: "Some", content: makeStringifyable(value) }),
+            Some: (value) => ({ type: "wrapped", typename: "Some", content: _nested(value) }),
             None: () => ({ type: "wrapped", typename: "None" }),
         })
     }
 
     if (value instanceof Result) {
         return value.match({
-            Ok: (value) => ({ type: "wrapped", typename: "Ok", content: makeStringifyable(value) }),
-            Err: (err) => ({ type: "wrapped", typename: "Err", content: makeStringifyable(err) }),
+            Ok: (value) => ({ type: "wrapped", typename: "Ok", content: _nested(value) }),
+            Err: (err) => ({ type: "wrapped", typename: "Err", content: _nested(err) }),
         })
     }
 
     if (value instanceof Either) {
         return value.match({
-            Left: (value) => ({ type: "wrapped", typename: "Left", content: makeStringifyable(value) }),
-            Right: (right) => ({ type: "wrapped", typename: "Err", content: makeStringifyable(right) }),
+            Left: (value) => ({ type: "wrapped", typename: "Left", content: _nested(value) }),
+            Right: (right) => ({ type: "wrapped", typename: "Err", content: _nested(right) }),
         })
     }
 
@@ -68,7 +75,7 @@ export function makeStringifyable(value: unknown): RawStringifyable {
         return {
             type: "collection",
             typename: "List",
-            content: value.toArray().map((item, i) => ({ key: makeStringifyable(i), value: makeStringifyable(item) })),
+            content: value.toArray().map((item, i) => ({ key: _nested(i), value: _nested(item) })),
         }
     }
 
@@ -76,7 +83,7 @@ export function makeStringifyable(value: unknown): RawStringifyable {
         return {
             type: "collection",
             typename: "Array",
-            content: value.map((item, i) => ({ key: makeStringifyable(i), value: makeStringifyable(item) })),
+            content: value.map((item, i) => ({ key: _nested(i), value: _nested(item) })),
         }
     }
 
@@ -87,12 +94,12 @@ export function makeStringifyable(value: unknown): RawStringifyable {
             content: value
                 .entries()
                 .collectArray()
-                .map(([key, value]) => ({ key: makeStringifyable(key), value: makeStringifyable(value) })),
+                .map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
         }
     }
 
     if (value instanceof Iter) {
-        return { type: "wrapped", typename: "Iter", content: { type: "prefixed", prefix: "pointer", value: makeStringifyable(value.pointer) } }
+        return { type: "wrapped", typename: "Iter", content: { type: "prefixed", prefix: "pointer", value: _nested(value.pointer) } }
     }
 
     if (value instanceof MaybeUninit) {
@@ -100,7 +107,7 @@ export function makeStringifyable(value: unknown): RawStringifyable {
             type: "wrapped",
             typename: "MaybeUninit",
             content: value.match({
-                Init: (value) => ({ type: "prefixed", prefix: "Init", content: makeStringifyable(value) }),
+                Init: (value) => ({ type: "prefixed", prefix: "Init", content: _nested(value) }),
                 Uninit: () => ({ type: "prefixed", prefix: "Uninit" }),
             }),
         }
@@ -111,7 +118,7 @@ export function makeStringifyable(value: unknown): RawStringifyable {
             type: "wrapped",
             typename: "Ref",
             content: value.match({
-                Available: (value) => ({ type: "prefixed", prefix: "Available", content: makeStringifyable(value) }),
+                Available: (value) => ({ type: "prefixed", prefix: "Available", content: _nested(value) }),
                 Destroyed: () => ({ type: "prefixed", prefix: "Destroyed" }),
             }),
         }
@@ -123,7 +130,7 @@ export function makeStringifyable(value: unknown): RawStringifyable {
             typename: "Future",
             content: value.match({
                 Pending: () => ({ type: "prefixed", prefix: "Pending" }),
-                Complete: (value) => ({ type: "prefixed", prefix: "Complete", content: makeStringifyable(value) }),
+                Complete: (value) => ({ type: "prefixed", prefix: "Complete", content: _nested(value) }),
             }),
         }
     }
@@ -136,8 +143,8 @@ export function makeStringifyable(value: unknown): RawStringifyable {
                 Created: () => ({ type: "prefixed", prefix: "Created" }),
                 Pending: () => ({ type: "prefixed", prefix: "Pending" }),
                 RunningStep: () => ({ type: "prefixed", prefix: "RunningStep" }),
-                Fulfilled: (value) => ({ type: "prefixed", prefix: "Fulfilled", value: makeStringifyable(value) }),
-                Failed: (err) => ({ type: "prefixed", prefix: "Failed", value: makeStringifyable(err) }),
+                Fulfilled: (value) => ({ type: "prefixed", prefix: "Fulfilled", value: _nested(value) }),
+                Failed: (err) => ({ type: "prefixed", prefix: "Failed", value: _nested(err) }),
             }),
         }
     }
@@ -151,8 +158,8 @@ export function makeStringifyable(value: unknown): RawStringifyable {
                 Running: () => ({ type: "prefixed", prefix: "Running" }),
                 Paused: () => ({ type: "prefixed", prefix: "Paused" }),
                 Aborted: () => ({ type: "prefixed", prefix: "Aborted" }),
-                Fulfilled: (value) => ({ type: "prefixed", prefix: "Fulfilled", value: makeStringifyable(value) }),
-                Failed: (err) => ({ type: "prefixed", prefix: "Failed", value: makeStringifyable(err) }),
+                Fulfilled: (value) => ({ type: "prefixed", prefix: "Fulfilled", value: _nested(value) }),
+                Failed: (err) => ({ type: "prefixed", prefix: "Failed", value: _nested(err) }),
             }),
         }
     }
@@ -165,7 +172,20 @@ export function makeStringifyable(value: unknown): RawStringifyable {
         return {
             type: "collection",
             typename: "Collection",
-            content: O.entries(value).map(([key, value]) => ({ key: makeStringifyable(key), value: makeStringifyable(value) })),
+            content: O.entries(value).map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
+        }
+    }
+
+    if (typeof value === "number") {
+        return {
+            type: "text",
+            text: matchString(numberFormat, {
+                b: () => "0b" + value.toString(2),
+                o: () => "0o" + value.toString(8),
+                d: () => value.toString(),
+                x: () => "0x" + value.toString(16).toLowerCase(),
+                X: () => "0x" + value.toString(16).toUpperCase(),
+            }),
         }
     }
 

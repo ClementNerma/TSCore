@@ -3,7 +3,7 @@
  */
 
 import { Comparator } from './comparison'
-import { panic } from './console'
+import { panic } from './env'
 import { Iter } from './iter'
 import { O } from './objects'
 import { None, Option, Some } from './option'

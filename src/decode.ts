@@ -2,8 +2,8 @@
  * @file Parser library for decoding data
  */
 
-import { MsgParam, formatCustom } from './console'
 import { Dictionary, RecordDict } from './dictionary'
+import { format } from './env'
 import { List } from './list'
 import { Matchable, State, VoidStates, enumStr, state } from './match'
 import { Collection, O } from './objects'
@@ -32,7 +32,7 @@ export type DecodingErrorLine =
     // String literal
     | ["s", string]
     // String to format
-    | ["f", string, MsgParam[]]
+    | ["f", string, unknown[]]
     // Decoding error
     | ["e", DecodingError]
     // Raw decoding error lines
@@ -118,26 +118,24 @@ export class DecodingError extends Matchable<
 
     /**
      * Render each line of the error individually
-     * @param formatter An optional formatter for parameters in the error lines
      */
-    renderLines(formatter?: (message: MsgParam) => string): string[] {
-        return DecodingError.renderLines(this.rawLines(), formatter)
+    renderLines(): string[] {
+        return DecodingError.renderLines(this.rawLines())
     }
 
     /**
      * Render the error as a text
      * @param message
      */
-    render(formatter?: (message: MsgParam) => string): string {
-        return this.renderLines(formatter).join("\n")
+    render(): string {
+        return this.renderLines().join("\n")
     }
 
     /**
      * Render a list of error lines
      * @param errorLines
-     * @param formatter An optional formatter for parameters in the error lines
      */
-    static renderLines(errorLines: DecodingErrorLine[], formatter?: (message: MsgParam) => string): string[] {
+    static renderLines(errorLines: DecodingErrorLine[]): string[] {
         let rendered: string[] = []
 
         for (const line of errorLines) {
@@ -147,15 +145,15 @@ export class DecodingError extends Matchable<
                     break
 
                 case "f":
-                    rendered.push(formatCustom(formatter || ((msg) => msg.toString()), line[1], ...line[2]))
+                    rendered.push(format(line[1], ...line[2]))
                     break
 
                 case "e":
-                    rendered = rendered.concat(DecodingError.renderLines(line[1].rawLines(), formatter).map((line) => "\t" + line))
+                    rendered = rendered.concat(DecodingError.renderLines(line[1].rawLines()).map((line) => "\t" + line))
                     break
 
                 case "l":
-                    rendered = rendered.concat(DecodingError.renderLines(line[1], formatter).map((line) => "\t" + line))
+                    rendered = rendered.concat(DecodingError.renderLines(line[1]).map((line) => "\t" + line))
             }
         }
 

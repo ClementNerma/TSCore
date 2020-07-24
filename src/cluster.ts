@@ -2,7 +2,7 @@
  * @file Parallel tasks management with concurrent executor and load balancer
  */
 
-import { panic } from './console'
+import { panic } from './env'
 import { FailableFuture } from './future'
 import { List } from './list'
 import { Matchable, State, hasState, match, state } from './match'

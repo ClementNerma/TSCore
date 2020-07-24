@@ -2,7 +2,7 @@
  * @file Reference values to avoid cloning and share resources
  */
 
-import { panic } from './console'
+import { panic } from './env'
 import { Consumers } from './list'
 import { AbstractMatchable, Enum, State, match, state } from './match'
 import { Option, Some } from './option'

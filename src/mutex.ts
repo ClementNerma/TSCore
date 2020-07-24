@@ -2,7 +2,7 @@
  * @file Mutual exclusion
  */
 
-import { panic } from './console'
+import { panic } from './env'
 import { FailableFuture } from './future'
 import { Consumers } from './list'
 import { AbstractMatchable, State, match, matchState, state } from './match'
