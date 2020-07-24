@@ -67,7 +67,7 @@ function decodeTodoNote(json: JsonValue): Result<TodoNote, DecodingError> {
     println!("Decoding note...")
 
     return json.decode(
-        j.mapped4([
+        j.mapped([
             ["userId", j.number],
             ["id", j.number],
             ["title", j.string],
