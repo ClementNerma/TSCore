@@ -189,6 +189,11 @@ export function makeStringifyable(value: unknown): RawStringifyable {
     }
 }
 
+/**
+ * Check if a stringifyable can be displayed in a single line
+ * Returns `false` if the stringifyable is or contains a collection of more than 1 element
+ * @param stri
+ */
 export function isStringifyableLinear(stri: RawStringifyable): boolean {
     switch (stri.type) {
         case "text":
@@ -211,6 +216,12 @@ export function isStringifyableLinear(stri: RawStringifyable): boolean {
     }
 }
 
+/**
+ * Stringify a raw stringifyable value
+ * @param stri
+ * @param pretty
+ * @param highlighters
+ */
 export function stringifyRaw(stri: RawStringifyable, pretty?: boolean, highlighters: StringifyHighlighter = (_, str) => str): string {
     // pretty ??= isStringifyableLinear(stri)
     pretty = pretty ?? !isStringifyableLinear(stri)
