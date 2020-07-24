@@ -36,7 +36,8 @@ export class Future<T> extends MappedMatchable<FutureMatch<T>, Option<T>> {
     }
 
     private _complete(value: T): void {
-        this._under.replace(value).expectNone("Tried to resolve an already-resolved future!")
+        this._under.expectNone("Tried to resolve an already-resolved future!")
+        this._under = Some(value)
         this._completionHandlers.resolve(value)
     }
 
@@ -181,14 +182,14 @@ export class FailableFuture<T, E> extends Future<Result<T, E>> {
      * Get the future's success value
      */
     ok(): Option<T> {
-        return this._under.andThen((value) => value.ok())
+        return this._under.andThen((value) => value.maybeOk())
     }
 
     /**
      * Get the future's error value
      */
     err(): Option<E> {
-        return this._under.andThen((value) => value.err())
+        return this._under.andThen((value) => value.maybeErr())
     }
 
     /**

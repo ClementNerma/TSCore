@@ -7,9 +7,9 @@ import { Either } from './either'
 import { format, panic } from './env'
 import { List } from './list'
 import { O } from './objects'
-import { Option } from './option'
+import { isOption } from './option'
 import { Ref } from './ref'
-import { Result } from './result'
+import { isResult } from './result'
 import { forceType } from './typecasting'
 
 /**
@@ -120,7 +120,7 @@ export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: stri
     }
 
     // Check for options
-    if (left instanceof Option && right instanceof Option) {
+    if (isOption(left) && isOption(right)) {
         if (left.isSome() && !right.isSome()) {
             fail("Left [Option] is concrete but right [Option] is not")
         }
@@ -137,7 +137,7 @@ export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: stri
     }
 
     // Check for results
-    if (left instanceof Result && right instanceof Result) {
+    if (isResult(left) && isResult(right)) {
         if (left.isOk() && !right.isOk()) {
             fail("Left [Result] is Ok but right [Result] is Err")
         }
@@ -147,9 +147,9 @@ export function assertEq<T>(left: T, right: T, panicMessage?: string, _ctx: stri
         }
 
         if (left.isOk()) {
-            assertEq(left.ok().unwrap(), right.ok().unwrap(), panicMessage, _ctx.concat("[Result].Ok"))
+            assertEq(left.maybeOk().unwrap(), right.maybeOk().unwrap(), panicMessage, _ctx.concat("[Result].Ok"))
         } else {
-            assertEq(left.err().unwrap(), right.err().unwrap(), panicMessage, _ctx.concat("[Result].Err"))
+            assertEq(left.maybeErr().unwrap(), right.maybeErr().unwrap(), panicMessage, _ctx.concat("[Result].Err"))
         }
 
         return

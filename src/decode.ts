@@ -7,7 +7,7 @@ import { format } from './env'
 import { List } from './list'
 import { Matchable, State, VoidStates, enumStr, state } from './match'
 import { Collection, O } from './objects'
-import { Option } from './option'
+import { None, Option, Some, maybeOption } from './option'
 import { Err, Ok, Result } from './result'
 import { stringify } from './stringify'
 
@@ -312,8 +312,12 @@ export namespace Decoders {
     }
 
     /** Decode an optional value to an Option<T> */
-    export function maybe<F, T>(decoder: Decoder<F, T>): Decoder<F, Option<T>> {
-        return (value) => Option.transpose(Option.nullable(value).map((value) => decoder(value)))
+    export function maybe<F, T>(decoder: Decoder<F, T>): Decoder<F | null | undefined, Option<T>> {
+        return (value) =>
+            maybeOption(value).match({
+                Some: (value) => decoder(value).map((value) => Some(value)),
+                None: (value) => Ok(None()),
+            })
     }
 
     /** Decode an optional value */

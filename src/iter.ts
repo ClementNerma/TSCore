@@ -63,7 +63,9 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
         }
 
         if (this._peeked.isSome()) {
-            return Some(this._peeked.take().unwrap())
+            const prev = this._peeked.unwrap()
+            this._peeked = None()
+            return Some(prev)
         }
 
         this._pointer++
@@ -92,9 +94,9 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
         }
 
         this._pointer--
-        this._peeked = Some(next.unwrap())
+        this._peeked = Some(next.inner)
 
-        return Some(next.unwrap())
+        return Some(next.inner)
     }
 
     /**

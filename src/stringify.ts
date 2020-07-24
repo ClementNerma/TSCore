@@ -8,9 +8,9 @@ import { List } from './list'
 import { matchString } from './match'
 import { MaybeUninit } from './maybeUinit'
 import { O } from './objects'
-import { Option } from './option'
+import { isOption } from './option'
 import { Ref } from './ref'
-import { Result } from './result'
+import { isResult } from './result'
 import { Task } from './task'
 
 export type StringifyHighlighter = (type: "typename" | "prefix" | "collKey" | "collValue" | "text" | "unknown" | "punctuation", str: string) => string
@@ -51,14 +51,14 @@ export function makeStringifyable(value: unknown, numberFormat: StringifyNumberF
         return { type: "text", text: "<undefined>" }
     }
 
-    if (value instanceof Option) {
+    if (isOption(value)) {
         return value.match({
             Some: (value) => ({ type: "wrapped", typename: "Some", content: _nested(value) }),
             None: () => ({ type: "wrapped", typename: "None" }),
         })
     }
 
-    if (value instanceof Result) {
+    if (isResult(value)) {
         return value.match({
             Ok: (value) => ({ type: "wrapped", typename: "Ok", content: _nested(value) }),
             Err: (err) => ({ type: "wrapped", typename: "Err", content: _nested(err) }),

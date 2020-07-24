@@ -11,8 +11,8 @@ import { List } from './list'
 import { AbstractMatchable, State, hasState, state } from './match'
 import { MaybeUninit } from './maybeUinit'
 import { Collection, O } from './objects'
-import { None, Option, Some, getStateValue } from './option'
-import { Err, Ok, Result } from './result'
+import { None, Option, Some, getStateValue, isOption } from './option'
+import { Err, Ok, Result, fallibleToResult, isResult } from './result'
 
 /**
  * Primitive JSON value
@@ -45,21 +45,6 @@ export type MatchableJsonValue =
     | State<"String", string>
     | State<"Array", List<JsonValue>>
     | State<"Collection", RecordDict<JsonValue>>
-
-/**
- * Encodable JSON value
- */
-export type EncodableJsonValue =
-    | JsonValuePrimitive
-    | Array<EncodableJsonValue>
-    | List<EncodableJsonValue>
-    | { [key: string]: EncodableJsonValue }
-    | Dictionary<string, EncodableJsonValue>
-    | RecordDict<EncodableJsonValue>
-    | Option<EncodableJsonValue>
-    | Either<EncodableJsonValue, EncodableJsonValue>
-    | Iter<EncodableJsonValue>
-    | MaybeUninit<EncodableJsonValue>
 
 /**
  * JSON encoding error
@@ -123,57 +108,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
      * @param source
      */
     static parse(source: string): Result<JsonValue, Error> {
-        return Result.fallible(() => JSON.parse(source) as JsonValueType).map((json) => new JsonValue(json))
-    }
-
-    /**
-     * Encode safely a JSON-like value to a native JSON value
-     * @param value
-     */
-    static extendedToNative(value: EncodableJsonValue): NativeJsonValueType {
-        if (value === null || value === false || value === true || typeof value === "number" || typeof value === "string") {
-            return value
-        }
-
-        if (value instanceof List) {
-            return value.toArray().map(JsonValue.extendedToNative)
-        }
-
-        if (value instanceof Dictionary) {
-            return value.mapValuesToCollectionUnchecked(JsonValue.extendedToNative)
-        }
-
-        if (value instanceof Option) {
-            return value.match({
-                Some: JsonValue.extendedToNative,
-                None: () => null,
-            })
-        }
-
-        if (value instanceof Either) {
-            return value.match({
-                Left: JsonValue.extendedToNative,
-                Right: JsonValue.extendedToNative,
-            })
-        }
-
-        if (value instanceof Iter) {
-            return value.collectArray().map(JsonValue.extendedToNative)
-        }
-
-        if (value instanceof MaybeUninit) {
-            return JsonValue.extendedToNative(value.value())
-        }
-
-        if (O.isArray(value)) {
-            return value.map(JsonValue.extendedToNative)
-        }
-
-        if (O.isCollection(value)) {
-            return O.mapValues(value, JsonValue.extendedToNative)
-        }
-
-        unreachable('Provided value is not a valid encodable JSON value (are you using "as any" when calling this function?)')
+        return fallibleToResult(() => JSON.parse(source) as JsonValueType).map((json) => new JsonValue(json))
     }
 
     /**
@@ -211,14 +146,14 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
             return Ok(out)
         }
 
-        if (value instanceof Option) {
+        if (isOption(value)) {
             return value.match<Result<NativeJsonValueType, JsonEncodingError>>({
                 Some: (value) => JsonValue.tryEncode(value, path.concat(["Some() variant of Option<T>"])),
                 None: () => Ok(null),
             })
         }
 
-        if (value instanceof Result) {
+        if (isResult(value)) {
             return value
                 .mapErr((err) => _err("Cannot encode Err() variants of Result<T, E> values", err).unwrapErr())
                 .andThen((value) => JsonValue.tryEncode(value, path.concat(["Ok() variant of Result<T, E>"])))
@@ -743,6 +678,7 @@ export namespace JsonDecoders {
             for (const [field, decoder] of mappings) {
                 const value = dict.get(field)
 
+                // HACK: Temporary fix until https://github.com/microsoft/TypeScript/issues/39733 gets fixed
                 if (value.isNone()) {
                     return Err(new DecodingError(state("MissingCollectionField", field)))
                 }

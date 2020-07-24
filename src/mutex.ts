@@ -6,7 +6,7 @@ import { panic } from './env'
 import { FailableFuture } from './future'
 import { Consumers } from './list'
 import { AbstractMatchable, State, match, matchState, state } from './match'
-import { None, Option } from './option'
+import { None, Option, Some } from './option'
 import { Ref } from './ref'
 import { Err, Ok, Result } from './result'
 
@@ -31,7 +31,7 @@ export type MutexPoisonError = State<"Poisoned">
  */
 export class Mutex<T> extends AbstractMatchable<MutexState> {
     private readonly _ref: Ref<T>
-    private readonly _locked: Option<Ref<T>>
+    private _locked: Option<Ref<T>>
     private _poisoned: boolean
     private _unlockWaiters: Consumers<Result<Ref<T>, MutexPoisonError>>
 
@@ -80,7 +80,7 @@ export class Mutex<T> extends AbstractMatchable<MutexState> {
 
         const lockRef = this._ref.clone()
 
-        this._locked.replace(lockRef)
+        this._locked = Some(lockRef)
 
         return Ok(lockRef)
     }
@@ -102,7 +102,7 @@ export class Mutex<T> extends AbstractMatchable<MutexState> {
                 }
 
                 lockRef.destroy()
-                this._locked.take()
+                this._locked = None()
 
                 match(this._unlockWaiters.shift(), {
                     Some: (callback) => callback(Ok(this.lock().expect("Failed to lock mutex just after unlocking!"))),

@@ -5,7 +5,7 @@
 import { panic } from './env'
 import { Consumers } from './list'
 import { AbstractMatchable, Enum, State, match, state } from './match'
-import { Option, Some } from './option'
+import { None, Option, Some } from './option'
 import { Result } from './result'
 
 export type RefMatch<T> = State<"Available", T> | State<"Destroyed">
@@ -17,7 +17,7 @@ export type RefMatch<T> = State<"Available", T> | State<"Destroyed">
  * @template T Type of referred value
  */
 export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
-    private readonly _wrapper: Option<{ ref: T }>
+    private _wrapper: Option<{ ref: T }>
     private _onDestroy: Consumers<void>
 
     /**
@@ -119,7 +119,7 @@ export class Ref<T> extends AbstractMatchable<RefMatch<T>> {
             panic("Cannot destroy a reference twice!")
         }
 
-        this._wrapper.take()
+        this._wrapper = None()
         this._onDestroy.resolve()
 
         return this

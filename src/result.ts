@@ -2,8 +2,8 @@
  * @file Result values that are either a success or an error
  */
 
-import { panic } from './env'
-import { Matchable, State, match, state } from './match'
+import { panic, unreachable } from './env'
+import { AbstractMatchable, State, state } from './match'
 import { None, Option, Some } from './option'
 
 /**
@@ -18,263 +18,339 @@ export type ResultMatch<T, E> = State<"Ok", T> | State<"Err", E>
  * @template T Success type
  * @template E Error type
  */
-export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
+abstract class ResultClass<T, E> extends AbstractMatchable<ResultMatch<T, E>> {
+    /**
+     * Create a new result value
+     */
+    constructor() {
+        super(() => (this.isOk() ? state("Ok", this.data) : this.isErr() ? state("Err", this.err) : unreachable()))
+    }
+
     /**
      * Is this result a success?
      */
-    isOk(): boolean {
-        return match(this, {
-            Ok: () => true,
-            Err: () => false,
-        })
-    }
+    abstract isOk(): this is OkValue<T, E>
 
     /**
      * Is this result an error?
      */
-    isErr(): boolean {
-        return match(this, {
-            Ok: () => false,
-            Err: () => true,
-        })
-    }
+    abstract isErr(): this is ErrValue<T, E>
 
     /**
      * Get this result's success value
      */
-    ok(): Option<T> {
-        return match(this, {
-            Ok: (value) => Some(value),
-            Err: () => None(),
-        })
-    }
+    abstract maybeOk(): Option<T>
 
     /**
      * Get this result's error value
      */
-    err(): Option<E> {
-        return match(this, {
-            Ok: () => None(),
-            Err: (err) => Some(err),
-        })
-    }
+    abstract maybeErr(): Option<E>
 
     /**
      * Run a callback if this result is Ok()
      * @param callback
      */
-    withOk(callback: (data: T) => void): this {
-        match(this, {
-            Ok: (data) => callback(data),
-            Err: () => {},
-        })
-
-        return this
-    }
+    abstract withOk(callback: (data: T) => void): this
 
     /**
      * Run a callback if this result is Err()
      * @param callback
      */
-    withErr(callback: (err: E) => void): this {
-        match(this, {
-            Ok: () => {},
-            Err: (err) => callback(err),
-        })
-
-        return this
-    }
+    abstract withErr(callback: (err: E) => void): this
 
     /**
      * Expect this result to be a success
      * Panics if it isn't
      * @param message Panic message
      */
-    expect(message: string): T {
-        return match(this, {
-            Ok: (value) => value,
-            Err: () => panic(message),
-        })
-    }
+    abstract expect(message: string): T
 
     /**
      * Expect this result to be an error
      * Panics if it isn't
      * @param message Panic message
      */
-    expectErr(message: string): E {
-        return match(this, {
-            Ok: () => panic(message),
-            Err: (err) => err,
-        })
-    }
+    abstract expectErr(message: string): E
 
     /**
      * Unwrap this result's success value
      * Panics if the result is not a success
      */
-    unwrap(): T {
-        return match(this, {
-            Ok: (value) => value,
-            Err: (err) => panic("Tried to unwrap an 'Err' value: {}", err),
-        })
-    }
+    abstract unwrap(): T
 
     /**
      * Unwrap this result's success value
      * Panics if the result is not a success and displays the message provided by the formatter
      * @param formatter
      */
-    unwrapWith(formatter: (err: E) => string): T {
-        return match(this, {
-            Ok: (value) => value,
-            Err: (err) => panic(formatter(err)),
-        })
-    }
+    abstract unwrapWith(formatter: (err: E) => string): T
 
     /**
      * Unwrap this result's success value
      * @param fallback Fallback value in case this result is an error
      */
-    unwrapOr(fallback: T): T {
-        return match(this, {
-            Ok: (value) => value,
-            Err: () => fallback,
-        })
-    }
+    abstract unwrapOr(fallback: T): T
 
     /**
      * Unwrap this result's success value
      * @param fallback Fallback function in case this result is an error
      */
-    unwrapOrElse(fallback: (err: E) => T): T {
-        return match(this, {
-            Ok: (value) => value,
-            Err: (err) => fallback(err),
-        })
-    }
+    abstract unwrapOrElse(fallback: (err: E) => T): T
 
     /**
      * Unwrap this result's error value
      */
-    unwrapErr(): E {
-        return match(this, {
-            Ok: () => panic("Tried to unwrap error of an 'Ok' value!"),
-            Err: (err) => err,
-        })
-    }
+    abstract unwrapErr(): E
 
     /**
      * Map this result's success value
      * @param mapper Mapping function
      */
-    map<U>(mapper: (value: T) => U): Result<U, E> {
-        return match(this, {
-            Ok: (value) => Ok(mapper(value)),
-            Err: (err) => Err(err),
-        })
-    }
+    abstract map<U>(mapper: (value: T) => U): Result<U, E>
 
     /**
      * Map this result's value
      * @param success Mapping function for success value
      * @param error Mapping function for error value
      */
-    mapOrElse<U>(success: (value: T) => U, error: (err: E) => U): U {
-        return match(this, {
-            Ok: (value) => success(value),
-            Err: (err) => error(err),
-        })
-    }
+    abstract mapOrElse<U>(success: (value: T) => U, error: (err: E) => U): U
 
     /**
      * Map this result's error value
      * @param mapper Mapping function for error value
      */
-    mapErr<F>(mapper: (err: E) => F): Result<T, F> {
-        return match(this, {
-            Ok: (value) => Ok(value),
-            Err: (err) => Err(mapper(err)),
-        })
-    }
+    abstract mapErr<F>(mapper: (err: E) => F): Result<T, F>
 
     /**
      * Expect this result and another one to be successes
      * @param other Another result
      */
-    and<U>(other: Result<U, E>): Result<U, E> {
-        return match(this, {
-            Ok: () => other,
-            Err: (err) => Err(err),
-        })
-    }
+    abstract and<U>(other: Result<U, E>): Result<U, E>
 
     /**
      * Run a callback in case this result is a success
      * @param other A callback returning a new result from this one's success value
      */
-    andThen<U>(other: (value: T) => Result<U, E>): Result<U, E> {
-        return match(this, {
-            Ok: (value) => other(value),
-            Err: (err) => Err(err),
-        })
-    }
+    abstract andThen<U>(other: (value: T) => Result<U, E>): Result<U, E>
 
     /**
      * Expect one of this result and another to be a success
      * @param other Another result
      */
-    or<F>(other: Result<T, F>): Result<T, F> {
-        return match(this, {
-            Ok: (value) => Ok(value),
-            Err: () => other,
-        })
-    }
+    abstract or<F>(other: Result<T, F>): Result<T, F>
 
     /**
      * Expect one of this result and another to be a success
      * @param other Function generating a result
      */
-    orElse<F>(other: () => Result<T, F>): Result<T, F> {
-        return match(this, {
-            Ok: (value) => Ok(value),
-            Err: () => other(),
-        })
-    }
+    abstract orElse<F>(other: () => Result<T, F>): Result<T, F>
 
     /**
      * Clone this result
      */
+    abstract clone(): Result<T, E>
+}
+
+/**
+ * Success type
+ */
+class OkValue<T, E> extends ResultClass<T, E> {
+    constructor(readonly data: T) {
+        super()
+    }
+
+    isOk(): this is OkValue<T, E> {
+        return true
+    }
+
+    isErr(): this is ErrValue<T, E> {
+        return false
+    }
+
+    maybeOk(): Option<T> {
+        return Some(this.data)
+    }
+
+    maybeErr(): Option<E> {
+        return None()
+    }
+
+    withOk(callback: (data: T) => void): this {
+        callback(this.data)
+        return this
+    }
+
+    withErr(callback: (err: E) => void): this {
+        return this
+    }
+
+    expect(message: string): T {
+        return this.data
+    }
+
+    expectErr(message: string): E {
+        return panic(message)
+    }
+
+    unwrap(): T {
+        return this.data
+    }
+
+    unwrapWith(formatter: (err: E) => string): T {
+        return this.data
+    }
+
+    unwrapOr(fallback: T): T {
+        return this.data
+    }
+
+    unwrapOrElse(fallback: (err: E) => T): T {
+        return this.data
+    }
+
+    unwrapErr(): E {
+        return panic("Tried to unwrap an Ok() value as an Err(): {}", this)
+    }
+
+    map<U>(mapper: (value: T) => U): Result<U, E> {
+        return Ok(mapper(this.data))
+    }
+
+    mapOrElse<U>(success: (value: T) => U, error: (err: E) => U): U {
+        return success(this.data)
+    }
+
+    mapErr<F>(mapper: (err: E) => F): Result<T, F> {
+        return Ok(this.data)
+    }
+
+    and<U>(other: Result<U, E>): Result<U, E> {
+        return other
+    }
+
+    andThen<U>(other: (value: T) => Result<U, E>): Result<U, E> {
+        return other(this.data)
+    }
+
+    or<F>(other: Result<T, F>): Result<T, F> {
+        return Ok(this.data)
+    }
+
+    orElse<F>(other: () => Result<T, F>): Result<T, F> {
+        return Ok(this.data)
+    }
+
     clone(): Result<T, E> {
-        return match(this, {
-            Ok: (value) => Ok(value),
-            Err: (err) => Err(err),
-        })
+        return Ok(this.data)
+    }
+}
+
+/**
+ * Error type
+ */
+export class ErrValue<T, E> extends ResultClass<T, E> {
+    constructor(readonly err: E) {
+        super()
     }
 
-    /**
-     * Create a result from a fallible function (= function which may throw())
-     * @param core
-     */
-    static fallible<T>(core: () => T): Result<T, Error> {
-        let value: T
-
-        try {
-            value = core()
-        } catch (e) {
-            return Err(e)
-        }
-
-        return Ok(value)
+    isOk(): this is OkValue<T, E> {
+        return false
     }
 
-    /**
-     * Create an Err() variant from an Error
-     * @param error
-     */
-    static fromError(error: Error): Result<any, string> {
-        return Err(error.message)
+    isErr(): this is ErrValue<T, E> {
+        return true
     }
+
+    maybeOk(): Option<T> {
+        return None()
+    }
+
+    maybeErr(): Option<E> {
+        return Some(this.err)
+    }
+
+    withOk(callback: (data: T) => void): this {
+        return this
+    }
+
+    withErr(callback: (err: E) => void): this {
+        callback(this.err)
+        return this
+    }
+
+    expect(message: string): T {
+        return panic(message)
+    }
+
+    expectErr(message: string): E {
+        return this.err
+    }
+
+    unwrap(): T {
+        return panic("Tried to unwrap an Err() value: {}", this)
+    }
+
+    unwrapWith(formatter: (err: E) => string): T {
+        return panic(formatter(this.err))
+    }
+
+    unwrapOr(fallback: T): T {
+        return fallback
+    }
+
+    unwrapOrElse(fallback: (err: E) => T): T {
+        return fallback(this.err)
+    }
+
+    unwrapErr(): E {
+        return this.err
+    }
+
+    map<U>(mapper: (value: T) => U): Result<U, E> {
+        return Err(this.err)
+    }
+
+    mapOrElse<U>(success: (value: T) => U, error: (err: E) => U): U {
+        return error(this.err)
+    }
+
+    mapErr<F>(mapper: (err: E) => F): Result<T, F> {
+        return Err(mapper(this.err))
+    }
+
+    and<U>(other: Result<U, E>): Result<U, E> {
+        return Err(this.err)
+    }
+
+    andThen<U>(other: (value: T) => Result<U, E>): Result<U, E> {
+        return Err(this.err)
+    }
+
+    or<F>(other: Result<T, F>): Result<T, F> {
+        return other
+    }
+
+    orElse<F>(other: () => Result<T, F>): Result<T, F> {
+        return other()
+    }
+
+    clone(): Result<T, E> {
+        return Err(this.err)
+    }
+}
+
+/**
+ * Result type
+ * @template T Success type
+ * @template E Error type
+ */
+export type Result<T, E> = OkValue<T, E> | ErrValue<T, E>
+
+/**
+ * Check if a value is a Result
+ */
+export function isResult(value: unknown): value is Result<unknown, unknown> {
+    return value instanceof OkValue || value instanceof ErrValue
 }
 
 /**
@@ -282,7 +358,7 @@ export class Result<T, E> extends Matchable<ResultMatch<T, E>> {
  * @param value The success value
  */
 export function Ok<T>(value: T): Result<T, any> {
-    return new Result(state("Ok", value))
+    return new OkValue(value)
 }
 
 /**
@@ -290,5 +366,21 @@ export function Ok<T>(value: T): Result<T, any> {
  * @param err The error value
  */
 export function Err<E>(err: E): Result<any, E> {
-    return new Result(state("Err", err))
+    return new ErrValue(err)
+}
+
+/**
+ * Create a result from a fallible function (= function which may throw())
+ * @param core
+ */
+export function fallibleToResult<T>(core: () => T): Result<T, Error> {
+    let value: T
+
+    try {
+        value = core()
+    } catch (e) {
+        return Err(e)
+    }
+
+    return Ok(value)
 }
