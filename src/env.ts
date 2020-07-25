@@ -119,8 +119,8 @@ const _tsCoreEnv: TSCoreEnv = {
     },
 }
 
-export function setupTypeScriptCore(newEnv: (previousEnv: Readonly<TSCoreEnv>) => Partial<TSCoreEnv>): void {
-    for (const [key, value] of O.entries(newEnv(_tsCoreEnv))) {
+export function setupTypeScriptCore(newEnv: Partial<TSCoreEnv> | ((previousEnv: Readonly<TSCoreEnv>) => Partial<TSCoreEnv>)): void {
+    for (const [key, value] of O.entries(newEnv instanceof Function ? newEnv(_tsCoreEnv) : newEnv)) {
         // @ts-ignore
         _tsCoreEnv[key] = value
     }
