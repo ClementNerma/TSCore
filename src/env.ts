@@ -1,4 +1,5 @@
 import { O } from './objects'
+import { Regex } from './regex'
 import { StringifyOptions, stringify } from './stringify'
 
 declare const console: {
@@ -42,8 +43,28 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
             const options = maybeOptions ?? this.defaultFormattingOptions(this.DEV_MODE)
             let paramCounter = -1
 
-            return message.replace(/{(\d+)?([:#])?([bdoxX])?(\?)?}/g, (_, strParamPos, display, numberFormat, pretty) => {
-                const paramPos = strParamPos ? parseInt(strParamPos) : ++paramCounter
+            return message.replace(/{([a-zA-Z0-9_:#\?\$]*)}/g, (match, format) => {
+                paramCounter++
+
+                const supported = new Regex(/^(\d+)?([:#])?([bdoxX])?(\?)?$/, ["strParamPos", "display", "numberFormat", "pretty"]).matchNamed(format)
+
+                if (supported.isNone()) {
+                    const ext = this.formatExt(format, params, paramCounter, options)
+
+                    if (ext === null) {
+                        return match
+                    }
+
+                    if (ext === false) {
+                        return options.unknownParam(paramCounter)
+                    }
+
+                    return ext
+                }
+
+                const { strParamPos, display, numberFormat, pretty } = supported.inner
+
+                const paramPos = strParamPos ? parseInt(strParamPos) : paramCounter
 
                 if (paramPos >= params.length) {
                     return options.unknownParam(paramPos)
@@ -52,7 +73,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
                 if (display === "#" || !display) {
                     return stringify(params[paramCounter], {
                         ...options.stringifyOptions,
-                        numberFormat: numberFormat || options.stringifyOptions.numberFormat,
+                        numberFormat: (numberFormat as any) || options.stringifyOptions.numberFormat,
                     })
                 }
 
