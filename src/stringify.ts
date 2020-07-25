@@ -14,19 +14,41 @@ import { Regex } from './regex'
 import { isResult } from './result'
 import { Task } from './task'
 
-export type StringifyHighlighter = (
-    type: "typename" | "prefix" | "listIndex" | "listValue" | "collKey" | "collValue" | "text" | "unknown" | "punctuation" | "voidPrefixValue",
-    str: string
-) => string
+/**
+ * Stringification options
+ */
+export interface StringifyOptions {
+    /**
+     * Highlight tokens during stringification (default: no highlighting)
+     */
+    highlighter?: (
+        type: "typename" | "prefix" | "listIndex" | "listValue" | "collKey" | "collValue" | "text" | "unknown" | "punctuation" | "voidPrefixValue",
+        str: string
+    ) => string
 
-export type StringifyNumberFormat = "b" | "d" | "o" | "x" | "X"
+    /**
+     * Display numbers using a specific format (default: decimal)
+     */
+    numberFormat?: "b" | "d" | "o" | "x" | "X"
+
+    /**
+     * Display indexes in arrays (default: true)
+     */
+    arrayIndexes?: boolean
+
+    /**
+     * Pretty-print the value on multiple lines (default: determined depending on the value's structural size)
+     */
+    prettify?: boolean
+}
 
 /**
  * Stringify a value to a human-readable string
  * @param value
+ * @param options
  */
-export function stringify(value: unknown, prettify?: boolean, numberFormat?: StringifyNumberFormat, highlighter?: StringifyHighlighter): string {
-    return stringifyRaw(makeStringifyable(value, numberFormat), prettify, highlighter)
+export function stringify(value: unknown, options?: StringifyOptions): string {
+    return stringifyRaw(makeStringifyable(value, options?.numberFormat), options)
 }
 
 /**
@@ -45,7 +67,7 @@ export type RawStringifyable =
  * @param value
  * @param numberFormat
  */
-export function makeStringifyable(value: unknown, numberFormat: StringifyNumberFormat = "d"): RawStringifyable {
+export function makeStringifyable(value: unknown, numberFormat: StringifyOptions["numberFormat"] = "d"): RawStringifyable {
     const _nested = (value: unknown) => makeStringifyable(value, numberFormat)
 
     if (value === null) {
@@ -311,114 +333,113 @@ export function isStringifyableChildless(stri: RawStringifyable): boolean {
 /**
  * Stringify a raw stringifyable value
  * @param stri
- * @param pretty
- * @param highlighters
+ * @param options
  */
-export function stringifyRaw(stri: RawStringifyable, pretty?: boolean, highlighters: StringifyHighlighter = (_, str) => str): string {
-    // pretty ??= isStringifyableLinear(stri)
-    pretty = pretty ?? !isStringifyableLinear(stri)
+export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions): string {
+    const prettify = options?.prettify ?? !isStringifyableLinear(stri)
+    const highlighter = options?.highlighter ?? ((value) => value)
 
     switch (stri.type) {
         case "text":
-            return highlighters("text", stri.text)
+            return highlighter("text", stri.text)
 
         case "wrapped":
             return (
-                highlighters("typename", stri.typename) +
-                highlighters("punctuation", "(") +
-                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n  " : "") : "") +
+                highlighter("typename", stri.typename) +
+                highlighter("punctuation", "(") +
+                (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n  " : "") : "") +
                 (stri.content
-                    ? stringifyRaw(stri.content, pretty, highlighters)
+                    ? stringifyRaw(stri.content, options)
                           .split(/\n/)
-                          .join("\n" + (pretty ? "  " : ""))
+                          .join("\n" + (prettify ? "  " : ""))
                     : "") +
-                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n" : "") : "") +
-                highlighters("punctuation", ")")
+                (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n" : "") : "") +
+                highlighter("punctuation", ")")
             )
 
         case "list":
             return (
-                highlighters("typename", stri.typename) +
+                highlighter("typename", stri.typename) +
                 " " +
-                highlighters("punctuation", "[") +
-                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n  " : " ") : "") +
+                highlighter("punctuation", "[") +
+                (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n  " : " ") : "") +
                 (stri.content || [])
                     .map(
                         ({ index, value }) =>
-                            highlighters("listIndex", index.toString()) +
-                            highlighters("punctuation", ":") +
-                            " " +
-                            highlighters(
+                            (options?.arrayIndexes ?? true
+                                ? highlighter("listIndex", index.toString()) + highlighter("punctuation", ":") + " "
+                                : "") +
+                            highlighter(
                                 "listValue",
-                                stringifyRaw(value, pretty, highlighters)
+                                stringifyRaw(value, options)
                                     .split(/\n/)
-                                    .join("\n" + (pretty ? "  " : ""))
+                                    .join("\n" + (prettify ? "  " : ""))
                             )
                     )
-                    .join(highlighters("punctuation", ",") + (pretty && !isStringifyableChildless(stri) ? "\n  " : " ")) +
-                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n" : " ") : "") +
-                highlighters("punctuation", "]")
+                    .join(highlighter("punctuation", ",") + (prettify && !isStringifyableChildless(stri) ? "\n  " : " ")) +
+                (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n" : " ") : "") +
+                highlighter("punctuation", "]")
             )
 
         case "collection":
             return (
-                highlighters("typename", stri.typename) +
+                highlighter("typename", stri.typename) +
                 " " +
-                highlighters("punctuation", "{") +
-                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n  " : " ") : "") +
+                highlighter("punctuation", "{") +
+                (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n  " : " ") : "") +
                 (stri.content || [])
                     .map(
                         ({ key, value }) =>
-                            highlighters(
+                            highlighter(
                                 "collKey",
-                                stringifyRaw(key, false)
+                                stringifyRaw(key, { ...options, prettify: false })
                                     .split(/\n/)
-                                    .join("\n" + (pretty ? "  " : ""))
+                                    .join("\n" + (prettify ? "  " : ""))
                             ) +
-                            highlighters("punctuation", ":") +
+                            highlighter("punctuation", ":") +
                             " " +
-                            highlighters(
+                            highlighter(
                                 "collValue",
-                                stringifyRaw(value, pretty, highlighters)
+                                stringifyRaw(value, options)
                                     .split(/\n/)
-                                    .join("\n" + (pretty ? "  " : ""))
+                                    .join("\n" + (prettify ? "  " : ""))
                             )
                     )
-                    .join(highlighters("punctuation", ",") + (pretty && !isStringifyableChildless(stri) ? "\n  " : " ")) +
-                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n" : " ") : "") +
-                highlighters("punctuation", "}")
+                    .join(highlighter("punctuation", ",") + (prettify && !isStringifyableChildless(stri) ? "\n  " : " ")) +
+                (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n" : " ") : "") +
+                highlighter("punctuation", "}")
             )
 
         case "prefixed":
             return (
-                highlighters("typename", stri.typename) +
+                highlighter("typename", stri.typename) +
                 " " +
-                highlighters("punctuation", "{") +
-                (!isStringifyableChildless(stri) ? (pretty ? "\n  " : " ") : "") +
+                highlighter("punctuation", "{") +
+                (!isStringifyableChildless(stri) ? (prettify ? "\n  " : " ") : "") +
                 (stri.prefixed || [])
                     .map(
                         ([prefix, value]) =>
-                            highlighters("prefix", prefix) +
-                            highlighters("punctuation", ":") +
+                            highlighter("prefix", prefix) +
+                            highlighter("punctuation", ":") +
                             " " +
                             value
                                 .map((value) =>
-                                    highlighters(
+                                    highlighter(
                                         "collValue",
-                                        stringifyRaw(value, pretty, highlighters)
+                                        stringifyRaw(value, options)
                                             .split(/\n/)
-                                            .join("\n" + (pretty ? "  " : ""))
+                                            .join("\n" + (prettify ? "  " : ""))
                                     )
                                 )
-                                .unwrapOrElse(() => highlighters("voidPrefixValue", "-"))
+                                .unwrapOrElse(() => highlighter("voidPrefixValue", "-"))
                     )
-                    .join(highlighters("punctuation", ",") + (pretty && !isStringifyableChildless(stri) ? "\n  " : " ")) +
-                (!isStringifyableChildless(stri) ? (pretty ? "\n" : " ") : "") +
-                highlighters("punctuation", "}")
+                    .join(highlighter("punctuation", ",") + (prettify && !isStringifyableChildless(stri) ? "\n  " : " ")) +
+                (!isStringifyableChildless(stri) ? (prettify ? "\n" : " ") : "") +
+                highlighter("punctuation", "}")
             )
 
         case "unknown":
-            return highlighters("unknown", `<${stri.typename ?? "unknown type"}>`)
+            return highlighter("unknown", `<${stri.typename ?? "unknown type"}>`)
     }
 }
 

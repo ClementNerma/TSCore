@@ -1,5 +1,5 @@
 import { O } from './objects'
-import { StringifyHighlighter, StringifyNumberFormat, stringify } from './stringify'
+import { StringifyOptions, stringify } from './stringify'
 
 declare const console: {
     debug(message: string): void
@@ -11,9 +11,9 @@ declare const console: {
 export interface TSCoreEnv {
     DEV_MODE: boolean
 
-    format(message: string, params: unknown[], options: FormatOptions): string
-    formatExt(format: string, params: unknown[], paramCounter: number): string | false | null
-    defaultFormattingOptions: FormatOptions
+    format(message: string, params: unknown[], options?: FormatOptions): string
+    formatExt(format: string, params: unknown[], paramCounter: number, options: FormatOptions): string | false | null
+    defaultFormattingOptions: (DEV_MODE: boolean) => FormatOptions
 
     logger(type: "debug" | "log" | "warn" | "error" | "panic" | "unreachable" | "unimplemented" | "todo", message: string, params: unknown[]): void
 
@@ -31,15 +31,14 @@ export interface TSCoreEnv {
 
 export interface FormatOptions {
     unknownParam: (position: number) => string | never
-    prettify: (DEV_MODE: boolean) => boolean
-    numberFormat: StringifyNumberFormat
-    highlighter: StringifyHighlighter
+    stringifyOptions: StringifyOptions
 }
 
 const _tsCoreEnv: TSCoreEnv = {
     DEV_MODE: true,
 
-    format(message, params, options) {
+    format(message, params, maybeOptions) {
+        const options = maybeOptions ?? this.defaultFormattingOptions(this.DEV_MODE)
         let paramCounter = -1
 
         return message.replace(/{(\d+)?([:#])?([bdoxX])?(\?)?}/g, (_, strParamPos, display, numberFormat, pretty) => {
@@ -50,50 +49,46 @@ const _tsCoreEnv: TSCoreEnv = {
             }
 
             if (display === "#" || !display) {
-                return stringify(
-                    params[paramCounter],
-                    display ? pretty : options.prettify(this.DEV_MODE),
-                    numberFormat ?? options.numberFormat,
-                    options.highlighter
-                )
+                return stringify(params[paramCounter], {
+                    ...options.stringifyOptions,
+                    numberFormat: numberFormat || options.stringifyOptions.numberFormat,
+                })
             }
 
             return JSON.stringify(params[paramCounter], null, pretty ? 4 : 0)
         })
     },
 
-    formatExt(format, params, paramCounter): string | null {
+    formatExt(format, params, paramCounter, options): string | null {
         return null
     },
 
-    defaultFormattingOptions: {
+    defaultFormattingOptions: (DEV_MODE) => ({
         unknownParam(position) {
             return `<<<missing parameter ${position + 1}>>>`
         },
 
-        prettify: (DEV_MODE) => DEV_MODE,
-        numberFormat: "d",
-        highlighter: (type, str) => str,
-    },
+        stringifyOptions: { prettify: DEV_MODE },
+    }),
 
     logger(message, params) {
         // Does nothing by default
     },
 
     debug(message, params) {
-        console.debug(this.format(message, params, _tsCoreEnv.defaultFormattingOptions))
+        console.debug(this.format(message, params, _tsCoreEnv.defaultFormattingOptions(this.DEV_MODE)))
     },
 
     println(message, params) {
-        console.log(this.format(message, params, _tsCoreEnv.defaultFormattingOptions))
+        console.log(this.format(message, params, _tsCoreEnv.defaultFormattingOptions(this.DEV_MODE)))
     },
 
     warn(message, params) {
-        console.warn(this.format(message, params, _tsCoreEnv.defaultFormattingOptions))
+        console.warn(this.format(message, params, _tsCoreEnv.defaultFormattingOptions(this.DEV_MODE)))
     },
 
     eprintln(message, params) {
-        console.error(this.format(message, params, _tsCoreEnv.defaultFormattingOptions))
+        console.error(this.format(message, params, _tsCoreEnv.defaultFormattingOptions(this.DEV_MODE)))
     },
 
     panicWatcher(message, params) {
@@ -101,7 +96,7 @@ const _tsCoreEnv: TSCoreEnv = {
     },
 
     panic(message, params) {
-        const formatted = this.format(message, params, { ..._tsCoreEnv.defaultFormattingOptions, prettify: (DEV_MODE) => DEV_MODE })
+        const formatted = this.format(message, params, _tsCoreEnv.defaultFormattingOptions(this.DEV_MODE))
         const stack = new Error("At: panic").stack
         throw new Error("Panicked! " + formatted + (stack ? "\n" + stack : ""))
     },
@@ -127,7 +122,7 @@ export function setupTypeScriptCore(newEnv: Partial<TSCoreEnv> | ((previousEnv: 
 }
 
 export function format(message: string, ...params: unknown[]): string {
-    return _tsCoreEnv.format(message, params, _tsCoreEnv.defaultFormattingOptions)
+    return _tsCoreEnv.format(message, params, _tsCoreEnv.defaultFormattingOptions(_tsCoreEnv.DEV_MODE))
 }
 
 export function debug(message: string, ...params: unknown[]): void {

@@ -239,10 +239,10 @@ export namespace Decoders {
         return then(instanceOf(Dictionary), (dict) =>
             dict.resultable((key, value) =>
                 keyDecoder(key)
-                    .mapErr((err) => new DecodingError(state("DictionaryKey", [stringify(key, false), err])))
+                    .mapErr((err) => new DecodingError(state("DictionaryKey", [stringify(key, { prettify: false }), err])))
                     .andThen((key) =>
                         valueDecoder(value)
-                            .mapErr((err) => new DecodingError(state("DictionaryValue", [stringify(key, false), err])))
+                            .mapErr((err) => new DecodingError(state("DictionaryValue", [stringify(key, { prettify: false }), err])))
                             .map((value) => [key, value])
                     )
             )
@@ -255,10 +255,10 @@ export namespace Decoders {
             dict
                 .resultable((key, value) =>
                     string(key)
-                        .mapErr((err) => new DecodingError(state("DictionaryKey", [stringify(key, false), err])))
+                        .mapErr((err) => new DecodingError(state("DictionaryKey", [stringify(key, { prettify: false }), err])))
                         .andThen((key) =>
                             valueDecoder(value)
-                                .mapErr((err) => new DecodingError(state("DictionaryValue", [stringify(key, false), err])))
+                                .mapErr((err) => new DecodingError(state("DictionaryValue", [stringify(key, { prettify: false }), err])))
                                 .map((value) => [key, value])
                         )
                 )
@@ -293,7 +293,7 @@ export namespace Decoders {
     /** Sub-type a value to a primitive type */
     export function typedPrimitive<P extends null | boolean | number | string>(primitive: P): Decoder<unknown, P> {
         return (value) =>
-            value === primitive ? Ok(value as P) : Err(new DecodingError(state("WrongType", `primitive[${stringify(primitive, false)}]`)))
+            value === primitive ? Ok(value as P) : Err(new DecodingError(state("WrongType", `primitive[${stringify(primitive, { prettify: false })}]`)))
     }
 
     /** Sub-type a value to a more precise type using a type predicate function */
@@ -335,7 +335,7 @@ export namespace Decoders {
                     new DecodingError(
                         state(
                             "NoneOfCases",
-                            candidates.map((c) => stringify(c, false))
+                            candidates.map((c) => stringify(c, { prettify: false }))
                         )
                     )
                 )
@@ -368,7 +368,7 @@ export namespace Decoders {
         return (value) =>
             cases.includes(value as any)
                 ? Ok(new cstr(enumStr(value) as any))
-                : Err(new DecodingError(state("NoneOfEnumStates", [cstr.name, cases.map((c) => stringify(c, false))])))
+                : Err(new DecodingError(state("NoneOfEnumStates", [cstr.name, cases.map((c) => stringify(c, { prettify: false }))])))
     }
 
     /** Try to decode a value using multiple decoders to an unknown data type */
