@@ -8,12 +8,16 @@ import { List } from './list'
 import { matchString } from './match'
 import { MaybeUninit } from './maybeUinit'
 import { O } from './objects'
-import { isOption } from './option'
+import { None, Option, Some, isOption } from './option'
 import { Ref } from './ref'
+import { Regex } from './regex'
 import { isResult } from './result'
 import { Task } from './task'
 
-export type StringifyHighlighter = (type: "typename" | "prefix" | "collKey" | "collValue" | "text" | "unknown" | "punctuation", str: string) => string
+export type StringifyHighlighter = (
+    type: "typename" | "prefix" | "collKey" | "collValue" | "text" | "unknown" | "punctuation" | "voidPrefixValue",
+    str: string
+) => string
 
 export type StringifyNumberFormat = "b" | "d" | "o" | "x" | "X"
 
@@ -32,7 +36,7 @@ export type RawStringifyable =
     | { type: "text"; text: string }
     | { type: "wrapped"; typename: string; content?: RawStringifyable }
     | { type: "collection"; typename: string; content: Array<{ key: RawStringifyable; value: RawStringifyable }> }
-    | { type: "prefixed"; prefix: string; value?: RawStringifyable }
+    | { type: "prefixed"; typename: string; prefixed: Array<[string, Option<RawStringifyable>]> }
     | { type: "unknown"; typename: string | undefined }
 
 /**
@@ -99,77 +103,106 @@ export function makeStringifyable(value: unknown, numberFormat: StringifyNumberF
         }
     }
 
+    if (value instanceof RegExp) {
+        return {
+            type: "wrapped",
+            typename: "RegExp",
+            content: { type: "text", text: value.toString() },
+        }
+    }
+
+    if (value instanceof Regex) {
+        return {
+            type: "prefixed",
+            typename: "Regex",
+            prefixed: [
+                ["expression", Some(_nested(value.inner))],
+                ["names", Some(_nested(value.names))],
+            ],
+        }
+    }
+
     if (value instanceof Iter) {
-        return { type: "wrapped", typename: "Iter", content: { type: "prefixed", prefix: "pointer", value: _nested(value.pointer) } }
+        return { type: "prefixed", typename: "Iter", prefixed: [["pointer", Some(_nested(value.pointer))]] }
     }
 
     if (value instanceof MaybeUninit) {
         return {
-            type: "wrapped",
+            type: "prefixed",
             typename: "MaybeUninit",
-            content: value.match({
-                Init: (value) => ({ type: "prefixed", prefix: "Init", content: _nested(value) }),
-                Uninit: () => ({ type: "prefixed", prefix: "Uninit" }),
-            }),
+            prefixed: [
+                value.match({
+                    Init: (value) => ["Init", Some(_nested(value))],
+                    Uninit: () => ["Uninit", None()],
+                }),
+            ],
         }
     }
 
     if (value instanceof Ref) {
         return {
-            type: "wrapped",
+            type: "prefixed",
             typename: "Ref",
-            content: value.match({
-                Available: (value) => ({ type: "prefixed", prefix: "Available", content: _nested(value) }),
-                Destroyed: () => ({ type: "prefixed", prefix: "Destroyed" }),
-            }),
+            prefixed: [
+                value.match({
+                    Available: (value) => ["Available", Some(_nested(value))],
+                    Destroyed: () => ["Destroyed", None()],
+                }),
+            ],
         }
     }
 
     if (value instanceof Future) {
         return {
-            type: "wrapped",
+            type: "prefixed",
             typename: "Future",
-            content: value.match({
-                Pending: () => ({ type: "prefixed", prefix: "Pending" }),
-                Complete: (value) => ({ type: "prefixed", prefix: "Complete", content: _nested(value) }),
-            }),
+            prefixed: [
+                value.match({
+                    Pending: () => ["Pending", None()],
+                    Complete: (value) => ["Complete", Some(_nested(value))],
+                }),
+            ],
         }
     }
 
     if (value instanceof Task) {
         return {
-            type: "wrapped",
+            type: "prefixed",
             typename: "Task",
-            content: value.match({
-                Created: () => ({ type: "prefixed", prefix: "Created" }),
-                Pending: () => ({ type: "prefixed", prefix: "Pending" }),
-                RunningStep: () => ({ type: "prefixed", prefix: "RunningStep" }),
-                Fulfilled: (value) => ({ type: "prefixed", prefix: "Fulfilled", value: _nested(value) }),
-                Failed: (err) => ({ type: "prefixed", prefix: "Failed", value: _nested(err) }),
-            }),
+            prefixed: [
+                value.match({
+                    Created: () => ["Created", None()],
+                    Pending: () => ["Pending", None()],
+                    RunningStep: () => ["RunningStep", None()],
+                    Fulfilled: (value) => ["Fulfilled", Some(_nested(value))],
+                    Failed: (err) => ["Failed", Some(_nested(err))],
+                }),
+            ],
         }
     }
 
     if (value instanceof TaskCluster) {
         return {
-            type: "wrapped",
+            type: "prefixed",
             typename: "TaskCluster",
-            content: value.match({
-                Created: () => ({ type: "prefixed", prefix: "Created" }),
-                Running: () => ({ type: "prefixed", prefix: "Running" }),
-                Paused: () => ({ type: "prefixed", prefix: "Paused" }),
-                Aborted: () => ({ type: "prefixed", prefix: "Aborted" }),
-                Fulfilled: (value) => ({ type: "prefixed", prefix: "Fulfilled", value: _nested(value) }),
-                Failed: (err) => ({ type: "prefixed", prefix: "Failed", value: _nested(err) }),
-            }),
+            prefixed: [
+                value.match({
+                    Created: () => ["Created", None()],
+                    Running: () => ["Running", None()],
+                    Paused: () => ["Paused", None()],
+                    Aborted: () => ["Aborted", None()],
+                    Fulfilled: (value) => ["Fulfilled", Some(_nested(value))],
+                    Failed: (err) => ["Failed", Some(_nested(err))],
+                }),
+            ],
         }
     }
 
     if (value instanceof JsonValue) {
         return {
-            type: "wrapped",
+            type: "prefixed",
             typename: "JsonValue",
-            content: _nested(value.inner()),
+            prefixed: [["inner", Some(_nested(value.inner()))]],
         }
     }
 
@@ -238,7 +271,7 @@ export function isStringifyableLinear(stri: RawStringifyable): boolean {
             )
 
         case "prefixed":
-            return !stri.value || typeof stri.value === "string" ? true : isStringifyableLinear(stri.value)
+            return stri.prefixed.every(([prefix, value]) => value.map((value) => isStringifyableLinear(value)).unwrapOr(true))
 
         case "unknown":
             return true
@@ -261,7 +294,7 @@ export function isStringifyableChildless(stri: RawStringifyable): boolean {
             return stri.content.length === 0
 
         case "prefixed":
-            return false
+            return stri.prefixed.length <= 1
 
         case "unknown":
             return true
@@ -327,8 +360,30 @@ export function stringifyRaw(stri: RawStringifyable, pretty?: boolean, highlight
 
         case "prefixed":
             return (
-                highlighters("prefix", stri.prefix) +
-                (stri.value ? highlighters("punctuation", ":") + " " + stringifyRaw(stri.value, pretty, highlighters) : "")
+                highlighters("typename", stri.typename) +
+                " " +
+                highlighters("punctuation", "{") +
+                (!isStringifyableChildless(stri) ? (pretty ? "\n  " : " ") : "") +
+                (stri.prefixed || [])
+                    .map(
+                        ([prefix, value]) =>
+                            highlighters("prefix", prefix) +
+                            highlighters("punctuation", ":") +
+                            " " +
+                            value
+                                .map((value) =>
+                                    highlighters(
+                                        "collValue",
+                                        stringifyRaw(value, pretty, highlighters)
+                                            .split(/\n/)
+                                            .join("\n" + (pretty ? "  " : ""))
+                                    )
+                                )
+                                .unwrapOrElse(() => highlighters("voidPrefixValue", "-"))
+                    )
+                    .join(highlighters("punctuation", ",") + (pretty && !isStringifyableChildless(stri) ? "\n  " : " ")) +
+                (!isStringifyableChildless(stri) ? (pretty ? "\n" : " ") : "") +
+                highlighters("punctuation", "}")
             )
 
         case "unknown":
