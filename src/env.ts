@@ -34,143 +34,149 @@ export interface FormatOptions {
     stringifyOptions: StringifyOptions
 }
 
-const _tsCoreEnv: TSCoreEnv = {
-    DEV_MODE: true,
+const _tsCoreEnv: { ref: TSCoreEnv } = {
+    ref: {
+        DEV_MODE: true,
 
-    format(message, params, maybeOptions) {
-        const options = maybeOptions ?? this.defaultFormattingOptions(this.DEV_MODE)
-        let paramCounter = -1
+        format(message, params, maybeOptions) {
+            const options = maybeOptions ?? this.defaultFormattingOptions(this.DEV_MODE)
+            let paramCounter = -1
 
-        return message.replace(/{(\d+)?([:#])?([bdoxX])?(\?)?}/g, (_, strParamPos, display, numberFormat, pretty) => {
-            const paramPos = strParamPos ? parseInt(strParamPos) : ++paramCounter
+            return message.replace(/{(\d+)?([:#])?([bdoxX])?(\?)?}/g, (_, strParamPos, display, numberFormat, pretty) => {
+                const paramPos = strParamPos ? parseInt(strParamPos) : ++paramCounter
 
-            if (paramPos >= params.length) {
-                return options.unknownParam(paramPos)
-            }
+                if (paramPos >= params.length) {
+                    return options.unknownParam(paramPos)
+                }
 
-            if (display === "#" || !display) {
-                return stringify(params[paramCounter], {
-                    ...options.stringifyOptions,
-                    numberFormat: numberFormat || options.stringifyOptions.numberFormat,
-                })
-            }
+                if (display === "#" || !display) {
+                    return stringify(params[paramCounter], {
+                        ...options.stringifyOptions,
+                        numberFormat: numberFormat || options.stringifyOptions.numberFormat,
+                    })
+                }
 
-            return JSON.stringify(params[paramCounter], null, pretty ? 4 : 0)
-        })
-    },
-
-    formatExt(format, params, paramCounter, options): string | null {
-        return null
-    },
-
-    defaultFormattingOptions: (DEV_MODE) => ({
-        unknownParam(position) {
-            return `<<<missing parameter ${position + 1}>>>`
+                return JSON.stringify(params[paramCounter], null, pretty ? 4 : 0)
+            })
         },
 
-        stringifyOptions: { prettify: DEV_MODE },
-    }),
+        formatExt(format, params, paramCounter, options): string | null {
+            return null
+        },
 
-    logger(message, params) {
-        // Does nothing by default
-    },
+        defaultFormattingOptions: (DEV_MODE) => ({
+            unknownParam(position) {
+                return `<<<missing parameter ${position + 1}>>>`
+            },
 
-    debug(message, params) {
-        console.debug(this.format(message, params, _tsCoreEnv.defaultFormattingOptions(this.DEV_MODE)))
-    },
+            stringifyOptions: { prettify: DEV_MODE },
+        }),
 
-    println(message, params) {
-        console.log(this.format(message, params, _tsCoreEnv.defaultFormattingOptions(this.DEV_MODE)))
-    },
+        logger(message, params) {
+            // Does nothing by default
+        },
 
-    warn(message, params) {
-        console.warn(this.format(message, params, _tsCoreEnv.defaultFormattingOptions(this.DEV_MODE)))
-    },
+        debug(message, params) {
+            console.debug(this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE)))
+        },
 
-    eprintln(message, params) {
-        console.error(this.format(message, params, _tsCoreEnv.defaultFormattingOptions(this.DEV_MODE)))
-    },
+        println(message, params) {
+            console.log(this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE)))
+        },
 
-    panicWatcher(message, params) {
-        // Does nothing by default
-    },
+        warn(message, params) {
+            console.warn(this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE)))
+        },
 
-    panic(message, params) {
-        const formatted = this.format(message, params, _tsCoreEnv.defaultFormattingOptions(this.DEV_MODE))
-        const stack = new Error("At: panic").stack
-        throw new Error("Panicked! " + formatted + (stack ? "\n" + stack : ""))
-    },
+        eprintln(message, params) {
+            console.error(this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE)))
+        },
 
-    unreachable(message, params) {
-        return this.panic(message, params)
-    },
+        panicWatcher(message, params) {
+            // Does nothing by default
+        },
 
-    unimplemented(message, params) {
-        return this.panic(message, params)
-    },
+        panic(message, params) {
+            const formatted = this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE))
+            const stack = new Error("At: panic").stack
+            throw new Error("Panicked! " + formatted + (stack ? "\n" + stack : ""))
+        },
 
-    todo(message, params) {
-        return this.panic(message, params)
+        unreachable(message, params) {
+            return this.panic(message, params)
+        },
+
+        unimplemented(message, params) {
+            return this.panic(message, params)
+        },
+
+        todo(message, params) {
+            return this.panic(message, params)
+        },
     },
 }
 
 export function setupTypeScriptCore(newEnv: Partial<TSCoreEnv> | ((previousEnv: Readonly<TSCoreEnv>) => Partial<TSCoreEnv>)): void {
-    for (const [key, value] of O.entries(newEnv instanceof Function ? newEnv(O.cloneDeep(_tsCoreEnv)) : newEnv)) {
+    const out = { ..._tsCoreEnv.ref }
+
+    for (const [key, value] of O.entries(newEnv instanceof Function ? newEnv(_tsCoreEnv.ref) : newEnv)) {
         // @ts-ignore
-        _tsCoreEnv[key] = value
+        out[key] = value
     }
+
+    _tsCoreEnv.ref = out
 }
 
 export function format(message: string, ...params: unknown[]): string {
-    return _tsCoreEnv.format(message, params, _tsCoreEnv.defaultFormattingOptions(_tsCoreEnv.DEV_MODE))
+    return _tsCoreEnv.ref.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(_tsCoreEnv.ref.DEV_MODE))
 }
 
 export function debug(message: string, ...params: unknown[]): void {
-    _tsCoreEnv.logger("debug", message, params)
-    return _tsCoreEnv.debug(message, params)
+    _tsCoreEnv.ref.logger("debug", message, params)
+    return _tsCoreEnv.ref.debug(message, params)
 }
 
 export function println(message: string, ...params: unknown[]): void {
-    _tsCoreEnv.logger("log", message, params)
-    return _tsCoreEnv.println(message, params)
+    _tsCoreEnv.ref.logger("log", message, params)
+    return _tsCoreEnv.ref.println(message, params)
 }
 
 export function warn(message: string, ...params: unknown[]): void {
-    _tsCoreEnv.logger("warn", message, params)
-    return _tsCoreEnv.warn(message, params)
+    _tsCoreEnv.ref.logger("warn", message, params)
+    return _tsCoreEnv.ref.warn(message, params)
 }
 
 export function eprintln(message: string, ...params: unknown[]): void {
-    _tsCoreEnv.logger("error", message, params)
-    return _tsCoreEnv.eprintln(message, params)
+    _tsCoreEnv.ref.logger("error", message, params)
+    return _tsCoreEnv.ref.eprintln(message, params)
 }
 
 export function panic(message: string, ...params: unknown[]): never {
-    _tsCoreEnv.logger("panic", message, params)
-    _tsCoreEnv.panicWatcher(message, params)
-    return _tsCoreEnv.panic(message, params)
+    _tsCoreEnv.ref.logger("panic", message, params)
+    _tsCoreEnv.ref.panicWatcher(message, params)
+    return _tsCoreEnv.ref.panic(message, params)
 }
 
 export function unreachable(message?: string, ...params: unknown[]): never {
     message = message ?? "unreachable statement reached!"
     params = params ?? []
 
-    _tsCoreEnv.logger("unreachable", message, params)
-    return _tsCoreEnv.unreachable(message, params)
+    _tsCoreEnv.ref.logger("unreachable", message, params)
+    return _tsCoreEnv.ref.unreachable(message, params)
 }
 
 export function unimplemented(message?: string, ...params: unknown[]): never {
     message = message ?? "unreachable statement reached!"
     params = params ?? []
 
-    _tsCoreEnv.logger("unimplemented", message, params)
-    return _tsCoreEnv.unimplemented(message, params)
+    _tsCoreEnv.ref.logger("unimplemented", message, params)
+    return _tsCoreEnv.ref.unimplemented(message, params)
 }
 
 export function todo(message?: string, ...params: unknown[]): never {
     message = message ?? "unreachable statement reached!"
     params = params ?? []
 
-    _tsCoreEnv.logger("todo", message, params)
-    return _tsCoreEnv.todo(message, params)
+    _tsCoreEnv.ref.logger("todo", message, params)
+    return _tsCoreEnv.ref.todo(message, params)
 }
