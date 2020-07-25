@@ -29,8 +29,8 @@ export class Dictionary<K, V> {
      * Create a new dictionary from a list of entries
      * @param content
      */
-    constructor(content?: Array<[K, V]> | Map<K, V>) {
-        this._content = content instanceof Map ? content : new Map(content)
+    constructor(content?: Array<[K, V]> | Map<K, V> | Dictionary<K, V>) {
+        this._content = content instanceof Map ? content : content instanceof Dictionary ? new Map(content._content) : new Map(content)
     }
 
     /**
