@@ -697,7 +697,7 @@ export namespace JsonDecoders {
     }
 
     /** Decode a collection to a strongly-typed collection with a decoder for each member of the mapping */
-    export function mapped<O extends object, D extends { [key in keyof O]: JsonDecoder<O[key]> }>(decoders: D): JsonDecoder<O> {
+    export function mapped<O extends object>(decoders: { [key in keyof O]: JsonDecoder<O[key]> }): JsonDecoder<O> {
         return untypedMapped(decoders) as any
     }
 

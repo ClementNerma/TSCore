@@ -457,7 +457,7 @@ export namespace Decoders {
     }
 
     /** Decode a collection to a strongly-typed collection with a decoder for each member of the mapping */
-    export function mapped<F, O extends object, D extends { [key in keyof O]: Decoder<unknown, O[key]> }>(decoders: D): Decoder<CollLike<F>, O> {
+    export function mapped<F, O extends object>(decoders: { [key in keyof O]: Decoder<unknown, O[key]> }): Decoder<CollLike<F>, O> {
         return untypedMapped<F>(decoders) as any
     }
 
