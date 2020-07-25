@@ -9,12 +9,14 @@ declare const console: {
     error(message: string): void
 }
 
+export type FormattingContext = "debug" | "print" | "warn" | "error" | "panic" | "logging" | "format"
+
 export interface TSCoreEnv {
     DEV_MODE: boolean
 
-    format(message: string, params: unknown[], options?: FormatOptions): string
-    formatExt(format: string, params: unknown[], paramCounter: number, options: FormatOptions): string | false | null
-    defaultFormattingOptions: (DEV_MODE: boolean) => FormatOptions
+    format(message: string, params: unknown[], context: FormattingContext, options?: FormatOptions): string
+    formatExt(format: string, params: unknown[], paramCounter: number, context: FormattingContext, options: FormatOptions): string | false | null
+    defaultFormattingOptions: (DEV_MODE: boolean, context: FormattingContext) => FormatOptions
 
     logger(type: "debug" | "log" | "warn" | "error" | "panic" | "unreachable" | "unimplemented" | "todo", message: string, params: unknown[]): void
 
@@ -39,8 +41,8 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
     ref: {
         DEV_MODE: true,
 
-        format(message, params, maybeOptions) {
-            const options = maybeOptions ?? this.defaultFormattingOptions(this.DEV_MODE)
+        format(message, params, context, maybeOptions) {
+            const options = maybeOptions ?? this.defaultFormattingOptions(this.DEV_MODE, context)
             let paramCounter = -1
 
             return message.replace(/{([a-zA-Z0-9_:#\?\$]*)}/g, (match, format) => {
@@ -49,7 +51,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
                 const supported = new Regex(/^(\d+)?([:#])?([bdoxX])?(\?)?$/, ["strParamPos", "display", "numberFormat", "pretty"]).matchNamed(format)
 
                 if (supported.isNone()) {
-                    const ext = this.formatExt(format, params, paramCounter, options)
+                    const ext = this.formatExt(format, params, paramCounter, context, options)
 
                     if (ext === null) {
                         return match
@@ -81,7 +83,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
             })
         },
 
-        formatExt(format, params, paramCounter, options): string | null {
+        formatExt(format, params, paramCounter, context, options): string | null {
             return null
         },
 
@@ -99,20 +101,20 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
 
         debug(message, params) {
             if (this.DEV_MODE) {
-                console.debug(this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE)))
+                console.debug(this.format(message, params, "debug"))
             }
         },
 
         println(message, params) {
-            console.log(this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE)))
+            console.log(this.format(message, params, "print"))
         },
 
         warn(message, params) {
-            console.warn(this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE)))
+            console.warn(this.format(message, params, "warn"))
         },
 
         eprintln(message, params) {
-            console.error(this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE)))
+            console.error(this.format(message, params, "error"))
         },
 
         panicWatcher(message, params) {
@@ -120,7 +122,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
         },
 
         panic(message, params) {
-            const formatted = this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE))
+            const formatted = this.format(message, params, "panic")
             const stack = new Error("At: panic").stack
             throw new Error("Panicked! " + formatted + (stack ? "\n" + stack : ""))
         },
@@ -151,7 +153,11 @@ export function setupTypeScriptCore(newEnv: Partial<TSCoreEnv> | ((previousEnv: 
 }
 
 export function format(message: string, ...params: unknown[]): string {
-    return _tsCoreEnv.ref.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(_tsCoreEnv.ref.DEV_MODE))
+    return _tsCoreEnv.ref.format(message, params, "format")
+}
+
+export function formatCtx(context: FormattingContext, message: string, ...params: unknown[]): string {
+    return _tsCoreEnv.ref.format(message, params, context)
 }
 
 export function debug(message: string, ...params: unknown[]): void {
