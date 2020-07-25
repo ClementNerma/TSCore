@@ -314,6 +314,14 @@ export class Dictionary<K, V> {
  */
 export class RecordDict<V> extends Dictionary<string, V> {
     /**
+     * Create a new dictionary from a list of entries
+     * @param content
+     */
+    constructor(content?: Array<[string, V]> | CollLike<V>) {
+        super(O.isCollection(content) ? O.entries(content) : content)
+    }
+
+    /**
      * Create a new dictionary with mapped keys
      * @param mapper
      */
