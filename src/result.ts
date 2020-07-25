@@ -146,6 +146,33 @@ abstract class ResultClass<T, E> extends AbstractMatchable<ResultMatch<T, E>> {
     abstract orElse<F>(other: () => Result<T, F>): Result<T, F>
 
     /**
+     * Cast this result's inner success value to a parent type
+     * If the provided type is not a parent of the inner value's one, the result will be returned but typechecking will fail
+     */
+    abstract castOk<U>(): T extends U ? Result<U, E> : never
+
+    /**
+     * Cast this result's inner error value to a parent type
+     * If the provided type is not a parent of the inner value's one, the result will be returned but typechecking will fail
+     */
+    abstract castErr<F>(): E extends F ? Result<T, F> : never
+
+    /**
+     * Extend this result's success type to allow another type to be part of it
+     */
+    abstract extendOk<U>(): Result<T | U, E>
+
+    /**
+     * Extend this result's error type to allow another type to be part of it
+     */
+    abstract extendErr<F>(): Result<T, E | F>
+
+    /**
+     * Extend this result's type to allow another type to be part of it
+     */
+    abstract extend<U, F>(): Result<T | U, E | F>
+
+    /**
      * Clone this result
      */
     abstract clone(): Result<T, E>
@@ -237,6 +264,26 @@ class OkValue<T, E> extends ResultClass<T, E> {
     }
 
     orElse<F>(other: () => Result<T, F>): Result<T, F> {
+        return Ok(this.data)
+    }
+
+    castOk<U>(): T extends U ? Result<U, E> : never {
+        return Ok(this.data) as any
+    }
+
+    castErr<F>(): E extends F ? Result<T, F> : never {
+        return Ok(this.data) as any
+    }
+
+    extendOk<U>(): Result<T | U, E> {
+        return Ok(this.data)
+    }
+
+    extendErr<F>(): Result<T, E | F> {
+        return Ok(this.data)
+    }
+
+    extend<U, F>(): Result<T | U, E | F> {
         return Ok(this.data)
     }
 
@@ -332,6 +379,26 @@ export class ErrValue<T, E> extends ResultClass<T, E> {
 
     orElse<F>(other: () => Result<T, F>): Result<T, F> {
         return other()
+    }
+
+    castOk<U>(): T extends U ? Result<U, E> : never {
+        return Ok(this.err) as any
+    }
+
+    castErr<F>(): E extends F ? Result<T, F> : never {
+        return Ok(this.err) as any
+    }
+
+    extendOk<U>(): Result<T | U, E> {
+        return Err(this.err)
+    }
+
+    extendErr<F>(): Result<T, E | F> {
+        return Err(this.err)
+    }
+
+    extend<U, F>(): Result<T | U, E | F> {
+        return Err(this.err)
     }
 
     clone(): Result<T, E> {
