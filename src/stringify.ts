@@ -15,7 +15,7 @@ import { isResult } from './result'
 import { Task } from './task'
 
 export type StringifyHighlighter = (
-    type: "typename" | "prefix" | "collKey" | "collValue" | "text" | "unknown" | "punctuation" | "voidPrefixValue",
+    type: "typename" | "prefix" | "listIndex" | "listValue" | "collKey" | "collValue" | "text" | "unknown" | "punctuation" | "voidPrefixValue",
     str: string
 ) => string
 
@@ -35,6 +35,7 @@ export function stringify(value: unknown, prettify?: boolean, numberFormat?: Str
 export type RawStringifyable =
     | { type: "text"; text: string }
     | { type: "wrapped"; typename: string; content?: RawStringifyable }
+    | { type: "list"; typename: string; content: Array<{ index: number; value: RawStringifyable }> }
     | { type: "collection"; typename: string; content: Array<{ key: RawStringifyable; value: RawStringifyable }> }
     | { type: "prefixed"; typename: string; prefixed: Array<[string, Option<RawStringifyable>]> }
     | { type: "unknown"; typename: string | undefined }
@@ -78,17 +79,17 @@ export function makeStringifyable(value: unknown, numberFormat: StringifyNumberF
 
     if (value instanceof List) {
         return {
-            type: "collection",
+            type: "list",
             typename: "List",
-            content: value.toArray().map((item, i) => ({ key: _nested(i), value: _nested(item) })),
+            content: value.toArray().map((item, index) => ({ index, value: _nested(item) })),
         }
     }
 
     if (O.isArray(value)) {
         return {
-            type: "collection",
+            type: "list",
             typename: "Array",
-            content: value.map((item, i) => ({ key: _nested(i), value: _nested(item) })),
+            content: value.map((item, index) => ({ index, value: _nested(item) })),
         }
     }
 
@@ -253,7 +254,7 @@ export function makeStringifyable(value: unknown, numberFormat: StringifyNumberF
 
 /**
  * Check if a stringifyable can be displayed in a single line
- * Returns `false` if the stringifyable is or contains a collection of more than 1 element
+ * Returns `false` if the stringifyable is or contains a list or a collection of more than 1 element
  * @param stri
  */
 export function isStringifyableLinear(stri: RawStringifyable): boolean {
@@ -263,6 +264,9 @@ export function isStringifyableLinear(stri: RawStringifyable): boolean {
 
         case "wrapped":
             return stri.content ? isStringifyableLinear(stri.content) : true
+
+        case "list":
+            return stri.content.length >= 1 && stri.content.every(({ value }) => isStringifyableLinear(value))
 
         case "collection":
             return (
@@ -289,6 +293,9 @@ export function isStringifyableChildless(stri: RawStringifyable): boolean {
 
         case "wrapped":
             return stri.content ? isStringifyableChildless(stri.content) : true
+
+        case "list":
+            return stri.content.length === 0
 
         case "collection":
             return stri.content.length === 0
@@ -327,6 +334,30 @@ export function stringifyRaw(stri: RawStringifyable, pretty?: boolean, highlight
                     : "") +
                 (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n" : "") : "") +
                 highlighters("punctuation", ")")
+            )
+
+        case "list":
+            return (
+                highlighters("typename", stri.typename) +
+                " " +
+                highlighters("punctuation", "[") +
+                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n  " : " ") : "") +
+                (stri.content || [])
+                    .map(
+                        ({ index, value }) =>
+                            highlighters("listIndex", index.toString()) +
+                            highlighters("punctuation", ":") +
+                            " " +
+                            highlighters(
+                                "listValue",
+                                stringifyRaw(value, pretty, highlighters)
+                                    .split(/\n/)
+                                    .join("\n" + (pretty ? "  " : ""))
+                            )
+                    )
+                    .join(highlighters("punctuation", ",") + (pretty && !isStringifyableChildless(stri) ? "\n  " : " ")) +
+                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n" : " ") : "") +
+                highlighters("punctuation", "]")
             )
 
         case "collection":
