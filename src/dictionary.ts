@@ -388,3 +388,9 @@ export class RecordDict<V> extends Dictionary<string, V> {
         return new this(O.entries(collection))
     }
 }
+
+/**
+ * Collection-like structure
+ * @template T Type of values
+ */
+export type CollLike<T> = Dictionary<string, T> | Collection<T> | Map<string, T>
