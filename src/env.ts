@@ -98,7 +98,9 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
         },
 
         debug(message, params) {
-            console.debug(this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE)))
+            if (this.DEV_MODE) {
+                console.debug(this.format(message, params, _tsCoreEnv.ref.defaultFormattingOptions(this.DEV_MODE)))
+            }
         },
 
         println(message, params) {
