@@ -246,6 +246,29 @@ export function isStringifyableLinear(stri: RawStringifyable): boolean {
 }
 
 /**
+ * Check if a stringifyable is child-less so it can be displayed on a single line even in prettified mode
+ * @param stri
+ */
+export function isStringifyableChildless(stri: RawStringifyable): boolean {
+    switch (stri.type) {
+        case "text":
+            return true
+
+        case "wrapped":
+            return stri.content ? isStringifyableChildless(stri.content) : true
+
+        case "collection":
+            return stri.content.length === 0
+
+        case "prefixed":
+            return false
+
+        case "unknown":
+            return true
+    }
+}
+
+/**
  * Stringify a raw stringifyable value
  * @param stri
  * @param pretty
@@ -263,13 +286,13 @@ export function stringifyRaw(stri: RawStringifyable, pretty?: boolean, highlight
             return (
                 highlighters("typename", stri.typename) +
                 highlighters("punctuation", "(") +
-                (stri.content ? (pretty ? "\n  " : "") : "") +
+                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n  " : "") : "") +
                 (stri.content
                     ? stringifyRaw(stri.content, pretty, highlighters)
                           .split(/\n/)
                           .join("\n" + (pretty ? "  " : ""))
                     : "") +
-                (stri.content ? (pretty ? "\n" : "") : "") +
+                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n" : "") : "") +
                 highlighters("punctuation", ")")
             )
 
@@ -278,7 +301,7 @@ export function stringifyRaw(stri: RawStringifyable, pretty?: boolean, highlight
                 highlighters("typename", stri.typename) +
                 " " +
                 highlighters("punctuation", "{") +
-                (stri.content ? (pretty ? "\n  " : " ") : "") +
+                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n  " : " ") : "") +
                 (stri.content || [])
                     .map(
                         ({ key, value }) =>
@@ -297,8 +320,8 @@ export function stringifyRaw(stri: RawStringifyable, pretty?: boolean, highlight
                                     .join("\n" + (pretty ? "  " : ""))
                             )
                     )
-                    .join(highlighters("punctuation", ",") + (pretty ? "\n  " : " ")) +
-                (stri.content ? (pretty ? "\n" : " ") : "") +
+                    .join(highlighters("punctuation", ",") + (pretty && !isStringifyableChildless(stri) ? "\n  " : " ")) +
+                (stri.content && !isStringifyableChildless(stri) ? (pretty ? "\n" : " ") : "") +
                 highlighters("punctuation", "}")
             )
 
