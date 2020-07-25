@@ -337,7 +337,7 @@ export function isStringifyableChildless(stri: RawStringifyable): boolean {
  */
 export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions): string {
     const prettify = options?.prettify ?? !isStringifyableLinear(stri)
-    const highlighter = options?.highlighter ?? ((value) => value)
+    const highlighter = options?.highlighter ?? ((type, str) => str)
 
     switch (stri.type) {
         case "text":
