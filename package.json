@@ -1,11 +1,11 @@
 {
     "name": "typescript-core",
-    "version": "5.4.1",
+    "version": "5.4.2",
     "description": "Functional utilities for TypeScript",
     "main": "build/index.js",
     "types": "build/index.d.ts",
     "scripts": {
-        "prepublishOnly": "tsc",
+        "prepublishOnly": "tsc && uglifyjs-folder build --compress --mangle -eo build -x \".js\"",
         "docs": "typedoc --out docs/types src",
         "build": "tsc"
     },
@@ -13,7 +13,8 @@
     "license": "Apache-2.0",
     "devDependencies": {
         "typedoc": "^0.17.7",
-        "typescript": "^3.9.7"
+        "typescript": "^3.9.7",
+        "uglifyjs-folder": "^2.0.0"
     },
     "files": [
         "tsconfig.json",
