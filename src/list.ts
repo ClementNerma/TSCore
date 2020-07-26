@@ -522,8 +522,9 @@ export class List<T> {
      * @param index
      * @param value
      */
-    insert(index: number, value: T): void {
+    insert(index: number, value: T): number {
         this._content.splice(index, 0, value)
+        return this._content.length
     }
 
     /**
