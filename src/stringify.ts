@@ -97,7 +97,7 @@ export type RawStringifyable =
     | { type: "text"; text: string }
     | { type: "wrapped"; typename: string; content?: RawStringifyable }
     | { type: "list"; typename: string; content: Array<{ index: number; value: RawStringifyable }> }
-    | { type: "collection"; typename: string; content: Array<{ key: RawStringifyable; value: RawStringifyable }> }
+    | { type: "collection"; typename: string; content: Array<{ key: RawStringifyable; value: RawStringifyable }>; nativeColor?: true }
     | { type: "error"; typename: string; message: string; stack: Option<string> }
     | { type: "prefixed"; typename: string; prefixed: Array<[string, Option<RawStringifyable>]> }
     | { type: "unknown"; typename: string | undefined }
@@ -179,6 +179,7 @@ export function makeStringifyable(value: unknown, stringifyExt?: StringifyOption
             type: "collection",
             typename: "Collection",
             content: O.entries(value).map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
+            nativeColor: true,
         }
     }
 
@@ -486,7 +487,10 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
                 (stri.content || [])
                     .map(
                         ({ key, value }) =>
-                            highlighter("collKey", stringifyRaw(key, { ...options, prettify: false })) +
+                            highlighter(
+                                "collKey",
+                                stringifyRaw(key, { ...options, prettify: false, highlighter: stri.nativeColor ? undefined : options?.highlighter })
+                            ) +
                             highlighter("punctuation", ":") +
                             " " +
                             highlighter("collValue", _lines(stringifyRaw(value, options), 0))
