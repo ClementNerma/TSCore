@@ -1,4 +1,5 @@
 import { TaskCluster } from './cluster'
+import { DecodingError } from './decode'
 import { Dictionary } from './dictionary'
 import { Either } from './either'
 import { Future } from './future'
@@ -195,6 +196,14 @@ export function makeStringifyable(value: unknown, stringifyExt?: StringifyOption
                 ["message", Some({ type: "text", text: value.message })],
                 ["stack", Option.maybe(value.stack).map((stack) => _nested(stack.split("\n")))],
             ],
+        }
+    }
+
+    if (value instanceof DecodingError) {
+        return {
+            type: "wrapped",
+            typename: "DecodingError",
+            content: { type: "text", text: value.render() },
         }
     }
 
