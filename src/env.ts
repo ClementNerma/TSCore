@@ -48,10 +48,10 @@ export interface TSCoreEnv {
 
     /**
      * Generate the default formatting options
-     * @param DEV_MODE Is development mode enabled?
+     * @param devMode Is development mode enabled?
      * @param context The formatting context
      */
-    defaultFormattingOptions: (DEV_MODE: boolean, context: FormattingContext) => FormatOptions
+    defaultFormattingOptions: (devMode: boolean, context: FormattingContext) => FormatOptions
 
     /**
      * Log a message - called before actually displaying the message in debug(), println(), panic() etc.
@@ -196,12 +196,12 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
             return null
         },
 
-        defaultFormattingOptions: (DEV_MODE) => ({
+        defaultFormattingOptions: (devMode) => ({
             missingParam(position) {
                 return `<<<missing parameter ${position + 1}>>>`
             },
 
-            stringifyOptions: { prettify: DEV_MODE },
+            stringifyOptions: { prettify: devMode },
         }),
 
         logger(message, params) {
