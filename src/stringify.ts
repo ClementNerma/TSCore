@@ -298,13 +298,13 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
 
 /**
  * Check if a stringifyable can be displayed in a single line
- * Returns `false` if the stringifyable is or contains a list or a collection of more than 1 element
+ * Returns `false` if the stringifyable is or contains a list or a collection of more than 1 element, or a multi-line text
  * @param stri
  */
 export function isStringifyableLinear(stri: RawStringifyable): boolean {
     switch (stri.type) {
         case "text":
-            return true
+            return stri.text.includes("\n")
 
         case "wrapped":
             return stri.content ? isStringifyableLinear(stri.content) : true
@@ -333,7 +333,7 @@ export function isStringifyableLinear(stri: RawStringifyable): boolean {
 export function isStringifyableChildless(stri: RawStringifyable): boolean {
     switch (stri.type) {
         case "text":
-            return true
+            return !stri.text.includes("\n")
 
         case "wrapped":
             return stri.content ? isStringifyableChildless(stri.content) : true
