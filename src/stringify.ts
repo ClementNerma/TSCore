@@ -344,10 +344,8 @@ export function isStringifyableLinear(stri: RawStringifyable): boolean {
         case "void":
         case "boolean":
         case "number":
-            return true
-
         case "string":
-            return !stri.value.includes("\n")
+            return true
 
         case "text":
             return !stri.text.includes("\n")
@@ -384,10 +382,8 @@ export function isStringifyableChildless(stri: RawStringifyable): boolean {
         case "void":
         case "boolean":
         case "number":
-            return true
-
         case "string":
-            return !stri.value.includes("\n")
+            return true
 
         case "text":
             return !stri.text.includes("\n")
@@ -445,7 +441,7 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
             )
 
         case "string":
-            return highlighter("string", stri.value)
+            return highlighter("string", JSON.stringify(stri.value))
 
         case "text":
             return highlighter("text", stri.text)
