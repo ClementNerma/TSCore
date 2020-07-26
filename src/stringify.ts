@@ -40,6 +40,13 @@ export interface StringifyOptions {
      * Pretty-print the value on multiple lines (default: determined depending on the value's structural size)
      */
     prettify?: boolean
+
+    /**
+     * Stringify unsupported types
+     * @param value The value to stringify
+     * @returns A raw stringifyable object, or `null` if the extension doesn't know how to stringify this type
+     */
+    stringifyExt?: (value: unknown) => RawStringifyable | null
 }
 
 /**
@@ -48,7 +55,7 @@ export interface StringifyOptions {
  * @param options
  */
 export function stringify(value: unknown, options?: StringifyOptions): string {
-    return stringifyRaw(makeStringifyable(value, options?.numberFormat), options)
+    return stringifyRaw(makeStringifyable(value, options), options)
 }
 
 /**
@@ -67,8 +74,8 @@ export type RawStringifyable =
  * @param value
  * @param numberFormat
  */
-export function makeStringifyable(value: unknown, numberFormat: StringifyOptions["numberFormat"] = "d"): RawStringifyable {
-    const _nested = (value: unknown) => makeStringifyable(value, numberFormat)
+export function makeStringifyable(value: unknown, options?: StringifyOptions): RawStringifyable {
+    const _nested = (value: unknown) => makeStringifyable(value, options)
 
     if (value === null) {
         return { type: "text", text: "<null>" }
@@ -244,7 +251,7 @@ export function makeStringifyable(value: unknown, numberFormat: StringifyOptions
     if (typeof value === "number") {
         return {
             type: "text",
-            text: matchString(numberFormat, {
+            text: matchString(options?.numberFormat || "d", {
                 b: () => "0b" + value.toString(2),
                 o: () => "0o" + value.toString(8),
                 d: () => value.toString(),
@@ -274,7 +281,7 @@ export function makeStringifyable(value: unknown, numberFormat: StringifyOptions
             return { type: "unknown", typename: (value as any).constructor?.name }
         }
     } else {
-        return stringifyExt(value) ?? { type: "unknown", typename: (value as any).constructor?.name }
+        return options?.stringifyExt?.(value) ?? { type: "unknown", typename: (value as any).constructor?.name }
     }
 }
 
@@ -445,16 +452,6 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
         case "unknown":
             return highlighter("unknown", `<${stri.typename ?? "unknown type"}>`)
     }
-}
-
-/**
- * Stringify additional values to a human-readable string
- * Called if the value could not be stringifed using .stringify()
- * @param value
- */
-export let stringifyExt: (value: unknown) => RawStringifyable | null = (value) => {
-    // Does nothing by default
-    return null
 }
 
 /**
