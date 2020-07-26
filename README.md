@@ -2,9 +2,9 @@
 
 [![npm version](https://badge.fury.io/js/typescript-core.svg)](https://badge.fury.io/js/typescript-core)
 
-This library aims to provide powerful pattern-matching to TypeScript, as well as some useful types & tools for handling repetitive or complex scenarios.
-This project was originally inspired by the [Rust programming language](https://www.rust-lang.org/).
-If you are familiar this Rust, you will be able to use functional types (at least) very quickly.
+TS-Core is a library that provides replacement types for some basic structures of TypeScript, like `undefined`, `null` or `Array<T>`. It also provides a pattern-matching system capable to pseudo-emulate a simple algebraic data type system.
+
+This project was originally inspired by the [Rust programming language](https://www.rust-lang.org/). If you are familiar this Rust, you should be able to use functional types very quickly.
 
 **WARNING: This library is NOT READY for production yet as it does not have any test and does not follow semantic versioning. A stable version will ship soon.**
 
@@ -54,11 +54,13 @@ The point of pattern-matching is to deal with all cases at once, as well as to p
 
 ## Examples
 
-You can also take a look at the [examples](examples/).
+You can also take a look at the [examples](examples/README.md).
 
 ## Documentation
 
-Types documentation can be got by running `yarn docs`. HTML files will be put in the `docs/` folder.
+The documentation can be found in the [`docs`](docs/README.md) folder.
+
+Types documentation can be got by running `yarn docs`. HTML files will be put in the [`docs/types`](docs/types/README.md) folder.
 
 ## License
 
