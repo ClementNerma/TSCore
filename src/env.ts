@@ -26,16 +26,6 @@ export interface TSCoreEnv {
     devMode: () => boolean
 
     /**
-     * Format a message
-     * Used by display functions like println(), debug() or panic()
-     * @param message The message to format
-     * @param params The message's parameters
-     * @param context The formatting context
-     * @param options Formatting options (default behaviour is to fallback to the default formatting options if none are provided)
-     */
-    format(message: string, params: unknown[], context: FormattingContext, options?: FormatOptions): string
-
-    /**
      * Formatting extension
      * Used by format() when a format used in the message is unknown
      * e.g. by default when formatting `Hello, {$$$}!` the format is `$$$` and will result in calling .formatExt() as it is unknown
@@ -157,52 +147,6 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
     ref: {
         devMode: () => true,
 
-        format(message, params, context, maybeOptions) {
-            const options = maybeOptions ?? this.defaultFormattingOptions(this.devMode(), context)
-            let paramCounter = -1
-
-            return message.replace(/{([a-zA-Z0-9_:#\?\$]*)}/g, (match, format) => {
-                paramCounter++
-
-                const supported = new Regex(/^(\d+)?([:#])?([bdoxX])?(\?)?$/, ["strParamPos", "display", "numberFormat", "pretty"]).matchNamed(format)
-
-                if (supported.isNone()) {
-                    const ext = this.formatExt(format, params, paramCounter, context, options)
-
-                    if (ext === null) {
-                        return match
-                    }
-
-                    if (ext === false) {
-                        return options.missingParam(paramCounter)
-                    }
-
-                    return ext
-                }
-
-                const { strParamPos, display, numberFormat, pretty } = supported.inner
-
-                const paramPos = strParamPos ? parseInt(strParamPos) : paramCounter
-
-                if (paramPos >= params.length) {
-                    return options.missingParam(paramPos)
-                }
-
-                if (display === "#" || !display) {
-                    return stringify(params[paramCounter], {
-                        ...options.stringifyOptions,
-                        numberFormat: (numberFormat as any) || options.stringifyOptions.numberFormat,
-                        highlighter:
-                            (context === "format" || context === "logging") && this.disableHighlighterInFormatContext(true)
-                                ? undefined
-                                : options.stringifyOptions.highlighter,
-                    })
-                }
-
-                return JSON.stringify(params[paramCounter], null, pretty ? 4 : 0)
-            })
-        },
-
         formatExt(format, params, paramCounter, context, options): string | null {
             return null
         },
@@ -225,20 +169,20 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
 
         debug(message, params) {
             if (this.devMode()) {
-                console.debug(this.format(message, params, "debug"))
+                console.debug(formatAdvanced(message, params, "debug"))
             }
         },
 
         println(message, params) {
-            console.log(this.format(message, params, "print"))
+            console.log(formatAdvanced(message, params, "print"))
         },
 
         warn(message, params) {
-            console.warn(this.format(message, params, "warn"))
+            console.warn(formatAdvanced(message, params, "warn"))
         },
 
         eprintln(message, params) {
-            console.error(this.format(message, params, "error"))
+            console.error(formatAdvanced(message, params, "error"))
         },
 
         panicWatcher(message, params) {
@@ -246,7 +190,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
         },
 
         panic(message, params) {
-            const formatted = this.format(message, params, "panic")
+            const formatted = formatAdvanced(message, params, "panic")
             const stack = new Error("At: panic").stack
             throw new Error("Panicked! " + formatted + (stack ? "\n" + stack : ""))
         },
@@ -284,10 +228,63 @@ export function setupTypeScriptCore(newEnv: Partial<TSCoreEnv> | ((previousEnv: 
  * Format a message
  * @param message The message to format
  * @param params The message's parameters
+ * @param context The formatting context
+ * @param options Formatting options (default behaviour is to fallback to the default formatting options if none are provided)
+ */
+export function formatAdvanced(message: string, params: unknown[], context: FormattingContext, maybeOptions?: FormatOptions): string {
+    const options = maybeOptions ?? _tsCoreEnv.ref.defaultFormattingOptions(_tsCoreEnv.ref.devMode(), context)
+    let paramCounter = -1
+
+    return message.replace(/{([a-zA-Z0-9_:#\?\$]*)}/g, (match, format) => {
+        paramCounter++
+
+        const supported = new Regex(/^(\d+)?([:#])?([bdoxX])?(\?)?$/, ["strParamPos", "display", "numberFormat", "pretty"]).matchNamed(format)
+
+        if (supported.isNone()) {
+            const ext = _tsCoreEnv.ref.formatExt(format, params, paramCounter, context, options)
+
+            if (ext === null) {
+                return match
+            }
+
+            if (ext === false) {
+                return options.missingParam(paramCounter)
+            }
+
+            return ext
+        }
+
+        const { strParamPos, display, numberFormat, pretty } = supported.inner
+
+        const paramPos = strParamPos ? parseInt(strParamPos) : paramCounter
+
+        if (paramPos >= params.length) {
+            return options.missingParam(paramPos)
+        }
+
+        if (display === "#" || !display) {
+            return stringify(params[paramCounter], {
+                ...options.stringifyOptions,
+                numberFormat: (numberFormat as any) || options.stringifyOptions.numberFormat,
+                highlighter:
+                    (context === "format" || context === "logging") && _tsCoreEnv.ref.disableHighlighterInFormatContext(true)
+                        ? undefined
+                        : options.stringifyOptions.highlighter,
+            })
+        }
+
+        return JSON.stringify(params[paramCounter], null, pretty ? 4 : 0)
+    })
+}
+
+/**
+ * Format a message
+ * @param message The message to format
+ * @param params The message's parameters
  * @returns The formatted message
  */
 export function format(message: string, ...params: unknown[]): string {
-    return _tsCoreEnv.ref.format(message, params, "format")
+    return formatAdvanced(message, params, "format")
 }
 
 /**
@@ -298,7 +295,7 @@ export function format(message: string, ...params: unknown[]): string {
  * @returns The formatted message
  */
 export function formatCtx(context: FormattingContext, message: string, ...params: unknown[]): string {
-    return _tsCoreEnv.ref.format(message, params, context)
+    return formatAdvanced(message, params, context)
 }
 
 /**
