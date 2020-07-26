@@ -20,9 +20,10 @@ export type FormattingContext = "debug" | "print" | "warn" | "error" | "panic" |
  */
 export interface TSCoreEnv {
     /**
-     * Enable developer mode, used to change how messages are displayed and how formatting is performed for instance
+     * Developer mode status, used to change how messages are displayed and how formatting is performed for instance
+     * Should be extremely fast to compute, as it is notably called before each formatting
      */
-    DEV_MODE: boolean
+    devMode: () => boolean
 
     /**
      * Format a message
@@ -147,10 +148,10 @@ export interface FormatOptions {
  */
 const _tsCoreEnv: { ref: TSCoreEnv } = {
     ref: {
-        DEV_MODE: true,
+        devMode: () => true,
 
         format(message, params, context, maybeOptions) {
-            const options = maybeOptions ?? this.defaultFormattingOptions(this.DEV_MODE, context)
+            const options = maybeOptions ?? this.defaultFormattingOptions(this.devMode(), context)
             let paramCounter = -1
 
             return message.replace(/{([a-zA-Z0-9_:#\?\$]*)}/g, (match, format) => {
@@ -208,7 +209,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
         },
 
         debug(message, params) {
-            if (this.DEV_MODE) {
+            if (this.devMode()) {
                 console.debug(this.format(message, params, "debug"))
             }
         },
