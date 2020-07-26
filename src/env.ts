@@ -54,6 +54,13 @@ export interface TSCoreEnv {
     defaultFormattingOptions: (devMode: boolean, context: FormattingContext) => FormatOptions
 
     /**
+     * Disable the highlighter in the 'format' and 'logging' context (defaults: does)
+     * Avoids getting color characters in the logging function for instance
+     * @param DEV_MODE Is development mode enabled?
+     */
+    disableHighlighterInFormatContext: (devMode: boolean) => boolean
+
+    /**
      * Log a message - called before actually displaying the message in debug(), println(), panic() etc.
      * @param type Logging type
      * @param message The message to log
@@ -185,6 +192,10 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
                     return stringify(params[paramCounter], {
                         ...options.stringifyOptions,
                         numberFormat: (numberFormat as any) || options.stringifyOptions.numberFormat,
+                        highlighter:
+                            (context === "format" || context === "logging") && this.disableHighlighterInFormatContext(true)
+                                ? undefined
+                                : options.stringifyOptions.highlighter,
                     })
                 }
 
@@ -203,6 +214,10 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
 
             stringifyOptions: { prettify: devMode },
         }),
+
+        disableHighlighterInFormatContext(devMode) {
+            return true
+        },
 
         logger(message, params) {
             // Does nothing by default
