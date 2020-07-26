@@ -254,6 +254,10 @@ export function makeStringifyable(value: unknown, numberFormat: StringifyOptions
         }
     }
 
+    if (typeof (value as any).__tsCoreStringify === "function") {
+        return (value as any).__tsCoreStringify()
+    }
+
     if ((value as any).toString) {
         if (typeof (value as any).toString === "function") {
             const stringifed = (value as any).toString()
@@ -451,4 +455,11 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
 export let stringifyExt: (value: unknown) => RawStringifyable | null = (value) => {
     // Does nothing by default
     return null
+}
+
+/**
+ * Non-natively stringifyable type
+ */
+export interface TSCoreStringifyable {
+    __tsCoreStringify(): RawStringifyable
 }
