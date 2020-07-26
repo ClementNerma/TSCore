@@ -236,6 +236,17 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         }
     }
 
+    if (value instanceof Error) {
+        return {
+            type: "prefixed",
+            typename: "Error",
+            prefixed: [
+                ["message", Some({ type: "text", text: value.message })],
+                ["stack", Option.maybe(value.stack).map((stack) => _nested(stack.split("\n")))],
+            ],
+        }
+    }
+
     if (typeof value === "string") {
         return { type: "text", text: JSON.stringify(value) }
     }
