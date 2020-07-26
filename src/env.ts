@@ -49,7 +49,7 @@ export interface TSCoreEnv {
     /**
      * Generate the default formatting options
      * @param DEV_MODE Is development mode enabled?
-     * @param
+     * @param context The formatting context
      */
     defaultFormattingOptions: (DEV_MODE: boolean, context: FormattingContext) => FormatOptions
 
