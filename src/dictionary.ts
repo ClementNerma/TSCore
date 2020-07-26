@@ -347,10 +347,18 @@ export class RecordDict<V> extends Dictionary<string, V> {
 
     /**
      * Converts the record to a collection
-     * If any key has a collection-illegal name (e.g. 'hasOwnProperty'), an error is returned
+     * Unlike .toStrictCollection(), it does not fail when a collection-illegal name is encountered (e.g. 'hasOwnProperty')
+     */
+    toCollection(): { [key: string]: V } {
+        return Object.fromEntries(this._content.entries())
+    }
+
+    /**
+     * Converts the record to a collection
+     * If any key has a potentially illegal name (e.g. 'hasOwnProperty'), an error is returned
      *   with a collection containing all keys excluding illegal ones as well as the list of faulty keys
      */
-    toCollection(): Result<{ [key: string]: V }, [{ [key: string]: V }, List<string>]> {
+    toStrictCollection(): Result<{ [key: string]: V }, [{ [key: string]: V }, List<string>]> {
         const coll: { [key: string]: V } = {}
         const faulty = new List<string>()
 
@@ -363,14 +371,6 @@ export class RecordDict<V> extends Dictionary<string, V> {
         }
 
         return faulty.empty() ? Ok(coll) : Err([coll, faulty])
-    }
-
-    /**
-     * Converts the record to a collection
-     * Unlike .toCollection(), it does not fail when a collection-illegal name is encountered (e.g. 'hasOwnProperty')
-     */
-    toUnsafeCollection(): { [key: string]: V } {
-        return Object.fromEntries(this._content.entries())
     }
 
     /**

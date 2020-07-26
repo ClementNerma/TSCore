@@ -308,7 +308,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
 
     /** Get the value as a collection */
     asCollection(): Option<Collection<JsonValue>> {
-        return this.asDict().map((record) => record.toUnsafeCollection())
+        return this.asDict().map((record) => record.toCollection())
     }
 
     /** Get the value as a parsed number */
@@ -415,7 +415,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
 
     /** Get a 'collection' child from the value (requires it to be a collection) */
     getCollection(child: string): Option<Collection<JsonValue>> {
-        return this.getDict(child).map((record) => record.toUnsafeCollection())
+        return this.getDict(child).map((record) => record.toCollection())
     }
 
     /** Get a child matching a custom decoder from the value (requires it to be a collection) */
@@ -641,7 +641,7 @@ export namespace JsonDecoders {
 
     /** Decode collections with a custom decoder for values */
     export function collectionOf<T>(decoder: JsonDecoder<T>): JsonDecoder<Collection<T>> {
-        return (value) => recordOf(decoder)(value).map((record) => record.toUnsafeCollection())
+        return (value) => recordOf(decoder)(value).map((record) => record.toCollection())
     }
 
     /** Decode arrays to untyped tuples using a decoder for each member of the tuple */
