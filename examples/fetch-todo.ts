@@ -97,7 +97,7 @@ async function main() {
         Err: (err) => eprintln("Failed to get todo note: {}", err),
         Ok: (json) =>
             decodeTodoNote(json).match({
-                Err: (err) => eprintln("Failed to decode todo note:\n{}", err.render()),
+                Err: (err) => eprintln("Failed to decode todo note:\n{}", err),
                 Ok: (note) => println("Got todo note successfully! {}", note),
             }),
     })

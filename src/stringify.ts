@@ -22,7 +22,23 @@ export interface StringifyOptions {
      * Highlight tokens during stringification (default: no highlighting)
      */
     highlighter?: (
-        type: "typename" | "prefix" | "listIndex" | "listValue" | "collKey" | "collValue" | "text" | "unknown" | "punctuation" | "voidPrefixValue",
+        type:
+            | "typename"
+            | "prefix"
+            | "listIndex"
+            | "listValue"
+            | "collKey"
+            | "collValue"
+            | "text"
+            | "unknown"
+            | "punctuation"
+            | "void"
+            | "boolean"
+            | "string"
+            | "number"
+            | "voidPrefixValue"
+            | "errorMessage"
+            | "errorStack",
         str: string
     ) => string
 
@@ -47,6 +63,16 @@ export interface StringifyOptions {
      * @returns A raw stringifyable object, or `null` if the extension doesn't know how to stringify this type
      */
     stringifyExt?: (value: unknown) => RawStringifyable | null
+
+    /**
+     * How to stringify 'undefined' values (default: '<unknown>')
+     */
+    undefinedStr?: string
+
+    /**
+     * How to stringify 'null' values (default: '<null>')
+     */
+    nullStr?: string
 }
 
 /**
@@ -55,13 +81,17 @@ export interface StringifyOptions {
  * @param options
  */
 export function stringify(value: unknown, options?: StringifyOptions): string {
-    return stringifyRaw(makeStringifyable(value, options), options)
+    return stringifyRaw(makeStringifyable(value, options?.stringifyExt), options)
 }
 
 /**
  * Stringifyable format
  */
 export type RawStringifyable =
+    | { type: "void"; value: null | undefined }
+    | { type: "boolean"; value: boolean }
+    | { type: "number"; value: number }
+    | { type: "string"; value: string }
     | { type: "text"; text: string }
     | { type: "wrapped"; typename: string; content?: RawStringifyable }
     | { type: "list"; typename: string; content: Array<{ index: number; value: RawStringifyable }> }
@@ -74,32 +104,30 @@ export type RawStringifyable =
  * @param value
  * @param numberFormat
  */
-export function makeStringifyable(value: unknown, options?: StringifyOptions): RawStringifyable {
-    const _nested = (value: unknown) => makeStringifyable(value, options)
+export function makeStringifyable(value: unknown, stringifyExt?: StringifyOptions["stringifyExt"]): RawStringifyable {
+    const _nested = (value: unknown) => makeStringifyable(value, stringifyExt)
 
     if (value === null) {
-        return { type: "text", text: "<null>" }
+        return { type: "void", value: null }
     }
 
     if (value === undefined) {
-        return { type: "text", text: "<undefined>" }
+        return { type: "void", value: undefined }
+    }
+
+    if (value === false || value === true) {
+        return { type: "boolean", value }
     }
 
     if (typeof value === "number") {
         return {
-            type: "text",
-            text: matchString(options?.numberFormat || "d", {
-                b: () => "0b" + value.toString(2),
-                o: () => "0o" + value.toString(8),
-                d: () => value.toString(),
-                x: () => "0x" + value.toString(16).toLowerCase(),
-                X: () => "0x" + value.toString(16).toUpperCase(),
-            }),
+            type: "number",
+            value,
         }
     }
 
     if (typeof value === "string") {
-        return { type: "text", text: JSON.stringify(value) }
+        return { type: "string", value }
     }
 
     if (isOption(value)) {
@@ -292,7 +320,7 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
             return { type: "unknown", typename: (value as any).constructor?.name }
         }
     } else {
-        return options?.stringifyExt?.(value) ?? { type: "unknown", typename: (value as any).constructor?.name }
+        return stringifyExt?.(value) ?? { type: "unknown", typename: (value as any).constructor?.name }
     }
 }
 
@@ -303,8 +331,16 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
  */
 export function isStringifyableLinear(stri: RawStringifyable): boolean {
     switch (stri.type) {
+        case "void":
+        case "boolean":
+        case "number":
+            return true
+
+        case "string":
+            return !stri.value.includes("\n")
+
         case "text":
-            return stri.text.includes("\n")
+            return !stri.text.includes("\n")
 
         case "wrapped":
             return stri.content ? isStringifyableLinear(stri.content) : true
@@ -332,6 +368,14 @@ export function isStringifyableLinear(stri: RawStringifyable): boolean {
  */
 export function isStringifyableChildless(stri: RawStringifyable): boolean {
     switch (stri.type) {
+        case "void":
+        case "boolean":
+        case "number":
+            return true
+
+        case "string":
+            return !stri.value.includes("\n")
+
         case "text":
             return !stri.text.includes("\n")
 
@@ -362,6 +406,27 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
     const highlighter = options?.highlighter ?? ((type, str) => str)
 
     switch (stri.type) {
+        case "void":
+            return highlighter("void", stri.value === undefined ? options?.undefinedStr ?? "<undefined>" : options?.nullStr ?? "<null>")
+
+        case "boolean":
+            return highlighter("boolean", stri.value.toString())
+
+        case "number":
+            return highlighter(
+                "number",
+                matchString(options?.numberFormat || "d", {
+                    b: () => "0b" + stri.value.toString(2),
+                    o: () => "0o" + stri.value.toString(8),
+                    d: () => stri.value.toString(),
+                    x: () => "0x" + stri.value.toString(16).toLowerCase(),
+                    X: () => "0x" + stri.value.toString(16).toUpperCase(),
+                })
+            )
+
+        case "string":
+            return highlighter("string", stri.value)
+
         case "text":
             return highlighter("text", stri.text)
 
