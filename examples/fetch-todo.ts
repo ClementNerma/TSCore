@@ -67,12 +67,12 @@ function decodeTodoNote(json: JsonValue): Result<TodoNote, DecodingError> {
     println!("Decoding note...")
 
     return json.decode(
-        j.mapped([
-            ["userId", j.number],
-            ["id", j.number],
-            ["title", j.string],
-            ["completed", j.boolean],
-        ])
+        j.mapped({
+            userId: j.number,
+            id: j.number,
+            title: j.string,
+            completed: j.boolean,
+        })
     )
 }
 
@@ -81,7 +81,7 @@ function decodeTodoNote(json: JsonValue): Result<TodoNote, DecodingError> {
  */
 async function main() {
     // Get the todo note's ID from command-line
-    const input = Option.nullable(process.argv[2]).expect("Please provide the todo note's ID as an argument (ex: 1)")
+    const input = Option.maybe(process.argv[2]).expect("Please provide the todo note's ID as an argument (ex: 1)")
 
     // Parse it as an integer
     const id = tryParseInt(input).expect("Invalid ID provided")
@@ -90,10 +90,10 @@ async function main() {
     const note = await fetchTodoNoteAsJson(id).promise()
 
     // Handle errors
-    match(note, {
+    note.match({
         Err: (err) => console.error("Failed to get todo note", err),
         Ok: (json) =>
-            match(decodeTodoNote(json), {
+            decodeTodoNote(json).match({
                 Err: (err) => console.error("Failed to decode todo note:\n", err.render()),
                 Ok: (note) => console.log("Got todo note successfully!", note),
             }),
