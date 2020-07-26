@@ -6,7 +6,7 @@
     "types": "build/index.d.ts",
     "scripts": {
         "prepublishOnly": "tsc && uglifyjs-folder build --compress --mangle -eo build -x \".js\"",
-        "docs": "typedoc --out docs/types src",
+        "typedoc": "typedoc --out docs/types src",
         "build": "tsc"
     },
     "author": "Clément Nerma",
