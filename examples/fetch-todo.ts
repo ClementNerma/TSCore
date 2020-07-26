@@ -97,7 +97,7 @@ async function main() {
         Err: (err) => eprintln("Failed to get todo note: {}", err),
         Ok: (json) =>
             decodeTodoNote(json).match({
-                Err: (err) => eprintln("Failed to decode todo note:\n{}", err),
+                Err: (err) => eprintln("Failed to decode todo note:\n  {}", err),
                 Ok: (note) => println("Got todo note successfully! {}", note),
             }),
     })
@@ -112,6 +112,8 @@ setupTypeScriptCore((prev) => ({
         stringifyOptions: {
             ...prev.defaultFormattingOptions(devMode, context).stringifyOptions,
 
+            prettify: true,
+
             highlighter: (type, content) => {
                 return matchString(type, {
                     typename: () => chalk.yellow(content),
@@ -122,6 +124,11 @@ setupTypeScriptCore((prev) => ({
                     listValue: () => chalk.blue(content),
                     collKey: () => chalk.magenta(content),
                     collValue: () => chalk.blue(content),
+                    text: () => chalk.green(content),
+                    string: () => chalk.green(content),
+                    number: () => chalk.yellow(content),
+                    errorMessage: () => chalk.red(content),
+                    errorStack: () => chalk.red(content),
                     _: () => content,
                 })
             },
