@@ -85,6 +85,23 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         return { type: "text", text: "<undefined>" }
     }
 
+    if (typeof value === "number") {
+        return {
+            type: "text",
+            text: matchString(options?.numberFormat || "d", {
+                b: () => "0b" + value.toString(2),
+                o: () => "0o" + value.toString(8),
+                d: () => value.toString(),
+                x: () => "0x" + value.toString(16).toLowerCase(),
+                X: () => "0x" + value.toString(16).toUpperCase(),
+            }),
+        }
+    }
+
+    if (typeof value === "string") {
+        return { type: "text", text: JSON.stringify(value) }
+    }
+
     if (isOption(value)) {
         return value.match({
             Some: (value) => ({ type: "wrapped", typename: "Some", content: _nested(value) }),
@@ -99,26 +116,11 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         })
     }
 
-    if (value instanceof Either) {
-        return value.match({
-            Left: (value) => ({ type: "wrapped", typename: "Left", content: _nested(value) }),
-            Right: (right) => ({ type: "wrapped", typename: "Err", content: _nested(right) }),
-        })
-    }
-
     if (value instanceof List) {
         return {
             type: "list",
             typename: "List",
             content: value.toArray().map((item, index) => ({ index, value: _nested(item) })),
-        }
-    }
-
-    if (O.isArray(value)) {
-        return {
-            type: "list",
-            typename: "Array",
-            content: value.map((item, index) => ({ index, value: _nested(item) })),
         }
     }
 
@@ -130,6 +132,54 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
                 .entries()
                 .collectArray()
                 .map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
+        }
+    }
+
+    if (O.isArray(value)) {
+        return {
+            type: "list",
+            typename: "Array",
+            content: value.map((item, index) => ({ index, value: _nested(item) })),
+        }
+    }
+
+    if (O.isCollection(value)) {
+        return {
+            type: "collection",
+            typename: "Collection",
+            content: O.entries(value).map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
+        }
+    }
+
+    if (value instanceof JsonValue) {
+        return {
+            type: "prefixed",
+            typename: "JsonValue",
+            prefixed: [["inner", Some(_nested(value.inner()))]],
+        }
+    }
+
+    if (value instanceof Error) {
+        return {
+            type: "prefixed",
+            typename: "Error",
+            prefixed: [
+                ["message", Some({ type: "text", text: value.message })],
+                ["stack", Option.maybe(value.stack).map((stack) => _nested(stack.split("\n")))],
+            ],
+        }
+    }
+
+    if (value instanceof Future) {
+        return {
+            type: "prefixed",
+            typename: "Future",
+            prefixed: [
+                value.match({
+                    Pending: () => ["Pending", None()],
+                    Complete: (value) => ["Complete", Some(_nested(value))],
+                }),
+            ],
         }
     }
 
@@ -169,6 +219,13 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         }
     }
 
+    if (value instanceof Either) {
+        return value.match({
+            Left: (value) => ({ type: "wrapped", typename: "Left", content: _nested(value) }),
+            Right: (right) => ({ type: "wrapped", typename: "Err", content: _nested(right) }),
+        })
+    }
+
     if (value instanceof Ref) {
         return {
             type: "prefixed",
@@ -177,19 +234,6 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
                 value.match({
                     Available: (value) => ["Available", Some(_nested(value))],
                     Destroyed: () => ["Destroyed", None()],
-                }),
-            ],
-        }
-    }
-
-    if (value instanceof Future) {
-        return {
-            type: "prefixed",
-            typename: "Future",
-            prefixed: [
-                value.match({
-                    Pending: () => ["Pending", None()],
-                    Complete: (value) => ["Complete", Some(_nested(value))],
                 }),
             ],
         }
@@ -225,50 +269,6 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
                     Failed: (err) => ["Failed", Some(_nested(err))],
                 }),
             ],
-        }
-    }
-
-    if (value instanceof JsonValue) {
-        return {
-            type: "prefixed",
-            typename: "JsonValue",
-            prefixed: [["inner", Some(_nested(value.inner()))]],
-        }
-    }
-
-    if (value instanceof Error) {
-        return {
-            type: "prefixed",
-            typename: "Error",
-            prefixed: [
-                ["message", Some({ type: "text", text: value.message })],
-                ["stack", Option.maybe(value.stack).map((stack) => _nested(stack.split("\n")))],
-            ],
-        }
-    }
-
-    if (typeof value === "string") {
-        return { type: "text", text: JSON.stringify(value) }
-    }
-
-    if (O.isCollection(value)) {
-        return {
-            type: "collection",
-            typename: "Collection",
-            content: O.entries(value).map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
-        }
-    }
-
-    if (typeof value === "number") {
-        return {
-            type: "text",
-            text: matchString(options?.numberFormat || "d", {
-                b: () => "0b" + value.toString(2),
-                o: () => "0o" + value.toString(8),
-                d: () => value.toString(),
-                x: () => "0x" + value.toString(16).toLowerCase(),
-                X: () => "0x" + value.toString(16).toUpperCase(),
-            }),
         }
     }
 
