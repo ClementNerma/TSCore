@@ -2,12 +2,15 @@
  * @file Fetch a mock todo note from the web through HTTPS
  */
 
+// Import Chalk to display colors in the terminal
+import * as chalk from 'chalk'
 // Import HTTPS to make a request
 import * as https from 'https'
 
 // Import required stuff from TS-Core
 import {
-    DecodingError, Err, Future, JsonDecoders as j, JsonValue, Matchable, Ok, Option, Result, State, match, println, state, tryParseInt
+    DecodingError, Err, Future, JsonDecoders as j, JsonValue, Matchable, Ok, Option, Result, State, eprintln, match, matchString, println,
+    setupTypeScriptCore, state, tryParseInt
 } from '../src'
 
 /**
@@ -91,14 +94,40 @@ async function main() {
 
     // Handle errors
     note.match({
-        Err: (err) => console.error("Failed to get todo note", err),
+        Err: (err) => eprintln("Failed to get todo note: {}", err),
         Ok: (json) =>
             decodeTodoNote(json).match({
-                Err: (err) => console.error("Failed to decode todo note:\n", err.render()),
-                Ok: (note) => console.log("Got todo note successfully!", note),
+                Err: (err) => eprintln("Failed to decode todo note:\n{}", err.render()),
+                Ok: (note) => println("Got todo note successfully! {}", note),
             }),
     })
 }
+
+// Set up TypeScript core to print outputs with pretty colors
+// Note that this part is purely optional
+setupTypeScriptCore((prev) => ({
+    defaultFormattingOptions: (devMode, context) => ({
+        ...prev.defaultFormattingOptions(devMode, context),
+
+        stringifyOptions: {
+            ...prev.defaultFormattingOptions(devMode, context).stringifyOptions,
+
+            highlighter: (type, content) => {
+                return matchString(type, {
+                    typename: () => chalk.yellow(content),
+                    prefix: () => chalk.cyan(content),
+                    unknown: () => chalk.red(content),
+                    punctuation: () => chalk.cyan(content),
+                    listIndex: () => chalk.magenta(content),
+                    listValue: () => chalk.blue(content),
+                    collKey: () => chalk.magenta(content),
+                    collValue: () => chalk.blue(content),
+                    _: () => content,
+                })
+            },
+        },
+    }),
+}))
 
 // Run the program
 main()
