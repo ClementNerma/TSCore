@@ -7,7 +7,7 @@ import { format } from './env'
 import { List } from './list'
 import { Matchable, State, VoidStates, enumStr, state } from './match'
 import { Collection, O } from './objects'
-import { None, Option, Some, maybeOption } from './option'
+import { None, Option, Some } from './option'
 import { Err, Ok, Result } from './result'
 import { stringify } from './stringify'
 
@@ -293,7 +293,9 @@ export namespace Decoders {
     /** Sub-type a value to a primitive type */
     export function typedPrimitive<P extends null | boolean | number | string>(primitive: P): Decoder<unknown, P> {
         return (value) =>
-            value === primitive ? Ok(value as P) : Err(new DecodingError(state("WrongType", `primitive[${stringify(primitive, { prettify: false })}]`)))
+            value === primitive
+                ? Ok(value as P)
+                : Err(new DecodingError(state("WrongType", `primitive[${stringify(primitive, { prettify: false })}]`)))
     }
 
     /** Sub-type a value to a more precise type using a type predicate function */
@@ -314,7 +316,7 @@ export namespace Decoders {
     /** Decode an optional value to an Option<T> */
     export function maybe<F, T>(decoder: Decoder<F, T>): Decoder<F | null | undefined, Option<T>> {
         return (value) =>
-            maybeOption(value).match({
+            Option.maybe(value).match({
                 Some: (value) => decoder(value).map((value) => Some(value)),
                 None: (value) => Ok(None()),
             })

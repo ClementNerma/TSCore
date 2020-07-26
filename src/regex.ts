@@ -1,6 +1,6 @@
 import { O } from './objects'
-import { Option, maybeOption } from './option'
-import { Result, fallibleToResult } from './result'
+import { Option } from './option'
+import { Result } from './result'
 import { forceType } from './typecasting'
 
 /**
@@ -23,7 +23,7 @@ export class Regex<N extends string> {
      * @returns Matched parameters
      */
     match(subject: string): Option<string[]> {
-        return maybeOption(subject.match(this.inner)).map(([_, ...parts]) => parts)
+        return Option.maybe(subject.match(this.inner)).map(([_, ...parts]) => parts)
     }
 
     /**
@@ -32,7 +32,7 @@ export class Regex<N extends string> {
      * @returns Matched string as well as matched parameters
      */
     matchFull(subject: string): Option<[string, string[]]> {
-        return maybeOption(subject.match(this.inner)).map(([match, ...parts]) => [match, parts])
+        return Option.maybe(subject.match(this.inner)).map(([match, ...parts]) => [match, parts])
     }
 
     /**
@@ -53,6 +53,6 @@ export class Regex<N extends string> {
      * @returns A typed regular expression, or an error if the provided expression is not valid
      */
     static parse<N extends string>(expr: string, names?: N[]): Result<Regex<N>, Error> {
-        return fallibleToResult(() => new RegExp(expr)).map((regexp) => new Regex(regexp, names))
+        return Result.fallible(() => new RegExp(expr)).map((regexp) => new Regex(regexp, names))
     }
 }

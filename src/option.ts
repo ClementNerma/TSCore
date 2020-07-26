@@ -443,9 +443,38 @@ export function getStateValue<T extends object, K extends string & KeyOfUnion<T>
 }
 
 /**
- * Create an Option<T> from a nullable/maybe-undefined value
- * @param value
+ * Utility functions for Option<T>
  */
-export function maybeOption<T>(value: T | null | undefined): Option<T> {
-    return value === null || value === undefined ? None() : Some(value)
+export namespace Option {
+    /**
+     * Create an Option<T> from a nullable/maybe-undefined value
+     * @param value
+     */
+    export function maybe<T>(value: T | null | undefined): Option<T> {
+        return value === null || value === undefined ? None() : Some(value)
+    }
+
+    /**
+     * Transpose an Option<Result<T, E>> into a Result<Option<T>, E>
+     * @param option
+     */
+    export function transpose<T, E>(option: Option<Result<T, E>>): Result<Option<T>, E> {
+        return option
+            .map((result) =>
+                result.mapOrElse(
+                    (data) => Ok(Some(data)),
+                    (err) => Err(err)
+                )
+            )
+            .unwrapOrElse(() => Ok(None<T>()))
+    }
+
+    /**
+     * Return a Some(T) if the provided property exists in the provided object, or a None() otherwise
+     * @param obj
+     * @param prop
+     */
+    export function prop<O extends object, K extends keyof O>(obj: O, prop: K): Option<O[K]> {
+        return obj.hasOwnProperty(prop) ? Some(obj[prop]) : None()
+    }
 }

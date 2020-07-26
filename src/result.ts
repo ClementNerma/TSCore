@@ -437,17 +437,22 @@ export function Err<E>(err: E): Result<any, E> {
 }
 
 /**
- * Create a result from a fallible function (= function which may throw())
- * @param core
+ * Utility functions for Result<T, E>
  */
-export function fallibleToResult<T>(core: () => T): Result<T, Error> {
-    let value: T
+export namespace Result {
+    /**
+     * Create a result from a fallible function (= function which may throw())
+     * @param core
+     */
+    export function fallible<T>(core: () => T): Result<T, Error> {
+        let value: T
 
-    try {
-        value = core()
-    } catch (e) {
-        return Err(e)
+        try {
+            value = core()
+        } catch (e) {
+            return Err(e)
+        }
+
+        return Ok(value)
     }
-
-    return Ok(value)
 }

@@ -12,7 +12,7 @@ import { AbstractMatchable, State, hasState, state } from './match'
 import { MaybeUninit } from './maybeUinit'
 import { Collection, O } from './objects'
 import { None, Option, Some, getStateValue, isOption } from './option'
-import { Err, Ok, Result, fallibleToResult, isResult } from './result'
+import { Err, Ok, Result, isResult } from './result'
 
 /**
  * Primitive JSON value
@@ -108,7 +108,7 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
      * @param source
      */
     static parse(source: string): Result<JsonValue, Error> {
-        return fallibleToResult(() => JSON.parse(source) as JsonValueType).map((json) => new JsonValue(json))
+        return Result.fallible(() => JSON.parse(source) as JsonValueType).map((json) => new JsonValue(json))
     }
 
     /**
