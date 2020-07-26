@@ -9,9 +9,9 @@ import { Err, Ok, Result } from './result'
  * @param str The string to parse
  * @returns The parsed integer
  */
-export function tryParseInt(str: string, base: number = 10): Result<number, void> {
+export function tryParseInt(str: string, base: number = 10, strictCheck = true): Result<number, void> {
     const parsed = parseInt(str, base)
-    return Number.isNaN(parsed) ? Err(undefined) : Ok(parsed)
+    return Number.isNaN(parsed) ? Err(void 0) : strictCheck || parsed.toString() === str ? Ok(parsed) : Err(void 0)
 }
 
 /**
@@ -19,7 +19,7 @@ export function tryParseInt(str: string, base: number = 10): Result<number, void
  * @param str The string to parse
  * @returns The parsed floating-point number
  */
-export function tryParseFloat(str: string): Result<number, void> {
-    const parsed = parseFloat(str)
-    return Number.isNaN(parsed) ? Err(undefined) : Ok(parsed)
+export function tryParseFloat(str: string, strictCheck = true): Result<number, void> {
+    const parsed = strictCheck ? Number(str) : parseFloat(str)
+    return Number.isNaN(parsed) ? Err(void 0) : Ok(parsed)
 }
