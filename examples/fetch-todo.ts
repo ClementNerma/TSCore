@@ -34,7 +34,7 @@ class FetchError extends Matchable<State<"HttpError", Error> | State<"InvalidJso
  * @returns Response's body as text in case of success
  */
 function fetch(url: string): Future<Result<string, Error>> {
-    println!("Fetching URL: {}", url)
+    println("Fetching URL: {}", url)
 
     return new Future((complete) => {
         https.get(url, (res) => {
