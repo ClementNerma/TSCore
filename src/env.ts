@@ -134,7 +134,7 @@ export interface FormatOptions {
      * Handle missing parameters
      * @param position Position of the missing parameter (starting at 0)
      */
-    unknownParam: (position: number) => string | never
+    missingParam: (position: number) => string | never
 
     /**
      * Options for the stringify() function
@@ -167,7 +167,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
                     }
 
                     if (ext === false) {
-                        return options.unknownParam(paramCounter)
+                        return options.missingParam(paramCounter)
                     }
 
                     return ext
@@ -178,7 +178,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
                 const paramPos = strParamPos ? parseInt(strParamPos) : paramCounter
 
                 if (paramPos >= params.length) {
-                    return options.unknownParam(paramPos)
+                    return options.missingParam(paramPos)
                 }
 
                 if (display === "#" || !display) {
@@ -197,7 +197,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
         },
 
         defaultFormattingOptions: (DEV_MODE) => ({
-            unknownParam(position) {
+            missingParam(position) {
                 return `<<<missing parameter ${position + 1}>>>`
             },
 
