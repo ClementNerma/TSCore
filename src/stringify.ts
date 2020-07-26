@@ -278,6 +278,22 @@ export function makeStringifyable(value: unknown, stringifyExt?: StringifyOption
         }
     }
 
+    if (value instanceof Set) {
+        return {
+            type: "list",
+            typename: "Set",
+            content: [...value.entries()].map(([index, value]) => ({ index, value })),
+        }
+    }
+
+    if (value instanceof Map) {
+        return {
+            type: "collection",
+            typename: "Map",
+            content: [...value.entries()].map(([key, value]) => ({ key, value })),
+        }
+    }
+
     if (value instanceof Task) {
         return {
             type: "prefixed",
