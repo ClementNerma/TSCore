@@ -31,6 +31,7 @@ export interface StringifyOptions {
             | "collKey"
             | "collValue"
             | "text"
+            | "lineBreak"
             | "unknown"
             | "punctuation"
             | "void"
@@ -97,6 +98,7 @@ export type RawStringifyable =
     | { type: "wrapped"; typename: string; content?: RawStringifyable }
     | { type: "list"; typename: string; content: Array<{ index: number; value: RawStringifyable }> }
     | { type: "collection"; typename: string; content: Array<{ key: RawStringifyable; value: RawStringifyable }> }
+    | { type: "error"; typename: string; message: string; stack: Option<string> }
     | { type: "prefixed"; typename: string; prefixed: Array<[string, Option<RawStringifyable>]> }
     | { type: "unknown"; typename: string | undefined }
 
@@ -190,20 +192,19 @@ export function makeStringifyable(value: unknown, stringifyExt?: StringifyOption
 
     if (value instanceof Error) {
         return {
-            type: "prefixed",
+            type: "error",
             typename: "Error",
-            prefixed: [
-                ["message", Some({ type: "text", text: value.message })],
-                ["stack", Option.maybe(value.stack).map((stack) => _nested(stack.split("\n")))],
-            ],
+            message: value.message,
+            stack: Option.maybe(value.stack),
         }
     }
 
     if (value instanceof DecodingError) {
         return {
-            type: "wrapped",
+            type: "error",
             typename: "DecodingError",
-            content: { type: "text", text: value.render() },
+            message: value.render(),
+            stack: None(),
         }
     }
 
@@ -335,7 +336,6 @@ export function makeStringifyable(value: unknown, stringifyExt?: StringifyOption
 
 /**
  * Check if a stringifyable can be displayed in a single line
- * Returns `false` if the stringifyable is or contains a list or a collection of more than 1 element, or a multi-line text
  * @param stri
  */
 export function isStringifyableLinear(stri: RawStringifyable): boolean {
@@ -362,6 +362,9 @@ export function isStringifyableLinear(stri: RawStringifyable): boolean {
                 stri.content.length >= 1 &&
                 stri.content.every(({ key, value }) => isStringifyableLinear(value) && (typeof key === "number" ? true : isStringifyableLinear(key)))
             )
+
+        case "error":
+            return stri.stack.isNone()
 
         case "prefixed":
             return stri.prefixed.every(([prefix, value]) => value.map((value) => isStringifyableLinear(value)).unwrapOr(true))
@@ -397,6 +400,9 @@ export function isStringifyableChildless(stri: RawStringifyable): boolean {
         case "collection":
             return stri.content.length === 0
 
+        case "error":
+            return stri.stack.isNone()
+
         case "prefixed":
             return stri.prefixed.length <= 1
 
@@ -413,6 +419,10 @@ export function isStringifyableChildless(stri: RawStringifyable): boolean {
 export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions): string {
     const prettify = options?.prettify ?? !isStringifyableLinear(stri)
     const highlighter = options?.highlighter ?? ((type, str) => str)
+
+    function _lines(str: string, prefixLength: number): string {
+        return str.split(/\n/).join(prettify ? "\n  " + " ".repeat(prefixLength) : highlighter("lineBreak", "\\n"))
+    }
 
     switch (stri.type) {
         case "void":
@@ -444,11 +454,7 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
                 highlighter("typename", stri.typename) +
                 highlighter("punctuation", "(") +
                 (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n  " : "") : "") +
-                (stri.content
-                    ? stringifyRaw(stri.content, options)
-                          .split(/\n/)
-                          .join("\n" + (prettify ? "  " : ""))
-                    : "") +
+                (stri.content ? _lines(stringifyRaw(stri.content, options), 0) : "") +
                 (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n" : "") : "") +
                 highlighter("punctuation", ")")
             )
@@ -464,13 +470,7 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
                         ({ index, value }) =>
                             (options?.arrayIndexes ?? true
                                 ? highlighter("listIndex", index.toString()) + highlighter("punctuation", ":") + " "
-                                : "") +
-                            highlighter(
-                                "listValue",
-                                stringifyRaw(value, options)
-                                    .split(/\n/)
-                                    .join("\n" + (prettify ? "  " : ""))
-                            )
+                                : "") + highlighter("listValue", _lines(stringifyRaw(value, options), 0))
                     )
                     .join(highlighter("punctuation", ",") + (prettify && !isStringifyableChildless(stri) ? "\n  " : " ")) +
                 (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n" : " ") : "") +
@@ -486,24 +486,39 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
                 (stri.content || [])
                     .map(
                         ({ key, value }) =>
-                            highlighter(
-                                "collKey",
-                                stringifyRaw(key, { ...options, prettify: false })
-                                    .split(/\n/)
-                                    .join("\n" + (prettify ? "  " : ""))
-                            ) +
+                            highlighter("collKey", stringifyRaw(key, { ...options, prettify: false })) +
                             highlighter("punctuation", ":") +
                             " " +
-                            highlighter(
-                                "collValue",
-                                stringifyRaw(value, options)
-                                    .split(/\n/)
-                                    .join("\n" + (prettify ? "  " : ""))
-                            )
+                            highlighter("collValue", _lines(stringifyRaw(value, options), 0))
                     )
                     .join(highlighter("punctuation", ",") + (prettify && !isStringifyableChildless(stri) ? "\n  " : " ")) +
                 (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n" : " ") : "") +
                 highlighter("punctuation", "}")
+            )
+
+        case "error":
+            return (
+                highlighter("typename", stri.typename) +
+                highlighter("punctuation", "(") +
+                stri.stack
+                    .map(
+                        (stack) =>
+                            (prettify ? "\n  " : "") +
+                            highlighter("prefix", "error: ") +
+                            highlighter("errorMessage", _lines(stri.message, 7)) +
+                            (prettify ? (stri.message.includes("\n") ? "\n" : "") + "\n  " : highlighter("punctuation", ",") + " ") +
+                            highlighter("prefix", "stack: ") +
+                            highlighter("errorStack", _lines(stack, 7)) +
+                            (prettify ? "\n" : "") +
+                            highlighter("punctuation", "}")
+                    )
+                    .unwrapOrElse(
+                        () =>
+                            highlighter("prefix", "error:") +
+                            " " +
+                            highlighter("errorMessage", _lines(stri.message, 7)) +
+                            highlighter("punctuation", ")")
+                    )
             )
 
         case "prefixed":
@@ -519,14 +534,7 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
                             highlighter("punctuation", ":") +
                             " " +
                             value
-                                .map((value) =>
-                                    highlighter(
-                                        "collValue",
-                                        stringifyRaw(value, options)
-                                            .split(/\n/)
-                                            .join("\n" + (prettify ? "  " : ""))
-                                    )
-                                )
+                                .map((value) => highlighter("collValue", _lines(stringifyRaw(value, options), 0)))
                                 .unwrapOrElse(() => highlighter("voidPrefixValue", "-"))
                     )
                     .join(highlighter("punctuation", ",") + (prettify && !isStringifyableChildless(stri) ? "\n  " : " ")) +
