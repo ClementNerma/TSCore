@@ -180,7 +180,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
 
         dump(value, options) {
             if (this.devMode()) {
-                console.debug(stringify(value, options))
+                console.debug(stringify(value, { ...this.defaultFormattingOptions(this.devMode(), "dump").stringifyOptions, ...options }))
             }
         },
 
