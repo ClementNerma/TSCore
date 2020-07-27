@@ -327,9 +327,9 @@ export class List<T> {
             const result = tester(this._content[i], i, this)
 
             if (result.isOk()) {
-                mapped.push(result.unwrap())
+                mapped.push(result.data)
             } else {
-                return Err(result.unwrapErr())
+                return Err(result.err)
             }
         }
 
@@ -748,10 +748,10 @@ export class List<T> {
 
         for (const item of list) {
             if (item.isErr()) {
-                return Err(item.unwrapErr())
+                return Err(item.err)
             }
 
-            out.push(item.unwrap())
+            out.push(item.data)
         }
 
         return Ok(out)

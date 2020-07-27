@@ -63,7 +63,7 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
         }
 
         if (this._peeked.isSome()) {
-            const prev = this._peeked.unwrap()
+            const prev = this._peeked.data
             this._peeked = None()
             return Some(prev)
         }
@@ -301,7 +301,7 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
                 const mapped = predicate(value)
 
                 if (mapped.isSome()) {
-                    yield mapped.unwrap()
+                    yield mapped.data
                 }
             }
         })

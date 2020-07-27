@@ -224,10 +224,10 @@ export class Dictionary<K, V> {
             const result = tester(key, value, this)
 
             if (result.isOk()) {
-                const [mappedKey, mappedValue] = result.unwrap()
+                const [mappedKey, mappedValue] = result.data
                 mapped.set(mappedKey, mappedValue)
             } else {
-                return Err(result.unwrapErr())
+                return Err(result.err)
             }
         }
 
@@ -247,9 +247,9 @@ export class Dictionary<K, V> {
             const result = tester(key, value, this)
 
             if (result.isOk()) {
-                mapped.set(key, result.unwrap())
+                mapped.set(key, result.data)
             } else {
-                return Err(result.unwrapErr())
+                return Err(result.err)
             }
         }
 

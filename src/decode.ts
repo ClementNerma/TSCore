@@ -224,10 +224,10 @@ export namespace Decoders {
                 const decoded = decoder(arr[i])
 
                 if (decoded.isErr()) {
-                    return Err(new DecodingError(state("ArrayItem", [i, decoded.unwrapErr()])))
+                    return Err(new DecodingError(state("ArrayItem", [i, decoded.err])))
                 }
 
-                out.push(decoded.unwrap())
+                out.push(decoded.data)
             }
 
             return Ok(out)
@@ -275,10 +275,10 @@ export namespace Decoders {
                 const decoded = decoder(value)
 
                 if (decoded.isErr()) {
-                    return Err(new DecodingError(state("CollectionItem", [field.toString(), decoded.unwrapErr()])))
+                    return Err(new DecodingError(state("CollectionItem", [field.toString(), decoded.err])))
                 }
 
-                out.push(decoded.unwrap())
+                out.push(decoded.data)
             }
 
             return Ok(out)
@@ -381,9 +381,9 @@ export namespace Decoders {
             for (const decoder of decoders) {
                 const decoded = decoder(value)
 
-                if (decoded.isOk()) return Ok(decoded.unwrap())
+                if (decoded.isOk()) return Ok(decoded.data)
 
-                errors.push(decoded.unwrapErr())
+                errors.push(decoded.err)
             }
 
             return Err(new DecodingError(state("NoneOfEither", errors)))
@@ -398,9 +398,9 @@ export namespace Decoders {
             for (const [i, decoder] of decoders.entries()) {
                 const decoded = decoder(value)
 
-                if (decoded.isErr()) return Err(new DecodingError(state("FailedCombining", [i, decoded.unwrapErr()])))
+                if (decoded.isErr()) return Err(new DecodingError(state("FailedCombining", [i, decoded.err])))
 
-                values.push(decoded.unwrap())
+                values.push(decoded.data)
             }
 
             return Ok(merger(...values))
@@ -423,10 +423,10 @@ export namespace Decoders {
                 let decoded = decoder(arr[i++])
 
                 if (decoded.isErr()) {
-                    return Err(new DecodingError(state("ArrayItem", [i - 1, decoded.unwrapErr()])))
+                    return Err(new DecodingError(state("ArrayItem", [i - 1, decoded.err])))
                 }
 
-                out.push(decoded.unwrap())
+                out.push(decoded.data)
             }
 
             return Ok(out)
@@ -441,17 +441,19 @@ export namespace Decoders {
             let out: Collection<unknown> = {}
 
             for (const [field, decoder] of O.entries(mappings)) {
-                if (!coll.hasOwnProperty(field)) {
+                const collField = coll.get(field)
+
+                if (collField.isNone()) {
                     return Err(new DecodingError(state("MissingCollectionField", field)))
                 }
 
-                let decoded = decoder(coll.get(field).unwrap())
+                let decoded = decoder(collField.data)
 
                 if (decoded.isErr()) {
-                    return Err(new DecodingError(state("CollectionItem", [field, decoded.unwrapErr()])))
+                    return Err(new DecodingError(state("CollectionItem", [field, decoded.err])))
                 }
 
-                out[field] = decoded.unwrap()
+                out[field] = decoded.data
             }
 
             return Ok(out)

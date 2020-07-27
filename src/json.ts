@@ -138,9 +138,9 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
                 if (typeof key !== "string") return _err("Key from dictionary must be a string", key)
 
                 const encodedVal = JsonValue.tryEncode(val, path.concat(["Collection key: " + key]))
-                if (encodedVal.isErr()) return _err("Failed to encode key: " + encodedVal.unwrapErr(), key)
+                if (encodedVal.isErr()) return _err("Failed to encode key: " + encodedVal.err, key)
 
-                out[key] = encodedVal.unwrap()
+                out[key] = encodedVal.data
             }
 
             return Ok(out)
@@ -188,8 +188,8 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
 
             for (const [key, val] of O.entries(value)) {
                 const encodedVal = JsonValue.tryEncode(val, path.concat(["Collection key: " + key]))
-                if (encodedVal.isErr()) return _err("Failed to unwrap value of key :" + encodedVal.unwrapErr(), key)
-                out[key] = encodedVal.unwrap()
+                if (encodedVal.isErr()) return _err("Failed to unwrap value of key :" + encodedVal.err, key)
+                out[key] = encodedVal.data
             }
 
             return Ok(out)
@@ -650,9 +650,7 @@ export namespace JsonDecoders {
             let out = []
             let i = 0
 
-            let arr = list.toArray()
-
-            if (arr.length < decoders.length) {
+            if (list.length < decoders.length) {
                 return Err(new DecodingError(state("MissingTupleEntry", decoders.length)))
             }
 
@@ -660,10 +658,10 @@ export namespace JsonDecoders {
                 let decoded = decoder(list.get(i++).unwrap())
 
                 if (decoded.isErr()) {
-                    return Err(new DecodingError(state("ArrayItem", [i - 1, decoded.unwrap()])))
+                    return Err(new DecodingError(state("ArrayItem", [i - 1, decoded.err])))
                 }
 
-                out.push(decoded.unwrap())
+                out.push(decoded.data)
             }
 
             return Ok(out)
@@ -683,13 +681,13 @@ export namespace JsonDecoders {
                     return Err(new DecodingError(state("MissingCollectionField", field)))
                 }
 
-                let decoded = decoder(value.unwrap())
+                let decoded = decoder(value.data)
 
                 if (decoded.isErr()) {
-                    return Err(new DecodingError(state("CollectionItem", [field, decoded.unwrapErr()])))
+                    return Err(new DecodingError(state("CollectionItem", [field, decoded.err])))
                 }
 
-                out[field] = decoded.unwrap()
+                out[field] = decoded.data
             }
 
             return Ok(out)
