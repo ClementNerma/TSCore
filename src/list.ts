@@ -9,7 +9,7 @@ import { O } from './objects'
 import { None, Option, Some } from './option'
 import { Err, Ok, Result } from './result'
 
-export class List<T> {
+export class List<T> implements Iterable<T> {
     private _content: T[]
 
     /**

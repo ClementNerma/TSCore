@@ -21,7 +21,7 @@ export type DictionaryToCollection<K, V> = {
  * @template K Type of keys
  * @template V Type of values
  */
-export class Dictionary<K, V> {
+export class Dictionary<K, V> implements Iterable<[K, V]> {
     /** Dictionary's content */
     protected readonly _content: Map<K, V>
 
