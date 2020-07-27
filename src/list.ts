@@ -714,6 +714,39 @@ export class List<T> {
     }
 
     /**
+     * Generate a list by calling a generation function while the provided predicate returns 'true'
+     * @param predicate
+     * @param generator
+     * @returns The list of generated values
+     */
+    static while<T>(predicate: (index: number, soFar: List<T>) => T, generator: (index: number, soFar: List<T>) => T): List<T> {
+        const out = new List<T>()
+
+        while (predicate(out.length, out)) {
+            out.push(generator(out.length, out))
+        }
+
+        return out
+    }
+
+    /**
+     * Generate a list by calling a generation function until the provided predicate returns 'false'
+     * The predicate is called *after* generating values
+     * @param predicate
+     * @param generator
+     * @returns The list of generated values
+     */
+    static doWhile<T>(predicate: (index: number, soFar: List<T>) => T, generator: (index: number, soFar: List<T>) => T): List<T> {
+        const out = new List<T>()
+
+        do {
+            out.push(generator(out.length, out))
+        } while (predicate(out.length, out))
+
+        return out
+    }
+
+    /**
      * Get an array from a value that may be a list
      * @param values The value to get as an array
      */
