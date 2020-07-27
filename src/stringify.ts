@@ -75,6 +75,13 @@ export interface StringifyOptions {
      * How to stringify 'null' values (default: '<null>')
      */
     nullStr?: string
+
+    /**
+     * Perform a full stringification even on primitive values (default: true)
+     * When set to 'false', primitives values will just receive a '.toString()' call (except for 'null' and 'undefined')
+     * The highlighter is also disabled
+     */
+    stringifyPrimitives?: boolean
 }
 
 /**
@@ -430,6 +437,18 @@ export function isStringifyableChildless(stri: RawStringifyable): boolean {
  * @param options
  */
 export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions): string {
+    if (options?.stringifyPrimitives) {
+        switch (stri.type) {
+            case "void":
+                return stri.value === undefined ? "undefined" : "null"
+
+            case "number":
+            case "boolean":
+            case "string":
+                return stri.value.toString()
+        }
+    }
+
     const prettify = options?.prettify ?? !isStringifyableLinear(stri)
     const highlighter = options?.highlighter ?? ((type, str) => str)
 
