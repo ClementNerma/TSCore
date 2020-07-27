@@ -128,6 +128,26 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
     }
 
     /**
+     * Consume the iterator into a list
+     * @param mapper
+     * @param toList Put all values into a list (default: true)
+     */
+    consume<U>(mapper: (value: T, index: number, iterator: this) => U, toList: true): List<T>
+    consume<U>(mapper: (value: T, index: number, iterator: this) => U, toList: false): void
+    consume<U>(mapper: (value: T, index: number, iterator: this) => U, toList = false): List<U> | void {
+        const list = new List<U>()
+
+        while (!this._done) {
+            this.next().some((value) => {
+                const mapped = mapper(value, this._pointer - 1, this)
+                if (toList) list.push(mapped)
+            })
+        }
+
+        return toList ? list : void 0
+    }
+
+    /**
      * Join values to a string
      * Consumes the iterator
      * @param str Joint
