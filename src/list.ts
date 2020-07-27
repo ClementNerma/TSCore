@@ -16,7 +16,7 @@ export class List<T> {
      * Create a new list
      * @param content (Optional) Existing array of set
      */
-    constructor(content?: T[] | Set<T> | List<T>) {
+    constructor(content?: ListLike<T>) {
         if (!content) {
             content = []
         } else if (content instanceof List) {
@@ -177,9 +177,11 @@ export class List<T> {
      * @param list
      * @param lists
      */
-    concatHead(list: Array<T> | List<T>, ...lists: Array<Array<T> | List<T>>): List<T> {
+    concatHead(list: ListLike<T>, ...lists: Array<ListLike<T>>): List<T> {
         return List.raw(
-            (O.isArray(list) ? list : list._content).concat(...lists.map((list) => (O.isArray(list) ? list : list._content))).concat(this._content)
+            List.toArray(list)
+                .concat(...lists.map((list) => List.toArray(list)))
+                .concat(this._content)
         )
     }
 
@@ -188,10 +190,8 @@ export class List<T> {
      * @param list
      * @param lists
      */
-    concat(list: Array<T> | List<T>, ...lists: Array<Array<T> | List<T>>): List<T> {
-        return List.raw(
-            this._content.concat(O.isArray(list) ? list : list._content).concat(...lists.map((list) => (O.isArray(list) ? list : list._content)))
-        )
+    concat(list: ListLike<T>, ...lists: Array<ListLike<T>>): List<T> {
+        return List.raw(this._content.concat(List.toArray(list)).concat(...lists.map((list) => List.toArray(list))))
     }
 
     /**
@@ -491,7 +491,7 @@ export class List<T> {
     /**
      * Append all elements from another list to the end of this one
      */
-    append(list: Array<T> | Set<T> | List<T>): this {
+    append(list: ListLike<T>): this {
         this.push(...list)
         return this
     }
@@ -715,10 +715,10 @@ export class List<T> {
 
     /**
      * Get an array from a value that may be a list
-     * @param arr The value to get as an array
+     * @param values The value to get as an array
      */
-    static toArray<T>(arr: Array<T> | List<T>): Array<T> {
-        return O.isArray(arr) ? arr : arr.toArray()
+    static toArray<T>(values: ListLike<T>): Array<T> {
+        return O.isArray(values) ? values : values instanceof Set ? Array.from(values.values()) : values.toArray()
     }
 
     /**
@@ -743,7 +743,7 @@ export class List<T> {
      * Convert a list of results to a single result holding a list in case of success
      * @param list A list of results
      */
-    static resultable<T, E>(list: List<Result<T, E>> | Array<Result<T, E>>): Result<List<T>, E> {
+    static resultable<T, E>(list: ListLike<Result<T, E>>): Result<List<T>, E> {
         const out = new List<T>()
 
         for (const item of list) {
@@ -762,7 +762,7 @@ export class List<T> {
      * Returns all encountered errors (slower than .resultable())
      * @param list A list of results
      */
-    static fullResultable<T, E>(list: List<Result<T, E>> | Array<Result<T, E>>): Result<List<T>, List<E>> {
+    static fullResultable<T, E>(list: ListLike<Result<T, E>>): Result<List<T>, List<E>> {
         const ok = new List<T>()
         const err = new List<E>()
 

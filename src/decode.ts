@@ -4,7 +4,7 @@
 
 import { CollLike, Dictionary, RecordDict } from './dictionary'
 import { format } from './env'
-import { List } from './list'
+import { List, ListLike } from './list'
 import { Matchable, State, VoidStates, enumStr, state } from './match'
 import { Collection, O } from './objects'
 import { None, Option, Some } from './option'
@@ -408,9 +408,9 @@ export namespace Decoders {
     }
 
     /** Decode arrays/lists to moderately-typed tuples as arrays with a common decoder for each member of the tuple */
-    export function untypedTuple<F>(decoders: Array<Decoder<F, unknown>>): Decoder<F[] | List<F>, unknown[]> {
+    export function untypedTuple<F>(decoders: Array<Decoder<F, unknown>>): Decoder<ListLike<F>, unknown[]> {
         return (encoded) => {
-            const arr = encoded instanceof List ? encoded.toArray() : encoded
+            const arr = List.toArray(encoded)
 
             let out: unknown[] = []
             let i = 0
