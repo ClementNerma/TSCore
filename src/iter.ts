@@ -153,9 +153,9 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * @param str Joint
      * @param stringifyer (Optional) Stringifyer for values
      */
-    join(str: string, stringifyer?: (value: T) => string): string {
+    join(str: string, stringifyer?: (value: T, index: number, iterator: this) => string): string {
         return this.collect()
-            .map((val) => (stringifyer ? stringifyer(val) : val))
+            .map((val) => (stringifyer ? stringifyer(val, this._pointer - 1, this) : val))
             .join(str)
     }
 
@@ -164,8 +164,8 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * This method is lazy so inspection will only occur when values are yielded
      * @param inspector
      */
-    inspect(inspector: (value: T) => void): this {
-        this._onYield.push((value) => inspector(value))
+    inspect(inspector: (value: T, index: number, iterator: this) => void): this {
+        this._onYield.push((value) => inspector(value, this._pointer - 1, this))
         return this
     }
 
@@ -214,13 +214,13 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * @param value
      * @param position
      */
-    map<U>(mapper: (value: T, position: number) => U): Iter<U> {
+    map<U>(mapper: (value: T, position: number, index: number, iterator: this) => U): Iter<U> {
         const that = this
         let position = 0
 
         return Iter.fromGenerator(function* (): IterableIterator<U> {
             for (const value of that) {
-                yield mapper(value, position++)
+                yield mapper(value, position++, that._pointer - 1, that)
             }
         })
     }
@@ -238,9 +238,9 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * Consumes the iterator
      * @param predicate
      */
-    any(predicate: (value: T) => boolean): boolean {
+    any(predicate: (value: T, pointer: number, iterator: this) => boolean): boolean {
         for (const value of this) {
-            if (predicate(value)) {
+            if (predicate(value, this._pointer - 1, this)) {
                 return true
             }
         }
@@ -253,9 +253,9 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * Consumes the iterator
      * @param predicate
      */
-    find(predicate: (value: T) => boolean): Option<T> {
+    find(predicate: (value: T, pointer: number, iterator: this) => boolean): Option<T> {
         for (const value of this) {
-            if (predicate(value)) {
+            if (predicate(value, this._pointer - 1, this)) {
                 return Some(value)
             }
         }
@@ -268,9 +268,9 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * Consumes the iterator
      * @param predicate
      */
-    position(predicate: (value: T) => boolean): Option<number> {
+    position(predicate: (value: T, pointer: number, iterator: this) => boolean): Option<number> {
         for (const [position, value] of this.enumerate()) {
-            if (predicate(value)) {
+            if (predicate(value, this._pointer - 1, this)) {
                 return Some(position)
             }
         }
@@ -283,9 +283,9 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * Consumes the iterator
      * @param predicate
      */
-    all(predicate: (value: T) => boolean): boolean {
+    all(predicate: (value: T, pointer: number, iterator: this) => boolean): boolean {
         for (const value of this) {
-            if (!predicate(value)) {
+            if (!predicate(value, this._pointer - 1, this)) {
                 return false
             }
         }
@@ -298,12 +298,12 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * Consumes the iterator
      * @param predicate
      */
-    filter(predicate: (value: T) => boolean): Iter<T> {
+    filter(predicate: (value: T, pointer: number, iterator: this) => boolean): Iter<T> {
         const that = this
 
         return Iter.fromGenerator(function* () {
             for (const value of that) {
-                if (predicate(value)) {
+                if (predicate(value, that._pointer - 1, that)) {
                     yield value
                 }
             }
@@ -315,12 +315,12 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * Consumes the iterator
      * @param predicate
      */
-    filterMap<U>(predicate: (value: T) => Option<U>): Iter<U> {
+    filterMap<U>(predicate: (value: T, pointer: number, iterator: this) => Option<U>): Iter<U> {
         const that = this
 
         return Iter.fromGenerator(function* () {
             for (const value of that) {
-                const mapped = predicate(value)
+                const mapped = predicate(value, that._pointer - 1, that)
 
                 if (mapped.isSome()) {
                     yield mapped.data
@@ -334,14 +334,14 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * Consumes the iterator
      * @param predicate
      */
-    skipWhile(predicate: (value: T) => boolean): Iter<T> {
+    skipWhile(predicate: (value: T, pointer: number, iterator: this) => boolean): Iter<T> {
         const that = this
 
         return Iter.fromGenerator(function* () {
             let finished = false
 
             for (const value of that) {
-                if (finished || !predicate(value)) {
+                if (finished || !predicate(value, that._pointer - 1, that)) {
                     finished = true
                     yield value
                 }
@@ -354,12 +354,12 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * Consumes the iterator
      * @param predicate
      */
-    takeWhile(predicate: (value: T) => boolean): Iter<T> {
+    takeWhile(predicate: (value: T, pointer: number, iterator: this) => boolean): Iter<T> {
         const that = this
 
         return Iter.fromGenerator(function* () {
             for (const value of that) {
-                if (!predicate(value)) {
+                if (!predicate(value, that._pointer - 1, that)) {
                     return
                 }
 
