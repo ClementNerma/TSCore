@@ -468,7 +468,7 @@ export namespace Result {
     }
 
     /**
-     * Create a Some(T) option from either an existing option, or a fallback function if it's a None()
+     * Create an Ok(T) option from either an existing option, or a fallback function if it's an Err()
      * @param result
      * @param fallback
      * @param mapper An optional function that performs operations on the concrete value
