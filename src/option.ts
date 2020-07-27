@@ -263,7 +263,7 @@ class SomeValue<T> extends OptionClass<T> {
         return Ok(this.inner)
     }
 
-    condition(cond: (value: T) => boolean, fallback: boolean): boolean {
+    condition(cond: (value: T) => boolean, fallback = false): boolean {
         return cond(this.inner)
     }
 
@@ -377,7 +377,7 @@ class NoneValue<T> extends OptionClass<T> {
         return Err(fallbackError())
     }
 
-    condition(cond: (value: T) => boolean, fallback: boolean): boolean {
+    condition(cond: (value: T) => boolean, fallback = false): boolean {
         return fallback
     }
 
