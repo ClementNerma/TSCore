@@ -1,6 +1,6 @@
 {
     "name": "typescript-core",
-    "version": "6.0.6",
+    "version": "6.1.0",
     "description": "Functional utilities for TypeScript",
     "main": "build/index.js",
     "types": "build/index.d.ts",

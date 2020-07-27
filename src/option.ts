@@ -477,4 +477,26 @@ export namespace Option {
     export function prop<O extends object, K extends keyof O>(obj: O, prop: K): Option<O[K]> {
         return obj.hasOwnProperty(prop) ? Some(obj[prop]) : None()
     }
+
+    /**
+     * Create a Some(T) option from either an existing option, or a fallback value if it's a None()
+     * @param option
+     * @param fallback
+     * @param mapper An optional function that performs operations on the concrete value
+     */
+    export function or<T>(option: Option<T>, fallback: T, mapper?: (mapper: T) => T): Option<T> {
+        const value = option.unwrapOr(fallback)
+        return Some(mapper ? mapper(value) : value)
+    }
+
+    /**
+     * Create a Some(T) option from either an existing option, or a fallback function if it's a None()
+     * @param option
+     * @param fallback
+     * @param mapper An optional function that performs operations on the concrete value
+     */
+    export function orElse<T>(option: Option<T>, fallback: () => T, mapper?: (mapper: T) => T): Option<T> {
+        const value = option.unwrapOrElse(() => fallback())
+        return Some(mapper ? mapper(value) : value)
+    }
 }

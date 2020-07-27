@@ -455,4 +455,26 @@ export namespace Result {
 
         return Ok(value)
     }
+
+    /**
+     * Create an Ok(T) option from either an existing result, or a fallback value if it's an Err()
+     * @param result
+     * @param fallback
+     * @param mapper An optional function that performs operations on the concrete value
+     */
+    export function or<T, E>(result: Result<T, E>, fallback: T, mapper?: (mapper: T) => T): Result<T, E> {
+        const value = result.unwrapOr(fallback)
+        return Ok(mapper ? mapper(value) : value)
+    }
+
+    /**
+     * Create a Some(T) option from either an existing option, or a fallback function if it's a None()
+     * @param result
+     * @param fallback
+     * @param mapper An optional function that performs operations on the concrete value
+     */
+    export function orElse<T, E>(result: Result<T, E>, fallback: () => T, mapper?: (mapper: T) => T): Result<T, E> {
+        const value = result.unwrapOrElse(() => fallback())
+        return Ok(mapper ? mapper(value) : value)
+    }
 }
