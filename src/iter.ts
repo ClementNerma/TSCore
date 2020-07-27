@@ -141,18 +141,18 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
 
     /**
      * Inspect elements without modifying them
-     * @param consume Yields values to inspect elements without waiting (consumes the iterator)
+     * @param lazy Only inspect elements when values are yielded (default: false, consume all elements)
      */
-    inspect(inspector: (value: T) => void, consume = true): this {
-        if (consume) {
-            for (const value of this) {
-                inspector(value)
-            }
-
+    inspect(inspector: (value: T) => void, lazy = false): this {
+        if (lazy) {
+            this._onYield.push((value) => inspector(value))
             return this
         }
 
-        this._onYield.push((value) => inspector(value))
+        for (const value of this) {
+            inspector(value)
+        }
+
         return this
     }
 
