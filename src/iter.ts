@@ -30,13 +30,13 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * @param iterable An iterable value
      */
     constructor(iterable: { [Symbol.iterator](): IterableIterator<T> }) {
-        super(() => (this._done ? state("Done") : this._pointer >= 0 ? state("Created") : state("AtStep", this._pointer)))
+        super(() => (this._done ? state("Done") : this._pointer === 0 ? state("Created") : state("AtStep", this._pointer)))
 
         this._iterator = iterable[Symbol.iterator]()
         this._onYield = new Consumers()
         this._peeked = None()
         this._done = false
-        this._pointer = -1
+        this._pointer = 0
     }
 
     /**
@@ -47,7 +47,7 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
     }
 
     /**
-     * Get the current value's index (-1 if the iterator didn't yield any value)
+     * Get the current value's index (0 if the iterator didn't yield any value)
      */
     get pointer(): number {
         return this._pointer
@@ -363,7 +363,7 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      */
     take(values: number): Iter<T> {
         const start = this._pointer
-        return this.takeWhile((_) => this._pointer - start <= values)
+        return this.takeWhile((_) => this._pointer - start < values)
     }
 
     /**
