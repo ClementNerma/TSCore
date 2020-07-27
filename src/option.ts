@@ -11,7 +11,7 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
      * Create a new optional value
      */
     constructor() {
-        super(() => (this.isSome() ? state("Some", this.inner) : state("None")))
+        super(() => (this.isSome() ? state("Some", this.data) : state("None")))
     }
 
     /**
@@ -174,7 +174,7 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
  * Concrete value
  */
 class SomeValue<T> extends OptionClass<T> {
-    constructor(readonly inner: T) {
+    constructor(readonly data: T) {
         super()
     }
 
@@ -187,7 +187,7 @@ class SomeValue<T> extends OptionClass<T> {
     }
 
     some(callback: (data: T) => void): this {
-        callback(this.inner)
+        callback(this.data)
         return this
     }
 
@@ -196,11 +196,11 @@ class SomeValue<T> extends OptionClass<T> {
     }
 
     toNative(): T | undefined {
-        return this.inner
+        return this.data
     }
 
     expect(message: string): T {
-        return this.inner
+        return this.data
     }
 
     expectNone(message: string): void {
@@ -208,27 +208,27 @@ class SomeValue<T> extends OptionClass<T> {
     }
 
     unwrap(): T {
-        return this.inner
+        return this.data
     }
 
     unwrapOr(fallback: T): T {
-        return this.inner
+        return this.data
     }
 
     unwrapOrElse(fallback: () => T): T {
-        return this.inner
+        return this.data
     }
 
     map<U>(mapper: (value: T) => U): Option<U> {
-        return Some(mapper(this.inner))
+        return Some(mapper(this.data))
     }
 
     mapOr<U>(mapper: (value: T) => U, fallback: U): U {
-        return mapper(this.inner)
+        return mapper(this.data)
     }
 
     mapOrElse<U>(mapper: (value: T) => U, fallback: () => U): U {
-        return mapper(this.inner)
+        return mapper(this.data)
     }
 
     and<U>(other: Option<U>): Option<U> {
@@ -236,11 +236,11 @@ class SomeValue<T> extends OptionClass<T> {
     }
 
     andThen<U>(mapper: (value: T) => Option<U>): Option<U> {
-        return mapper(this.inner)
+        return mapper(this.data)
     }
 
     filter(predicate: (value: T) => boolean): Option<T> {
-        return predicate(this.inner) ? this : None()
+        return predicate(this.data) ? this : None()
     }
 
     or(other: Option<T>): Option<T> {
@@ -256,23 +256,23 @@ class SomeValue<T> extends OptionClass<T> {
     }
 
     okOr<U>(fallbackError: U): Result<T, U> {
-        return Ok(this.inner)
+        return Ok(this.data)
     }
 
     okOrElse<U>(fallbackError: () => U): Result<T, U> {
-        return Ok(this.inner)
+        return Ok(this.data)
     }
 
     condition(cond: (value: T) => boolean, fallback = false): boolean {
-        return cond(this.inner)
+        return cond(this.data)
     }
 
     clone(): Option<T> {
-        return Some(this.inner)
+        return Some(this.data)
     }
 
     toNullable(): T | null {
-        return this.inner
+        return this.data
     }
 
     cast<U>(): T extends U ? Option<U> : never {

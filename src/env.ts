@@ -254,7 +254,7 @@ export function formatAdvanced(message: string, params: unknown[], context: Form
             return ext
         }
 
-        const { strParamPos, display, numberFormat, pretty } = supported.inner
+        const { strParamPos, display, numberFormat, pretty } = supported.data
 
         const paramPos = strParamPos ? parseInt(strParamPos) : paramCounter
 

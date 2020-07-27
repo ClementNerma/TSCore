@@ -94,9 +94,9 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
         }
 
         this._pointer--
-        this._peeked = Some(next.inner)
+        this._peeked = Some(next.data)
 
-        return Some(next.inner)
+        return Some(next.data)
     }
 
     /**
