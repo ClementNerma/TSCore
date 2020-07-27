@@ -13,7 +13,7 @@ declare const console: {
  * Formatting context, used to determine how to perform the formatting
  * Used in formatting and printing functions like format(), println() or panic()
  */
-export type FormattingContext = "debug" | "print" | "warn" | "error" | "panic" | "logging" | "format"
+export type FormattingContext = "dump" | "debug" | "print" | "warn" | "error" | "panic" | "logging" | "format"
 
 /**
  * Core environment - a set of methods and configuration objects used to determine how the librarybehaves
@@ -57,6 +57,14 @@ export interface TSCoreEnv {
      * @param params The message's parameters
      */
     logger(type: "debug" | "log" | "warn" | "error" | "panic" | "unreachable" | "unimplemented" | "todo", message: string, params: unknown[]): void
+
+    /**
+     * Dump a value in the console
+     * By default, nothing is printed if development mode is not enabled
+     * @param value The value to dump
+     * @param options Optional stringification options
+     */
+    dump(value: unknown, options?: StringifyOptions): void
 
     /**
      * Print a debug message in the console
@@ -151,12 +159,15 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
             return null
         },
 
-        defaultFormattingOptions: (devMode) => ({
+        defaultFormattingOptions: (devMode, context) => ({
             missingParam(position) {
                 return `<<<missing parameter ${position + 1}>>>`
             },
 
-            stringifyOptions: { prettify: devMode },
+            stringifyOptions: {
+                prettify: devMode,
+                stringifyPrimitives: context === "dump",
+            },
         }),
 
         disableHighlighterInFormatContext(devMode) {
@@ -165,6 +176,12 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
 
         logger(message, params) {
             // Does nothing by default
+        },
+
+        dump(value, options) {
+            if (this.devMode()) {
+                console.debug(stringify(value, options))
+            }
         },
 
         debug(message, params) {
@@ -296,6 +313,16 @@ export function format(message: string, ...params: unknown[]): string {
  */
 export function formatCtx(context: FormattingContext, message: string, ...params: unknown[]): string {
     return formatAdvanced(message, params, context)
+}
+
+/**
+ * Dump a value in the console
+ * Does not call the logger
+ * @param value The value to dump
+ * @param options Optional stringification options
+ */
+export function dump(value: unknown, options?: StringifyOptions): void {
+    return _tsCoreEnv.ref.dump(value)
 }
 
 /**
