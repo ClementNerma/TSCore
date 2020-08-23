@@ -29,9 +29,9 @@ export class Regex<N extends string> {
     /**
      * Match a string using this regular expression
      * @param subject
-     * @returns Matched string as well as matched parameters
+     * @returns Matched string as well as matched parameters including the subject
      */
-    matchFull(subject: string): Option<[string, string[]]> {
+    matchWithSubject(subject: string): Option<[string, string[]]> {
         return Option.maybe(subject.match(this.inner)).map(([match, ...parts]) => [match, parts])
     }
 
@@ -40,10 +40,10 @@ export class Regex<N extends string> {
      * @param subject
      * @returns Matched string as well as matched parameters in a strongly-typed object
      */
-    matchNamed(subject: string): Option<{ [name in N]: string } & { _matched: string }> {
-        return this.matchFull(subject).map(([matched, parts]) => {
-            return forceType<{ [name in N]: string } & { _matched: string }>(
-                O.fromEntries([["_matched", matched], ...this.names.map<[string, string]>((name, pos) => [name, parts[pos + 1] ?? ""])])
+    matchNamed(subject: string): Option<{ [name in N]: string } & { _subject: string }> {
+        return this.matchWithSubject(subject).map(([matched, parts]) => {
+            return forceType<{ [name in N]: string } & { _subject: string }>(
+                O.fromEntries([["_subject", matched], ...this.names.map<[string, string]>((name, pos) => [name, parts[pos + 1] ?? ""])])
             )
         })
     }
