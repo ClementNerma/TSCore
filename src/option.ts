@@ -74,6 +74,13 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
     abstract unwrapOrElse(fallback: () => T): T
 
     /**
+     * Unwrap this option's concrete value
+     * Panics if the option is not a concrete value and displays the message provided by the formatter
+     * @param formatter
+     */
+    abstract unwrapWith(formatter: () => string): T
+
+    /**
      * Map this option's concrete value
      * @param mapper Mapping function
      */
@@ -219,6 +226,10 @@ class SomeValue<T> extends OptionClass<T> {
         return this.data
     }
 
+    unwrapWith(formatter: () => string): T {
+        return this.data
+    }
+
     map<U>(mapper: (value: T) => U): Option<U> {
         return Some(mapper(this.data))
     }
@@ -331,6 +342,10 @@ class NoneValue<T> extends OptionClass<T> {
 
     unwrapOrElse(fallback: () => T): T {
         return fallback()
+    }
+
+    unwrapWith(formatter: () => string): T {
+        return panic(formatter())
     }
 
     map<U>(mapper: (value: T) => U): Option<U> {
