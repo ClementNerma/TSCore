@@ -322,17 +322,6 @@ export function format(message: string, ...params: unknown[]): string {
 }
 
 /**
- * Format a message with a specific formatting context for later use
- * @param context The formatting context
- * @param message The message to format
- * @param params The message's parameters
- * @returns The formatted message
- */
-export function formatCtx(context: FormattingContext, message: string, ...params: unknown[]): string {
-    return formatAdvanced(message, params, context)
-}
-
-/**
  * Dump a value in the console
  * Does not call the logger
  * @param value The value to dump
