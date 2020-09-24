@@ -26,6 +26,13 @@ export interface TSCoreEnv {
     devMode: () => boolean
 
     /**
+     * Determine if a message should be displayed or not
+     * @param devMode Is development mode enabled?
+     * @param context Formatting context
+     */
+    verbosity: (devMode: boolean, context: Exclude<FormattingContext, "format" | "logging" | "panic">) => boolean
+
+    /**
      * Formatting extension
      * Used by format() when a format used in the message is unknown
      * e.g. by default when formatting `Hello, {$$$}!` the format is `$$$` and will result in calling .formatExt() as it is unknown
@@ -155,6 +162,14 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
     ref: {
         devMode: () => true,
 
+        verbosity: (devMode, context) => {
+            if (context === "debug" || context === "dump") {
+                return devMode
+            }
+
+            return true
+        },
+
         formatExt(format, params, paramCounter, context, options): string | null {
             return null
         },
@@ -249,7 +264,9 @@ export function setupTypeScriptCore(newEnv: Partial<TSCoreEnv> | ((previousEnv: 
  * @param options Formatting options (default behaviour is to fallback to the default formatting options if none are provided)
  */
 export function formatAdvanced(message: string, params: unknown[], context: FormattingContext, maybeOptions?: FormatOptions): string {
-    const options = maybeOptions ?? _tsCoreEnv.ref.defaultFormattingOptions(_tsCoreEnv.ref.devMode(), context)
+    const devMode = _tsCoreEnv.ref.devMode()
+
+    const options = maybeOptions ?? _tsCoreEnv.ref.defaultFormattingOptions(devMode, context)
     let paramCounter = -1
 
     return message.replace(/{([a-zA-Z0-9_:#\?\$]*)}/g, (match, format) => {
@@ -322,7 +339,9 @@ export function formatCtx(context: FormattingContext, message: string, ...params
  * @param options Optional stringification options
  */
 export function dump(value: unknown, options?: StringifyOptions): void {
-    return _tsCoreEnv.ref.dump(value)
+    if (_tsCoreEnv.ref.verbosity(_tsCoreEnv.ref.devMode(), "dump")) {
+        return _tsCoreEnv.ref.dump(value)
+    }
 }
 
 /**
@@ -332,7 +351,10 @@ export function dump(value: unknown, options?: StringifyOptions): void {
  */
 export function debug(message: string, ...params: unknown[]): void {
     _tsCoreEnv.ref.logger("debug", message, params)
-    return _tsCoreEnv.ref.debug(message, params)
+
+    if (_tsCoreEnv.ref.verbosity(_tsCoreEnv.ref.devMode(), "debug")) {
+        return _tsCoreEnv.ref.debug(message, params)
+    }
 }
 
 /**
@@ -342,7 +364,10 @@ export function debug(message: string, ...params: unknown[]): void {
  */
 export function println(message: string, ...params: unknown[]): void {
     _tsCoreEnv.ref.logger("log", message, params)
-    return _tsCoreEnv.ref.println(message, params)
+
+    if (_tsCoreEnv.ref.verbosity(_tsCoreEnv.ref.devMode(), "print")) {
+        return _tsCoreEnv.ref.println(message, params)
+    }
 }
 
 /**
@@ -352,7 +377,10 @@ export function println(message: string, ...params: unknown[]): void {
  */
 export function warn(message: string, ...params: unknown[]): void {
     _tsCoreEnv.ref.logger("warn", message, params)
-    return _tsCoreEnv.ref.warn(message, params)
+
+    if (_tsCoreEnv.ref.verbosity(_tsCoreEnv.ref.devMode(), "warn")) {
+        return _tsCoreEnv.ref.warn(message, params)
+    }
 }
 
 /**
@@ -362,7 +390,10 @@ export function warn(message: string, ...params: unknown[]): void {
  */
 export function eprintln(message: string, ...params: unknown[]): void {
     _tsCoreEnv.ref.logger("error", message, params)
-    return _tsCoreEnv.ref.eprintln(message, params)
+
+    if (_tsCoreEnv.ref.verbosity(_tsCoreEnv.ref.devMode(), "error")) {
+        return _tsCoreEnv.ref.eprintln(message, params)
+    }
 }
 
 /**
