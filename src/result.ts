@@ -290,6 +290,10 @@ class OkValue<T, E> extends ResultClass<T, E> {
     clone(): Result<T, E> {
         return Ok(this.data)
     }
+
+    asOk(): Result<T, any> {
+        return Ok(this.data)
+    }
 }
 
 /**
@@ -402,6 +406,10 @@ export class ErrValue<T, E> extends ResultClass<T, E> {
     }
 
     clone(): Result<T, E> {
+        return Err(this.err)
+    }
+
+    asErr(): Result<any, E> {
         return Err(this.err)
     }
 }
