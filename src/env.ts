@@ -52,11 +52,11 @@ export interface TSCoreEnv {
 
     /**
      * Log a message - called before actually displaying the message in debug(), println(), panic() etc.
-     * @param type Logging type
+     * @param context Logging type
      * @param message The message to log
      * @param params The message's parameters
      */
-    logger(type: "debug" | "log" | "warn" | "error" | "panic" | "unreachable" | "unimplemented" | "todo", message: string, params: unknown[]): void
+    logger(context: "debug" | "log" | "warn" | "error" | "panic" | "unreachable" | "unimplemented" | "todo", message: string, params: unknown[]): void
 
     /**
      * Dump a value in the console
@@ -174,7 +174,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
             return true
         },
 
-        logger(message, params) {
+        logger(context, message, params) {
             // Does nothing by default
         },
 
