@@ -373,6 +373,11 @@ export namespace Decoders {
                 : Err(new DecodingError(state("NoneOfEnumStates", [cstr.name, cases.map((c) => stringify(c, { prettify: false }))])))
     }
 
+    /** Ensure a value is of a given type using fallback decoders */
+    export function ensure<F, T>(...decoders: Array<Decoder<F, T>>): Decoder<F, T> {
+        return untypedEither(...decoders) as Decoder<F, T>
+    }
+
     /** Try to decode a value using multiple decoders to an unknown data type */
     export function untypedEither<F>(...decoders: Array<Decoder<F, unknown>>): Decoder<F, unknown> {
         return (value) => {
