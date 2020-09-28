@@ -43,7 +43,7 @@ export class Regex<N extends string> {
     matchNamed(subject: string): Option<{ [name in N]: string } & { _subject: string }> {
         return this.matchWithSubject(subject).map(([matched, parts]) => {
             return forceType<{ [name in N]: string } & { _subject: string }>(
-                O.fromEntries([["_subject", matched], ...this.names.map<[string, string]>((name, pos) => [name, parts[pos + 1] ?? ""])])
+                O.fromEntries([["_subject", matched], ...this.names.map<[string, string]>((name, pos) => [name, parts[pos] ?? ""])])
             )
         })
     }
