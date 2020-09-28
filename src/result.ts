@@ -494,4 +494,25 @@ export namespace Result {
         const value = result.unwrapOrElse(() => fallback())
         return Ok(mapper ? mapper(value) : value)
     }
+
+    /**
+     * Try a list of functions and return the value of the first function that doesn't throws
+     * @param tries The functions to 'try'
+     * @returns The return value of a function or the list of errors of all functions
+     */
+    export function any<T>(...tries: Array<() => T>): Result<T, Error[]> {
+        const errors = []
+
+        for (const oneTry of tries) {
+            const data = fallible(oneTry)
+
+            if (data.isOk()) {
+                return data.asOk()
+            }
+
+            errors.push(data.err)
+        }
+
+        return Err(errors)
+    }
 }
