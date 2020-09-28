@@ -45,10 +45,8 @@ export interface TSCoreEnv {
 
     /**
      * Generate the default formatting options
-     * @param devMode Is development mode enabled?
-     * @param context The formatting context
      */
-    defaultFormattingOptions: (devMode: boolean, context: FormattingContext) => FormatOptions
+    defaultFormattingOptions: () => FormatOptions
 
     /**
      * Disable the highlighter in the 'format' and 'logging' context (defaults: does)
@@ -150,8 +148,10 @@ export interface FormatOptions {
 
     /**
      * Options for the stringify() function
+     * @param devMode Is development mode enabled?
+     * @param context The formatting context
      */
-    stringifyOptions: StringifyOptions
+    stringifyOptions: (devMode: boolean, context: FormattingContext, prettify: boolean | null) => StringifyOptions
 }
 
 /**
@@ -174,13 +174,13 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
             return null
         },
 
-        defaultFormattingOptions: (devMode, context) => ({
+        defaultFormattingOptions: () => ({
             missingParam(position) {
                 return `<<<missing parameter ${position + 1}>>>`
             },
 
-            stringifyOptions: {
-                stringifyPrimitives: context === "dump",
+            stringifyOptions(devMode, context, prettify) {
+                return { stringifyPrimitives: context === "dump", prettify: prettify ?? devMode }
             },
         }),
 
@@ -194,7 +194,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
 
         dump(value, options) {
             if (this.devMode()) {
-                console.debug(stringify(value, { ...this.defaultFormattingOptions(this.devMode(), "dump").stringifyOptions, ...options }))
+                console.debug(stringify(value, { ...this.defaultFormattingOptions().stringifyOptions(this.devMode(), "dump", true), ...options }))
             }
         },
 
@@ -265,13 +265,13 @@ export function setupTypeScriptCore(newEnv: Partial<TSCoreEnv> | ((previousEnv: 
 export function formatAdvanced(message: string, params: unknown[], context: FormattingContext, maybeOptions?: FormatOptions): string {
     const devMode = _tsCoreEnv.ref.devMode()
 
-    const options = maybeOptions ?? _tsCoreEnv.ref.defaultFormattingOptions(devMode, context)
+    const options = maybeOptions ?? _tsCoreEnv.ref.defaultFormattingOptions()
     let paramCounter = -1
 
     return message.replace(/{([a-zA-Z0-9_:#\?\$]*)}/g, (match, format) => {
         paramCounter++
 
-        const supported = new Regex(/^(\d+)?([#])?([bdoxX])?(\?)?$/, ["strParamPos", "display", "numberFormat", "pretty"]).matchNamed(format)
+        const supported = new Regex(/^(\d+)?([:#])?([bdoxX])?(\?)?$/, ["strParamPos", "display", "numberFormat", "pretty"]).matchNamed(format)
 
         if (supported.isNone()) {
             const ext = _tsCoreEnv.ref.formatExt(format, params, paramCounter, context, options)
@@ -296,14 +296,15 @@ export function formatAdvanced(message: string, params: unknown[], context: Form
         }
 
         if (display === "#" || !display) {
+            const stringifyOptions = options.stringifyOptions(devMode, context, pretty !== "")
+
             return stringify(params[paramCounter], {
-                ...options.stringifyOptions,
-                prettify: pretty !== "",
-                numberFormat: (numberFormat as any) || options.stringifyOptions.numberFormat,
+                ...stringifyOptions,
+                numberFormat: (numberFormat as any) || stringifyOptions.numberFormat,
                 highlighter:
                     (context === "format" || context === "logging") && _tsCoreEnv.ref.disableHighlighterInFormatContext(true)
                         ? undefined
-                        : options.stringifyOptions.highlighter,
+                        : stringifyOptions.highlighter,
             })
         }
 
