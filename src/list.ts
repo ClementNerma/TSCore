@@ -195,6 +195,27 @@ export class List<T> implements Iterable<T> {
     }
 
     /**
+     * Concatenate this list with other ones if they are concrete values
+     * @param list
+     * @param lists
+     */
+    concatMaybe(list: Option<ListLike<T>>, ...lists: Array<Option<ListLike<T>>>): List<T> {
+        const concat = this.clone()
+
+        if (list.isSome()) {
+            concat.push(...list.data)
+        }
+
+        for (const list of lists) {
+            if (list.isSome()) {
+                concat.push(...list.data)
+            }
+        }
+
+        return concat
+    }
+
+    /**
      * Join this list as a string
      * @param separator
      */
