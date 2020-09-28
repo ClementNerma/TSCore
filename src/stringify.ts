@@ -33,6 +33,7 @@ export interface StringifyOptions {
             | "text"
             | "lineBreak"
             | "unknown"
+            | "unknownWrapper"
             | "punctuation"
             | "void"
             | "boolean"
@@ -338,24 +339,7 @@ export function makeStringifyable(value: unknown, stringifyExt?: StringifyOption
         return (value as any).__tsCoreStringify()
     }
 
-    if ((value as any).toString) {
-        if (typeof (value as any).toString === "function") {
-            const stringifed = (value as any).toString()
-
-            if (typeof stringifed === "string") {
-                // Avoid vertical overflow when displaying
-                const lines = stringifed.split(/\r\n|\r|\n/)
-                // Avoid horizontal overflow too
-                return { type: "text", text: lines[0].length > 64 ? lines[0] + "..." : lines[0] }
-            } else {
-                return { type: "unknown", typename: (value as any).constructor?.name }
-            }
-        } else {
-            return { type: "unknown", typename: (value as any).constructor?.name }
-        }
-    } else {
-        return stringifyExt?.(value) ?? { type: "unknown", typename: (value as any).constructor?.name }
-    }
+    return stringifyExt?.(value) ?? { type: "unknown", typename: (value as any).constructor?.name }
 }
 
 /**
@@ -582,7 +566,13 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
             )
 
         case "unknown":
-            return highlighter("unknown", `<${stri.typename ?? "unknown type"}>`)
+            return (
+                highlighter("punctuation", "<") +
+                highlighter("unknownWrapper", "Instance of:") +
+                " " +
+                highlighter("unknown", stri.typename ?? "unknown type") +
+                highlighter("punctuation", ">")
+            )
     }
 }
 
