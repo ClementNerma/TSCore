@@ -180,7 +180,6 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
             },
 
             stringifyOptions: {
-                prettify: devMode,
                 stringifyPrimitives: context === "dump",
             },
         }),
@@ -272,7 +271,7 @@ export function formatAdvanced(message: string, params: unknown[], context: Form
     return message.replace(/{([a-zA-Z0-9_:#\?\$]*)}/g, (match, format) => {
         paramCounter++
 
-        const supported = new Regex(/^(\d+)?([:#])?([bdoxX])?(\?)?$/, ["strParamPos", "display", "numberFormat", "pretty"]).matchNamed(format)
+        const supported = new Regex(/^(\d+)?([#])?([bdoxX])?(\?)?$/, ["strParamPos", "display", "numberFormat", "pretty"]).matchNamed(format)
 
         if (supported.isNone()) {
             const ext = _tsCoreEnv.ref.formatExt(format, params, paramCounter, context, options)
@@ -299,6 +298,7 @@ export function formatAdvanced(message: string, params: unknown[], context: Form
         if (display === "#" || !display) {
             return stringify(params[paramCounter], {
                 ...options.stringifyOptions,
+                prettify: pretty !== "",
                 numberFormat: (numberFormat as any) || options.stringifyOptions.numberFormat,
                 highlighter:
                     (context === "format" || context === "logging") && _tsCoreEnv.ref.disableHighlighterInFormatContext(true)
