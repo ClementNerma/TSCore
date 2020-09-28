@@ -2,7 +2,7 @@
  * @file Result values that are either a success or an error
  */
 
-import { panic, unreachable } from './env'
+import { formatAdvanced, panic, unreachable } from './env'
 import { AbstractMatchable, State, state } from './match'
 import { None, Option, Some } from './option'
 
@@ -442,6 +442,15 @@ export function Ok<T>(value: T): Result<T, any> {
  */
 export function Err<E>(err: E): Result<any, E> {
     return new ErrValue(err)
+}
+
+/**
+ * Create a new error result with formatting
+ * @param err The error value
+ * @param params The formatting parameters
+ */
+export function ErrMsg(err: string, ...params: unknown[]): Result<any, string> {
+    return new ErrValue(formatAdvanced(err, params, "error"))
 }
 
 /**
