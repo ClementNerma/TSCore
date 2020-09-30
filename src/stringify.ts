@@ -528,10 +528,9 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
             return (
                 (stri.typename === false
                     ? options?.displayArrayTypeName
-                        ? highlighter("typename", "Array")
+                        ? highlighter("typename", "Array") + " "
                         : ""
-                    : highlighter("typename", stri.typename)) +
-                " " +
+                    : highlighter("typename", stri.typename) + " ") +
                 highlighter("punctuation", "[") +
                 (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n  " : " ") : "") +
                 (stri.content || [])
@@ -550,10 +549,9 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
             return (
                 (stri.typename === false
                     ? options?.displayCollectionTypeName
-                        ? highlighter("typename", "Collection")
+                        ? highlighter("typename", "Collection") + " "
                         : ""
-                    : highlighter("typename", stri.typename)) +
-                " " +
+                    : highlighter("typename", stri.typename) + " ") +
                 highlighter("punctuation", "{") +
                 (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n  " : " ") : "") +
                 (stri.content || [])
