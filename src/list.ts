@@ -328,7 +328,7 @@ export class List<T> implements Iterable<T> {
      * Create a new list without the current list's duplicate items
      * @param comparator
      */
-    withoutDuplicates(comparator: Comparator<T>): List<T> {
+    withoutDuplicates(comparator: (left: T, right: T) => boolean): List<T> {
         const out = new List<T>()
 
         for (let i = 0; i < this._content.length; i++) {
@@ -344,7 +344,7 @@ export class List<T> implements Iterable<T> {
      * Remove all duplicate items from the current list
      * @param comparator
      */
-    removeDuplicates(comparator: Comparator<T>): this {
+    removeDuplicates(comparator: (left: T, right: T) => boolean): this {
         for (let i = 0; i < this._content.length; i++) {
             if (this._content.findIndex((val) => comparator(val, this._content[i])) !== i) {
                 this._content.splice(i, 1)
