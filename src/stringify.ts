@@ -1,6 +1,7 @@
 import { TaskCluster } from './cluster'
+import { compare } from './comparison'
 import { DecodingError } from './decode'
-import { Dictionary } from './dictionary'
+import { Dictionary, RecordDict } from './dictionary'
 import { Either } from './either'
 import { Future } from './future'
 import { Iter } from './iter'
@@ -56,6 +57,11 @@ export interface StringifyOptions {
     arrayIndexes?: boolean
 
     /**
+     * Sort record dictionaries' keys alphabetically (default: true)
+     */
+    sortRecordDictKeys?: boolean
+
+    /**
      * Pretty-print the value on multiple lines (default: determined depending on the value's structural size)
      */
     prettify?: boolean
@@ -91,7 +97,7 @@ export interface StringifyOptions {
  * @param options
  */
 export function stringify(value: unknown, options?: StringifyOptions): string {
-    return stringifyRaw(makeStringifyable(value, options?.stringifyExt), options)
+    return stringifyRaw(makeStringifyable(value, options), options)
 }
 
 /**
@@ -115,8 +121,8 @@ export type RawStringifyable =
  * @param value
  * @param numberFormat
  */
-export function makeStringifyable(value: unknown, stringifyExt?: StringifyOptions["stringifyExt"]): RawStringifyable {
-    const _nested = (value: unknown) => makeStringifyable(value, stringifyExt)
+export function makeStringifyable(value: unknown, options?: StringifyOptions): RawStringifyable {
+    const _nested = (value: unknown) => makeStringifyable(value, options)
 
     if (value === null) {
         return { type: "void", value: null }
@@ -160,6 +166,25 @@ export function makeStringifyable(value: unknown, stringifyExt?: StringifyOption
             type: "list",
             typename: "List",
             content: value.toArray().map((item, index) => ({ index, value: _nested(item) })),
+        }
+    }
+
+    if (value instanceof RecordDict) {
+        return {
+            type: "collection",
+            typename: "RecordDict",
+            content:
+                options?.sortRecordDictKeys ?? true
+                    ? value
+                          .entries()
+                          .collect()
+                          .sort(([a], [b]) => compare(a, b))
+                          .map(([key, value]) => ({ key: _nested(key), value: _nested(value) }))
+                          .toArray()
+                    : value
+                          .entries()
+                          .collectArray()
+                          .map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
         }
     }
 
@@ -339,7 +364,7 @@ export function makeStringifyable(value: unknown, stringifyExt?: StringifyOption
         return (value as any).__tsCoreStringify()
     }
 
-    return stringifyExt?.(value) ?? { type: "unknown", typename: (value as any).constructor?.name }
+    return options?.stringifyExt?.(value) ?? { type: "unknown", typename: (value as any).constructor?.name }
 }
 
 /**
