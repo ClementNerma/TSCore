@@ -27,10 +27,11 @@ export function tryParseFloat(str: string, strictCheck = true): Result<number, v
 /**
  * Add indentation to a string
  * @param str The string to indent
+ * @param beginString Add a string at the beginning of the line
  * @param indent The number of characters to indent the string with
  * @param indentChar The character to indent the string with
  * @returns The indented string
  */
-export function addStrIndent(str: string, indent: number, indentChar = " "): string {
-    return str.replace(/^.*$/gm, (match) => indentChar.repeat(indent) + match)
+export function addStrIndent(str: string, beginString = "", indent: number, indentChar = " "): string {
+    return str.replace(/^.*$/gm, (match) => beginString + indentChar.repeat(indent) + match)
 }
