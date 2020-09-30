@@ -276,6 +276,18 @@ export class List<T> implements Iterable<T> {
     }
 
     /**
+     * Find an item or push a new one at the end of the list otherwise
+     * @param predicate
+     * @param value
+     */
+    findOrPush(predicate: (value: T, index: number, list: this) => boolean, value: T): T {
+        return this.find(predicate).unwrapOrElse(() => {
+            this.push(value)
+            return value
+        })
+    }
+
+    /**
      * Filter items using a predicate
      * @param predicate
      */
