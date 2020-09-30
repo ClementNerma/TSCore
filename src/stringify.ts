@@ -52,6 +52,16 @@ export interface StringifyOptions {
     numberFormat?: "b" | "d" | "o" | "x" | "X"
 
     /**
+     * Display an 'Array' type before an array's content (default: false)
+     */
+    displayArrayTypeName?: boolean
+
+    /**
+     * Display a 'Collection' type before an array's content (default: false)
+     */
+    displayCollectionTypeName?: boolean
+
+    /**
      * Display indexes in arrays (default: true)
      */
     arrayIndexes?: boolean
@@ -115,8 +125,8 @@ export type RawStringifyable =
     | { type: "string"; value: string }
     | { type: "text"; text: string }
     | { type: "wrapped"; typename: string; content?: RawStringifyable }
-    | { type: "list"; typename: string; content: Array<{ index: number; value: RawStringifyable }> }
-    | { type: "collection"; typename: string; content: Array<{ key: RawStringifyable; value: RawStringifyable }>; nativeColor?: true }
+    | { type: "list"; typename: false | string; content: Array<{ index: number; value: RawStringifyable }> }
+    | { type: "collection"; typename: false | string; content: Array<{ key: RawStringifyable; value: RawStringifyable }>; nativeColor?: true }
     | { type: "error"; typename: string; message: string; stack: Option<string> }
     | { type: "prefixed"; typename: string; prefixed: Array<[string, Option<RawStringifyable>]> }
     | { type: "unknown"; typename: string | undefined }
@@ -207,7 +217,7 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
     if (O.isArray(value)) {
         return {
             type: "list",
-            typename: "Array",
+            typename: false,
             content: value.map((item, index) => ({ index, value: _nested(item) })),
         }
     }
@@ -215,7 +225,7 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
     if (O.isCollection(value)) {
         return {
             type: "collection",
-            typename: "Collection",
+            typename: false,
             content:
                 options?.sortCollectionKeys === false
                     ? O.entries(value).map(([key, value]) => ({ key: _nested(key), value: _nested(value) }))
@@ -516,7 +526,11 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
 
         case "list":
             return (
-                highlighter("typename", stri.typename) +
+                (stri.typename === false
+                    ? options?.displayArrayTypeName
+                        ? highlighter("typename", "Array")
+                        : ""
+                    : highlighter("typename", stri.typename)) +
                 " " +
                 highlighter("punctuation", "[") +
                 (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n  " : " ") : "") +
@@ -534,7 +548,11 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
 
         case "collection":
             return (
-                highlighter("typename", stri.typename) +
+                (stri.typename === false
+                    ? options?.displayCollectionTypeName
+                        ? highlighter("typename", "Collection")
+                        : ""
+                    : highlighter("typename", stri.typename)) +
                 " " +
                 highlighter("punctuation", "{") +
                 (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n  " : " ") : "") +
