@@ -23,3 +23,14 @@ export function tryParseFloat(str: string, strictCheck = true): Result<number, v
     const parsed = strictCheck ? Number(str) : parseFloat(str)
     return Number.isNaN(parsed) ? Err(void 0) : Ok(parsed)
 }
+
+/**
+ * Add indentation to a string
+ * @param str The string to indent
+ * @param indent The number of characters to indent the string with
+ * @param indentChar The character to indent the string with
+ * @returns The indented string
+ */
+export function addStrIndent(str: string, indent: number, indentChar = " "): string {
+    return str.replace(/^.*$/gm, (match) => indentChar.repeat(indent) + match)
+}
