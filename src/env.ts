@@ -418,7 +418,7 @@ export function unreachable(message?: string, ...params: unknown[]): never {
  * @param params The optional message's parameters
  */
 export function unimplemented(message?: string, ...params: unknown[]): never {
-    message = message ?? "unreachable statement reached!"
+    message = message ?? "not implemented!"
     params = params ?? []
 
     _tsCoreEnv.ref.logger("unimplemented", message, params)
@@ -431,7 +431,7 @@ export function unimplemented(message?: string, ...params: unknown[]): never {
  * @param params The optional message's parameters
  */
 export function todo(message?: string, ...params: unknown[]): never {
-    message = message ?? "unreachable statement reached!"
+    message = message ?? "not implemented!"
     params = params ?? []
 
     _tsCoreEnv.ref.logger("todo", message, params)
