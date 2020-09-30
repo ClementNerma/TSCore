@@ -313,6 +313,37 @@ export class List<T> implements Iterable<T> {
     }
 
     /**
+     * Create a new list without the current list's duplicate items
+     * @param comparator
+     */
+    withoutDuplicates(comparator: Comparator<T>): List<T> {
+        const out = new List<T>()
+
+        for (let i = 0; i < this._content.length; i++) {
+            if (this._content.findIndex((val) => comparator(val, this._content[i])) === i) {
+                out.push(this._content[i])
+            }
+        }
+
+        return out
+    }
+
+    /**
+     * Remove all duplicate items from the current list
+     * @param comparator
+     */
+    removeDuplicates(comparator: Comparator<T>): this {
+        for (let i = 0; i < this._content.length; i++) {
+            if (this._content.findIndex((val) => comparator(val, this._content[i])) !== i) {
+                this._content.splice(i, 1)
+                i--
+            }
+        }
+
+        return this
+    }
+
+    /**
      * Select the first items matching a predicate
      * Equivalent of `.filter(...).firstOnes(...)` but a lot faster
      * @param predicate
