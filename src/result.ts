@@ -338,7 +338,7 @@ export class ErrValue<T, E> extends ResultClass<T, E> {
     }
 
     unwrap(): T {
-        return panic("Tried to unwrap an Err() value: {}", this)
+        return panic("Tried to unwrap an Err() value: {}", this.err)
     }
 
     unwrapWith(formatter: (err: E, p: typeof panic) => string): T {
