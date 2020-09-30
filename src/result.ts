@@ -83,7 +83,7 @@ abstract class ResultClass<T, E> extends AbstractMatchable<ResultMatch<T, E>> {
      * Panics if the result is not a success and displays the message provided by the formatter
      * @param formatter
      */
-    abstract unwrapWith(formatter: (err: E) => string): T
+    abstract unwrapWith(formatter: (err: E, p: typeof panic) => string): T
 
     /**
      * Unwrap this result's success value
@@ -223,7 +223,7 @@ class OkValue<T, E> extends ResultClass<T, E> {
         return this.data
     }
 
-    unwrapWith(formatter: (err: E) => string): T {
+    unwrapWith(formatter: (err: E, p: typeof panic) => string): T {
         return this.data
     }
 
@@ -341,8 +341,8 @@ export class ErrValue<T, E> extends ResultClass<T, E> {
         return panic("Tried to unwrap an Err() value: {}", this)
     }
 
-    unwrapWith(formatter: (err: E) => string): T {
-        return panic(formatter(this.err))
+    unwrapWith(formatter: (err: E, p: typeof panic) => string): T {
+        return panic("{}", formatter(this.err, panic))
     }
 
     unwrapOr(fallback: T): T {
