@@ -514,4 +514,21 @@ export namespace Option {
         const value = option.unwrapOrElse(() => fallback())
         return Some(mapper ? mapper(value) : value)
     }
+
+    /**
+     * Try a list of functions and return the value of the first function that doesn't return a None()
+     * @param tries The functions to 'try'
+     * @returns The first concrete return value of a function (if any)
+     */
+    export function any<T>(tries: Array<() => Option<T>>): Option<T> {
+        for (const oneTry of tries) {
+            const data = oneTry()
+
+            if (data.isSome()) {
+                return data
+            }
+        }
+
+        return None()
+    }
 }
