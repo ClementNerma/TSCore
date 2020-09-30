@@ -25,13 +25,13 @@ export function tryParseFloat(str: string, strictCheck = true): Result<number, v
 }
 
 /**
- * Add indentation to a string
+ * Map lines of a string
  * @param str The string to indent
- * @param beginString Add a string at the beginning of the line
- * @param indent The number of characters to indent the string with
- * @param indentChar The character to indent the string with
- * @returns The indented string
+ * @param mapper A function to map the lines
+ * @returns The mapped string
+ * @example mapStrLines('a\nb', line => '> ' + line) === '> a\n> b'
  */
-export function addStrIndent(str: string, beginString = "", indent: number, indentChar = " "): string {
-    return str.replace(/^.*$/gm, (match) => beginString + indentChar.repeat(indent) + match)
+export function mapStrLines(str: string, mapper: (line: string, lineIndex: number) => string): string {
+    let i = 0
+    return str.replace(/^.*$/gm, (match) => mapper(match, i++))
 }
