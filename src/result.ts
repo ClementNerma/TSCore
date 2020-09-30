@@ -500,7 +500,7 @@ export namespace Result {
      * @param tries The functions to 'try'
      * @returns The return value of a function or the list of errors of all functions
      */
-    export function any<T>(...tries: Array<() => T>): Result<T, Error[]> {
+    export function any<T>(tries: Array<() => T>): Result<T, Error[]> {
         const errors = []
 
         for (const oneTry of tries) {
