@@ -262,6 +262,20 @@ export class List<T> implements Iterable<T> {
     }
 
     /**
+     * Check if any element matches a predicate
+     * @param predicate
+     */
+    findHas(predicate: (value: T, index: number, list: this) => boolean): boolean {
+        for (let i = 0; i < this._content.length; i++) {
+            if (predicate(this._content[i], i, this)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    /**
      * Find the index of the first element matching a predicate
      * @param predicate
      */
