@@ -106,19 +106,18 @@ async function main() {
 // Set up TypeScript core to print outputs with pretty colors
 // Note that this part is purely optional
 setupTypeScriptCore((prev) => ({
-    defaultFormattingOptions: (devMode, context) => ({
-        ...prev.defaultFormattingOptions(devMode, context),
+    defaultFormattingOptions: () => ({
+        ...prev.defaultFormattingOptions(),
 
-        stringifyOptions: {
-            ...prev.defaultFormattingOptions(devMode, context).stringifyOptions,
+        stringifyOptions: (devMode, context, prettify) => ({
+            ...prev.defaultFormattingOptions().stringifyOptions(devMode, context, prettify),
 
-            prettify: true,
-
-            highlighter: (type, content) => {
-                return matchString(type, {
+            highlighter: (type, content) =>
+                matchString(type, {
                     typename: () => chalk.yellow(content),
                     prefix: () => chalk.cyan(content),
-                    unknown: () => chalk.red(content),
+                    unknown: () => chalk.yellowBright(content),
+                    unknownWrapper: () => chalk.magentaBright(content),
                     punctuation: () => chalk.cyan(content),
                     listIndex: () => chalk.magenta(content),
                     listValue: () => chalk.blue(content),
@@ -130,9 +129,8 @@ setupTypeScriptCore((prev) => ({
                     errorMessage: () => chalk.red(content),
                     errorStack: () => chalk.red(content),
                     _: () => content,
-                })
-            },
-        },
+                }),
+        }),
     }),
 }))
 
