@@ -57,6 +57,11 @@ export interface StringifyOptions {
     arrayIndexes?: boolean
 
     /**
+     * Sort collections' keys alphabetically (default: true)
+     */
+    sortCollectionKeys?: boolean
+
+    /**
      * Sort record dictionaries' keys alphabetically (default: true)
      */
     sortRecordDictKeys?: boolean
@@ -211,7 +216,12 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         return {
             type: "collection",
             typename: "Collection",
-            content: O.entries(value).map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
+            content:
+                options?.sortCollectionKeys === false
+                    ? O.entries(value).map(([key, value]) => ({ key: _nested(key), value: _nested(value) }))
+                    : O.entries(value)
+                          .sort(([a], [b]) => compare(a, b))
+                          .map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
             nativeColor: true,
         }
     }
