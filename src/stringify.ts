@@ -174,17 +174,17 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
             type: "collection",
             typename: "RecordDict",
             content:
-                options?.sortRecordDictKeys ?? true
+                options?.sortRecordDictKeys === false
                     ? value
+                          .entries()
+                          .collectArray()
+                          .map(([key, value]) => ({ key: _nested(key), value: _nested(value) }))
+                    : value
                           .entries()
                           .collect()
                           .sort(([a], [b]) => compare(a, b))
                           .map(([key, value]) => ({ key: _nested(key), value: _nested(value) }))
-                          .toArray()
-                    : value
-                          .entries()
-                          .collectArray()
-                          .map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
+                          .toArray(),
         }
     }
 
