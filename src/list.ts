@@ -387,6 +387,26 @@ export class List<T> implements Iterable<T> {
     }
 
     /**
+     * Detect if an item appears at least two times in the current list
+     * @param predicate
+     */
+    hasDuplicate(predicate: (value: T, index: number, list: this) => boolean): boolean {
+        let found = false
+
+        for (let i = 0; i < this._content.length; i++) {
+            if (predicate(this._content[i], i, this)) {
+                if (found) {
+                    return true
+                }
+
+                found = true
+            }
+        }
+
+        return false
+    }
+
+    /**
      * Select the first items matching a predicate
      * Equivalent of `.filter(...).firstOnes(...)` but a lot faster
      * @param predicate
