@@ -101,6 +101,12 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
     abstract mapOrElse<U>(mapper: (value: T) => U, fallback: () => U): U
 
     /**
+     * Map this option to a string, falling back to an empty string if this option is 'None'
+     * @param mapper Mapping function
+     */
+    abstract mapStr(mapper: (value: T) => string): string
+
+    /**
      * Expect this option and another to be concrete
      * @param other Another option
      */
@@ -242,6 +248,10 @@ class SomeValue<T> extends OptionClass<T> {
         return mapper(this.data)
     }
 
+    mapStr(mapper: (value: T) => string): string {
+        return mapper(this.data)
+    }
+
     and<U>(other: Option<U>): Option<U> {
         return other
     }
@@ -358,6 +368,10 @@ class NoneValue<T> extends OptionClass<T> {
 
     mapOrElse<U>(mapper: (value: T) => U, fallback: () => U): U {
         return fallback()
+    }
+
+    mapStr(mapper: (value: T) => string): string {
+        return ""
     }
 
     and<U>(other: Option<U>): Option<U> {
