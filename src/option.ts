@@ -470,6 +470,14 @@ export namespace Option {
     }
 
     /**
+     * Create an Option<void> from a boolean (`true` creates a Some(), `false` creates a None())
+     * @param value
+     */
+    export function bool(value: boolean): Option<void> {
+        return value ? Some(undefined) : None()
+    }
+
+    /**
      * Transpose an Option<Result<T, E>> into a Result<Option<T>, E>
      * @param option
      */

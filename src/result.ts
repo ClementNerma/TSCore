@@ -474,6 +474,14 @@ export namespace Result {
     }
 
     /**
+     * Create a Result<void, void> from a boolean (`true` creates an Ok(), `false` creates an Err())
+     * @param value
+     */
+    export function bool(value: boolean): Result<void, void> {
+        return value ? Ok(undefined) : Err(undefined)
+    }
+
+    /**
      * Create an Ok(T) option from either an existing result, or a fallback value if it's an Err()
      * @param result
      * @param fallback
