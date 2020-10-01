@@ -148,6 +148,16 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
     }
 
     /**
+     * Consume the iterator by running an inspection function on each yield item
+     * Equivalent of .consume() with 'toList' set to 'false'
+     */
+    forEach(inspector: (value: T, index: number, iterator: this) => void): void {
+        while (!this._done) {
+            this.next().some((value) => inspector(value, this._pointer - 1, this))
+        }
+    }
+
+    /**
      * Join values to a string
      * Consumes the iterator
      * @param str Joint
