@@ -171,9 +171,13 @@ export class List<T> implements Iterable<T> {
     countWith(predicate: (value: T, index: number, list: this) => boolean, stopAt = Infinity): number {
         let counter = 0
 
-        for (const [i, value] of this._content.entries()) {
-            if (predicate(value, i, this)) {
+        for (let i = 0; i < this._content.length; i++) {
+            if (predicate(this._content[i], i, this)) {
                 counter++
+
+                if (counter === stopAt) {
+                    return counter
+                }
             }
         }
 
