@@ -164,6 +164,23 @@ export class List<T> implements Iterable<T> {
     }
 
     /**
+     * Count the number of items matching a predicate
+     * @param predicate
+     * @param stopAt Stop once a given number of items has been found
+     */
+    countWith(predicate: (value: T, index: number, list: this) => boolean, stopAt = Infinity): number {
+        let counter = 0
+
+        for (const [i, value] of this._content.entries()) {
+            if (predicate(value, i, this)) {
+                counter++
+            }
+        }
+
+        return counter
+    }
+
+    /**
      * Get a slice of the list
      * @param startAt
      * @param endAt
