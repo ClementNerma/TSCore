@@ -433,13 +433,6 @@ class NoneValue<T> extends OptionClass<T> {
 export type Option<T> = SomeValue<T> | NoneValue<T>
 
 /**
- * Check if a value is an Option
- */
-export function isOption(value: unknown): value is Option<unknown> {
-    return value instanceof SomeValue || value instanceof NoneValue
-}
-
-/**
  * Create a concrete value
  * @param value
  */
@@ -475,6 +468,13 @@ export function getStateValue<T extends object, K extends string & KeyOfUnion<T>
  * Utility functions for Option<T>
  */
 export namespace Option {
+    /**
+     * Check if a value is an Option
+     */
+    export function is(value: unknown): value is Option<unknown> {
+        return value instanceof SomeValue || value instanceof NoneValue
+    }
+
     /**
      * Create an Option<T> from a nullable/maybe-undefined value
      * @param value

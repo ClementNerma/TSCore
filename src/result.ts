@@ -422,13 +422,6 @@ export class ErrValue<T, E> extends ResultClass<T, E> {
 export type Result<T, E> = OkValue<T, E> | ErrValue<T, E>
 
 /**
- * Check if a value is a Result
- */
-export function isResult(value: unknown): value is Result<unknown, unknown> {
-    return value instanceof OkValue || value instanceof ErrValue
-}
-
-/**
  * Create a new success result
  * @param value The success value
  */
@@ -457,6 +450,13 @@ export function ErrMsg(err: string, ...params: unknown[]): Result<any, string> {
  * Utility functions for Result<T, E>
  */
 export namespace Result {
+    /**
+     * Check if a value is a Result
+     */
+    export function is(value: unknown): value is Result<unknown, unknown> {
+        return value instanceof OkValue || value instanceof ErrValue
+    }
+
     /**
      * Create a result from a fallible function (= function which may throw())
      * @param core

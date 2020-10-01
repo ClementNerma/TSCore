@@ -10,10 +10,10 @@ import { List } from './list'
 import { matchString } from './match'
 import { MaybeUninit } from './maybeUinit'
 import { O } from './objects'
-import { None, Option, Some, isOption } from './option'
+import { None, Option, Some } from './option'
 import { Ref } from './ref'
 import { Regex } from './regex'
-import { isResult } from './result'
+import { Result } from './result'
 import { Task } from './task'
 
 /**
@@ -162,14 +162,14 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         return { type: "string", value }
     }
 
-    if (isOption(value)) {
+    if (Option.is(value)) {
         return value.match({
             Some: (value) => ({ type: "wrapped", typename: "Some", content: _nested(value) }),
             None: () => ({ type: "wrapped", typename: "None" }),
         })
     }
 
-    if (isResult(value)) {
+    if (Result.is(value)) {
         return value.match({
             Ok: (value) => ({ type: "wrapped", typename: "Ok", content: _nested(value) }),
             Err: (err) => ({ type: "wrapped", typename: "Err", content: _nested(err) }),

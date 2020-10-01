@@ -7,9 +7,9 @@ import { Either } from './either'
 import { format, panic } from './env'
 import { List } from './list'
 import { O } from './objects'
-import { isOption } from './option'
+import { Option } from './option'
 import { Ref } from './ref'
-import { Err, Ok, Result, isResult } from './result'
+import { Err, Ok, Result } from './result'
 import { forceType } from './typecasting'
 
 export interface FailedEqCmp {
@@ -147,7 +147,7 @@ export function deepCompareEq(left: unknown, right: unknown, _ctx: string[] = []
     }
 
     // Check for options
-    if (isOption(left) && isOption(right)) {
+    if (Option.is(left) && Option.is(right)) {
         if (left.isSome() && !right.isSome()) {
             return fail("Left [Option] is concrete but right [Option] is not")
         }
@@ -168,7 +168,7 @@ export function deepCompareEq(left: unknown, right: unknown, _ctx: string[] = []
     }
 
     // Check for results
-    if (isResult(left) && isResult(right)) {
+    if (Result.is(left) && Result.is(right)) {
         if (left.isOk() && !right.isOk()) {
             return fail("Left [Result] is Ok but right [Result] is Err")
         }

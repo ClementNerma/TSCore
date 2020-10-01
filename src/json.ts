@@ -11,8 +11,8 @@ import { List } from './list'
 import { AbstractMatchable, State, hasState, state } from './match'
 import { MaybeUninit } from './maybeUinit'
 import { Collection, O } from './objects'
-import { None, Option, Some, getStateValue, isOption } from './option'
-import { Err, Ok, Result, isResult } from './result'
+import { None, Option, Some, getStateValue } from './option'
+import { Err, Ok, Result } from './result'
 
 /**
  * Primitive JSON value
@@ -146,14 +146,14 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
             return Ok(out)
         }
 
-        if (isOption(value)) {
+        if (Option.is(value)) {
             return value.match<Result<NativeJsonValueType, JsonEncodingError>>({
                 Some: (value) => JsonValue.tryEncode(value, path.concat(["Some() variant of Option<T>"])),
                 None: () => Ok(null),
             })
         }
 
-        if (isResult(value)) {
+        if (Result.is(value)) {
             return value
                 .mapErr((err) => _err("Cannot encode Err() variants of Result<T, E> values", err).unwrapErr())
                 .andThen((value) => JsonValue.tryEncode(value, path.concat(["Ok() variant of Result<T, E>"])))
