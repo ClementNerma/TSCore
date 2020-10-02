@@ -243,13 +243,19 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
 }
 
 /**
- * Set up TSCore (can be called multiple times)
- * @param newEnv Either an object containing the configuration properties to update, or a function generating one using the previous configuration object
+ * A function to update TSCore's configuration ;
+ * Either an object containing the configuration properties to update, or a function generating one using the previous configuration object
  */
-export function setupTypeScriptCore(newEnv: Partial<TSCoreEnv> | ((previousEnv: Readonly<TSCoreEnv>) => Partial<TSCoreEnv>)): void {
+export type TSCoreEnvUpdater = Partial<TSCoreEnv> | ((previousEnv: Readonly<TSCoreEnv>) => Partial<TSCoreEnv>)
+
+/**
+ * Set up TSCore (can be called multiple times)
+ * @param envUpdater The update
+ */
+export function setupTypeScriptCore(envUpdater: TSCoreEnvUpdater): void {
     const out = { ..._tsCoreEnv.ref }
 
-    for (const [key, value] of O.entries(newEnv instanceof Function ? newEnv(_tsCoreEnv.ref) : newEnv)) {
+    for (const [key, value] of O.entries(envUpdater instanceof Function ? envUpdater(_tsCoreEnv.ref) : envUpdater)) {
         // @ts-ignore
         out[key] = value
     }
