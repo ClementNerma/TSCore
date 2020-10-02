@@ -705,7 +705,7 @@ export namespace JsonDecoders {
     }
 
     /** Decode an optional value */
-    export function optional<T>(decoder: JsonDecoder<T>): JsonDecoder<T | undefined> {
+    export function undefinable<T>(decoder: JsonDecoder<T>): JsonDecoder<T | undefined> {
         return (value) => (value.isNull() ? Ok(undefined) : decoder(value))
     }
 
