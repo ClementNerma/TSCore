@@ -338,7 +338,7 @@ export class List<T> implements Iterable<T> {
         const out = new List<U>()
 
         for (let i = 0; i < this._content.length; i++) {
-            func(this._content[i], i, this).some((mapped) => out.push(mapped))
+            func(this._content[i], i, this).ifSome((mapped) => out.push(mapped))
         }
 
         return out
@@ -353,7 +353,7 @@ export class List<T> implements Iterable<T> {
 
         for (let i = 0; i < this._content.length; i++) {
             const filteredMapped = await func(this._content[i], i, this)
-            filteredMapped.some((mapped) => out.push(mapped))
+            filteredMapped.ifSome((mapped) => out.push(mapped))
         }
 
         return out

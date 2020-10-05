@@ -28,13 +28,13 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
      * Run a callback if this option is concrete
      * @param callback
      */
-    abstract some(callback: (data: T) => void): this
+    abstract ifSome(callback: (data: T) => void): this
 
     /**
      * Run a callback if this option is a 'None' value
      * @param callback
      */
-    abstract none(callback: () => void): this
+    abstract ifNone(callback: () => void): this
 
     /**
      * Convert this value to a native one ('undefined' if this option is a 'None' value)
@@ -199,12 +199,12 @@ class SomeValue<T> extends OptionClass<T> {
         return false
     }
 
-    some(callback: (data: T) => void): this {
+    ifSome(callback: (data: T) => void): this {
         callback(this.data)
         return this
     }
 
-    none(callback: () => void): this {
+    ifNone(callback: () => void): this {
         return this
     }
 
@@ -323,11 +323,11 @@ class NoneValue<T> extends OptionClass<T> {
         return true
     }
 
-    some(callback: (data: T) => void): this {
+    ifSome(callback: (data: T) => void): this {
         return this
     }
 
-    none(callback: () => void): this {
+    ifNone(callback: () => void): this {
         callback()
         return this
     }

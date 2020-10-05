@@ -107,7 +107,7 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
         const yielded = new List<T>()
 
         while (!this._done) {
-            this.next().some((value) => yielded.push(value))
+            this.next().ifSome((value) => yielded.push(value))
         }
 
         return yielded
@@ -121,7 +121,7 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
         const yielded: T[] = []
 
         while (!this._done) {
-            this.next().some((value) => yielded.push(value))
+            this.next().ifSome((value) => yielded.push(value))
         }
 
         return yielded
@@ -138,7 +138,7 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
         const list = new List<U>()
 
         while (!this._done) {
-            this.next().some((value) => {
+            this.next().ifSome((value) => {
                 const mapped = mapper(value, this._pointer - 1, this)
                 if (toList) list.push(mapped)
             })
@@ -153,7 +153,7 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      */
     forEach(inspector: (value: T, index: number, iterator: this) => void): void {
         while (!this._done) {
-            this.next().some((value) => inspector(value, this._pointer - 1, this))
+            this.next().ifSome((value) => inspector(value, this._pointer - 1, this))
         }
     }
 

@@ -213,7 +213,7 @@ export class FailableFuture<T, E> extends Future<Result<T, E>> {
      * @param callback
      */
     inspectOk(callback: (data: T) => void): this {
-        this.then((result) => result.withOk(callback))
+        this.then((result) => result.ifOk(callback))
         return this
     }
 
@@ -222,7 +222,7 @@ export class FailableFuture<T, E> extends Future<Result<T, E>> {
      * @param callback
      */
     inspectErr(callback: (data: E) => void): this {
-        this.then((result) => result.withErr(callback))
+        this.then((result) => result.ifErr(callback))
         return this
     }
 

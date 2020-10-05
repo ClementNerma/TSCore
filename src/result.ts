@@ -50,13 +50,13 @@ abstract class ResultClass<T, E> extends AbstractMatchable<ResultMatch<T, E>> {
      * Run a callback if this result is Ok()
      * @param callback
      */
-    abstract withOk(callback: (data: T) => void): this
+    abstract ifOk(callback: (data: T) => void): this
 
     /**
      * Run a callback if this result is Err()
      * @param callback
      */
-    abstract withErr(callback: (err: E) => void): this
+    abstract ifErr(callback: (err: E) => void): this
 
     /**
      * Expect this result to be a success
@@ -202,12 +202,12 @@ class OkValue<T, E> extends ResultClass<T, E> {
         return None()
     }
 
-    withOk(callback: (data: T) => void): this {
+    ifOk(callback: (data: T) => void): this {
         callback(this.data)
         return this
     }
 
-    withErr(callback: (err: E) => void): this {
+    ifErr(callback: (err: E) => void): this {
         return this
     }
 
@@ -320,11 +320,11 @@ export class ErrValue<T, E> extends ResultClass<T, E> {
         return Some(this.err)
     }
 
-    withOk(callback: (data: T) => void): this {
+    ifOk(callback: (data: T) => void): this {
         return this
     }
 
-    withErr(callback: (err: E) => void): this {
+    ifErr(callback: (err: E) => void): this {
         callback(this.err)
         return this
     }
