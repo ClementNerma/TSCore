@@ -427,7 +427,7 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
                 ref,
                 type: "list",
                 typename: "Set",
-                content: [...value.entries()].map(([value]) => ({ index: index++, value })),
+                content: [...value.entries()].map(([value]) => ({ index: index++, value: _nested(value) })),
             }
         }
 
@@ -436,7 +436,7 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
                 ref,
                 type: "collection",
                 typename: "Map",
-                content: [...value.entries()].map(([key, value]) => ({ key, value })),
+                content: [...value.entries()].map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
             }
         }
 
