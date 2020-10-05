@@ -162,6 +162,17 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         return { type: "string", value }
     }
 
+    if (value instanceof Symbol) {
+        return {
+            type: "wrapped",
+            typename: "Symbol",
+            content: {
+                type: "string",
+                value: value.description ?? "",
+            },
+        }
+    }
+
     if (Option.is(value)) {
         return value.match({
             Some: (value) => ({ type: "wrapped", typename: "Some", content: _nested(value) }),
