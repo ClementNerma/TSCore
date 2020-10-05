@@ -62,13 +62,13 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
             return None()
         }
 
+        this._pointer++
+
         if (this._peeked.isSome()) {
             const prev = this._peeked.data
             this._peeked = None()
             return Some(prev)
         }
-
-        this._pointer++
 
         const next = this._iterator.next()
 
