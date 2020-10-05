@@ -44,6 +44,10 @@ export function mapStrLines(str: string, mapper: (line: string, lineIndex: numbe
  * @returns The indented string
  */
 export function indentStr(str: string, indent: number, indentChar = " "): string {
+    if (indent === 0) {
+        return str
+    }
+
     const indentStr = indentChar.repeat(indent)
     return str.replace(/^.*$/gm, (match) => indentStr + match)
 }
