@@ -86,6 +86,12 @@ export interface StringifyOptions {
     developUnknownValues?: boolean
 
     /**
+     * Use the system's locale for dates (default: true)
+     * If disabled, will fall back to UTC
+     */
+    useLocaleForDates?: boolean
+
+    /**
      * Pretty-print the value on multiple lines (default: determined depending on the value's structural size)
      */
     prettify?: boolean
@@ -364,6 +370,15 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
                 type: "prefixed",
                 typename: "Function",
                 prefixed: [["name", Some(_nested(value.name))]],
+            }
+        }
+
+        if (value instanceof Date) {
+            return {
+                ref: null,
+                type: "wrapped",
+                typename: "Date",
+                content: { ref: null, type: "text", text: options?.useLocaleForDates !== false ? value.toLocaleString() : value.toUTCString() },
             }
         }
 
