@@ -583,7 +583,16 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
         const prettify = options?.prettify ?? !isStringifyableLinear(item)
 
         function _nested(item: RawStringifyableItem, addOptions?: Partial<StringifyOptions>): string {
-            return stringifyItem(item, { ...options, ...addOptions, stringifyPrimitives: true })
+            return stringifyItem(
+                item,
+                options.stringifyPrimitives
+                    ? addOptions
+                        ? { ...options, ...addOptions }
+                        : options
+                    : addOptions
+                    ? { ...options, ...addOptions, stringifyPrimitives: true }
+                    : { ...options, stringifyPrimitives: true }
+            )
         }
 
         function _lines(str: string, prefixLength: number): string {
