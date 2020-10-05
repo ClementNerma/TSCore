@@ -419,7 +419,7 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         return (value as any).__tsCoreStringify()
     }
 
-    return options?.stringifyExt?.(value) ?? { type: "unknown", typename: (value as any).constructor?.name }
+    return options?.stringifyExt?.(value) ?? { type: "unknown", typename: (value as any)?.constructor?.name }
 }
 
 /**
