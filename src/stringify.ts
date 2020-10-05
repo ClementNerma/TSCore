@@ -491,8 +491,8 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
             }
         }
 
-        if (typeof (value as any).__tsCoreStringify === "function") {
-            return (value as any).__tsCoreStringify()
+        if ((value as any).__tsCoreStringify instanceof Function) {
+            return _nested((value as any).__tsCoreStringify())
         }
 
         return options?.stringifyExt?.(value, refs, duplicateRefs) ?? { ref, type: "unknown", typename: (value as any)?.constructor?.name }
