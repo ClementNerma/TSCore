@@ -45,7 +45,15 @@ export interface StringifyOptions {
             | "errorMessage"
             | "errorStack"
             | "reference"
-            | "referenceWrapper",
+            | "referenceWrapper"
+            | "remainingProperties"
+            | "remainingPropertiesWrapper"
+            | "propertyLimit"
+            | "propertyLimitWrapper"
+            | "recursiveCallLimit"
+            | "recursiveCallLimitWrapper"
+            | "timeout"
+            | "timeoutWrapper",
         str: string
     ) => string
 
@@ -127,6 +135,28 @@ export interface StringifyOptions {
      * The highlighter is also disabled
      */
     stringifyPrimitives?: boolean
+
+    /**
+     * Maximum number of items to show from lists (default: 20)
+     */
+    arrayLengthLimit?: number
+
+    /**
+     * Maximum number of items to show from collections (default: Infinity)
+     */
+    collectionPropertiesLimit?: number
+
+    /**
+     * Limit the number of recursive call during stringification (default: 1000)
+     * Setting a number too high will induce risks of high memory, CPU usage and latency when stringifying extremely large objects
+     */
+    recursiveCallsLimit?: number
+
+    /**
+     * Limit the time used to process an item (default: 300'000 ms)
+     * Setting a number too high will induce risks of high memory, CPU usage and latency when stringifying extremely large objects
+     */
+    limitStringificationTime?: number
 }
 
 /**
@@ -156,13 +186,26 @@ export type RawStringifyableItem = { ref: null | number } & (
     | { type: "string"; value: string }
     | { type: "text"; text: string }
     | { type: "wrapped"; typename: string; content?: RawStringifyableItem }
-    | { type: "list"; typename: false | string; content: Array<{ index: number; value: RawStringifyableItem }> }
-    | { type: "collection"; typename: false | string; content: Array<{ key: RawStringifyableItem; value: RawStringifyableItem }>; nativeColor?: true }
+    | { type: "list"; typename: false | string; content: Array<{ index: number; value: RawStringifyableItem }>; cut: null | number }
+    | {
+          type: "collection"
+          typename: false | string
+          content: Array<{ key: RawStringifyableItem; value: RawStringifyableItem }>
+          nativeColor?: true
+          cut: null | number
+      }
     | { type: "error"; typename: string; message: string; stack: Option<string> }
     | { type: "prefixed"; typename: string; prefixed: Array<[string, Option<RawStringifyableItem>]> }
     | { type: "unknown"; typename: string | undefined }
-    | { type: "unknownObj"; typename: string | undefined; content: Array<{ key: RawStringifyableItem; value: RawStringifyableItem }> }
+    | {
+          type: "unknownObj"
+          typename: string | undefined
+          content: Array<{ key: RawStringifyableItem; value: RawStringifyableItem }>
+          cut: null | number
+      }
     | { type: "reference"; id: number }
+    | { type: "recursiveCallLimit"; limit: number }
+    | { type: "timeout"; limit: number }
 )
 
 /**
@@ -171,7 +214,17 @@ export type RawStringifyableItem = { ref: null | number } & (
  * @param numberFormat
  */
 export function makeStringifyable(value: unknown, options?: StringifyOptions): RawStringifyable {
-    function _nested(value: unknown): RawStringifyableItem {
+    function makeStringifyableItem(value: unknown, l: number): RawStringifyableItem {
+        if (l > recursiveCallLimit) {
+            return { ref: null, type: "recursiveCallLimit", limit: recursiveCallLimit }
+        }
+
+        if (Date.now() - started > timeLimit) {
+            return { ref: null, type: "timeout", limit: timeLimit }
+        }
+
+        const _nested = (value: unknown) => makeStringifyableItem(value, l + 1)
+
         if (value === null) {
             return { ref: null, type: "void", value: null }
         }
@@ -273,15 +326,23 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         }
 
         if (value instanceof List) {
+            const cut = value.length <= arrayLengthLimit ? null : value.length - arrayLengthLimit
+
             return {
                 ref,
                 type: "list",
                 typename: "List",
-                content: value.toArray().map((item, index) => ({ index, value: _nested(item) })),
+                content: (!cut ? value.toArray() : value.firstOnes(value.length - cut).toArray()).map((item, index) => ({
+                    index,
+                    value: _nested(item),
+                })),
+                cut,
             }
         }
 
         if (value instanceof RecordDict) {
+            const cut = value.size <= collectionPropertiesLimit ? null : value.size - collectionPropertiesLimit
+
             return {
                 ref,
                 type: "collection",
@@ -290,50 +351,66 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
                     options?.sortRecordDictKeys === false
                         ? value
                               .entries()
+                              .take(Math.min(value.size, collectionPropertiesLimit))
                               .collectArray()
                               .map(([key, value]) => ({ key: _nested(key), value: _nested(value) }))
                         : value
                               .entries()
+                              .take(Math.min(value.size, collectionPropertiesLimit))
                               .collect()
                               .sort(([a], [b]) => compare(a, b))
                               .map(([key, value]) => ({ key: _nested(key), value: _nested(value) }))
                               .toArray(),
+                cut,
             }
         }
 
         if (value instanceof Dictionary) {
+            const cut = value.size <= collectionPropertiesLimit ? null : value.size - collectionPropertiesLimit
+
             return {
                 ref,
                 type: "collection",
                 typename: "Dictionary",
                 content: value
                     .entries()
+                    .take(Math.min(value.size, collectionPropertiesLimit))
                     .collectArray()
                     .map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
+                cut,
             }
         }
 
         if (O.isArray(value)) {
+            const cut = value.length <= arrayLengthLimit ? null : value.length - arrayLengthLimit
+
             return {
                 ref,
                 type: "list",
                 typename: false,
-                content: value.map((item, index) => ({ index, value: _nested(item) })),
+                content: value.slice(0, Math.min(value.length, arrayLengthLimit)).map((item, index) => ({ index, value: _nested(item) })),
+                cut,
             }
         }
 
         if (O.isCollection(value)) {
+            const entries = O.entries(value)
+            const cut = entries.length <= collectionPropertiesLimit ? null : entries.length - collectionPropertiesLimit
+
+            if (options?.sortCollectionKeys !== false) {
+                entries.sort(([a], [b]) => compare(a, b))
+            }
+
             return {
                 ref,
                 type: "collection",
                 typename: false,
-                content:
-                    options?.sortCollectionKeys === false
-                        ? O.entries(value).map(([key, value]) => ({ key: _nested(key), value: _nested(value) }))
-                        : O.entries(value)
-                              .sort(([a], [b]) => compare(a, b))
-                              .map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
+                content: (!cut ? entries : entries.slice(0, entries.length - cut)).map(([key, value]) => ({
+                    key: _nested(key),
+                    value: _nested(value),
+                })),
                 nativeColor: true,
+                cut,
             }
         }
 
@@ -422,21 +499,33 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         }
 
         if (value instanceof Set) {
+            const cut = value.size <= arrayLengthLimit ? null : value.size - arrayLengthLimit
             let index = 0
+
             return {
                 ref,
                 type: "list",
                 typename: "Set",
-                content: [...value.entries()].map(([value]) => ({ index: index++, value: _nested(value) })),
+                content: (!cut ? [...value.entries()] : new Iter(value.entries()).take(value.size - cut).collectArray()).map(([value]) => ({
+                    index: index++,
+                    value: _nested(value),
+                })),
+                cut,
             }
         }
 
         if (value instanceof Map) {
+            const cut = value.size <= collectionPropertiesLimit ? null : value.size - collectionPropertiesLimit
+
             return {
                 ref,
                 type: "collection",
                 typename: "Map",
-                content: [...value.entries()].map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
+                content: (!cut ? [...value.entries()] : new Iter(value.entries()).take(value.size - cut).collectArray()).map(([key, value]) => ({
+                    key: _nested(key),
+                    value: _nested(value),
+                })),
+                cut,
             }
         }
 
@@ -479,14 +568,23 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
             const entries = Result.fallible(() => O.entries(value as object))
 
             if (entries.isOk()) {
+                const fullEntries = entries.data
+
+                const cut = entries.data.length <= collectionPropertiesLimit ? null : entries.data.length - collectionPropertiesLimit
+
+                if (options?.sortCollectionKeys !== false) {
+                    fullEntries.sort(([a, b]) => compare(a, b))
+                }
+
                 return {
                     ref,
                     type: "unknownObj",
                     typename: (value as any)?.constructor?.name,
-                    content:
-                        options?.sortCollectionKeys === false
-                            ? entries.data.map(([key, value]) => ({ key: _nested(key), value: _nested(value) }))
-                            : entries.data.sort(([a], [b]) => compare(a, b)).map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
+                    content: (!cut ? fullEntries : fullEntries.slice(0, fullEntries.length - cut)).map(([key, value]) => ({
+                        key: _nested(key),
+                        value: _nested(value),
+                    })),
+                    cut,
                 }
             }
         }
@@ -502,7 +600,15 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
     const duplicateRefs = new Set<number>()
     let ref = -1
 
-    return { rootItem: _nested(value), duplicateRefs }
+    const recursiveCallLimit = options?.recursiveCallsLimit ?? 1_000
+
+    const timeLimit = options?.limitStringificationTime ?? 300_000
+    const started = Date.now()
+
+    const arrayLengthLimit = options?.arrayLengthLimit ?? 20
+    const collectionPropertiesLimit = options?.collectionPropertiesLimit ?? Infinity
+
+    return { rootItem: makeStringifyableItem(value, 0), duplicateRefs }
 }
 
 /**
@@ -544,6 +650,12 @@ export function isStringifyableLinear(stri: RawStringifyableItem): boolean {
 
         case "reference":
             return true
+
+        case "recursiveCallLimit":
+            return true
+
+        case "timeout":
+            return true
     }
 }
 
@@ -582,6 +694,12 @@ export function isStringifyableChildless(stri: RawStringifyableItem): boolean {
             return true
 
         case "reference":
+            return true
+
+        case "recursiveCallLimit":
+            return true
+
+        case "timeout":
             return true
     }
 }
@@ -630,6 +748,15 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
                 : highlighter("referenceWrapper", "<ref: ") + highlighter("reference", item.ref.toString()) + highlighter("referenceWrapper", ">")
 
         const spacedRefMarker = refMarker ? " " + refMarker + " " : ""
+
+        const cut =
+            "cut" in item && item.cut !== null
+                ? [
+                      highlighter("remainingPropertiesWrapper", "<") +
+                          highlighter("remainingProperties", item.cut.toString()) +
+                          highlighter("remainingPropertiesWrapper", ` other item${item.cut > 1 ? "s" : ""}>`),
+                  ]
+                : []
 
         switch (item.type) {
             case "void":
@@ -688,6 +815,7 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
                                     ? highlighter("listIndex", index.toString()) + highlighter("punctuation", ":") + " "
                                     : "") + highlighter("listValue", _lines(_nested(value), 0))
                         )
+                        .concat(cut)
                         .join(highlighter("punctuation", ",") + (prettify && !isStringifyableChildless(item) ? "\n  " : " ")) +
                     (item.content && !isStringifyableChildless(item) ? (prettify ? "\n" : " ") : "") +
                     highlighter("punctuation", "]")
@@ -724,6 +852,7 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
                                 " " +
                                 highlighter("collValue", _lines(_nested(value), 0))
                         )
+                        .concat(cut)
                         .join(highlighter("punctuation", ",") + (prettify && !isStringifyableChildless(item) ? "\n  " : " ")) +
                     (item.content && !isStringifyableChildless(item) ? (prettify ? "\n" : " ") : "") +
                     highlighter("punctuation", "}")
@@ -789,6 +918,20 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
 
             case "reference":
                 return highlighter("referenceWrapper", "<*ref ") + highlighter("reference", item.id.toString()) + highlighter("referenceWrapper", ">")
+
+            case "recursiveCallLimit":
+                return (
+                    highlighter("recursiveCallLimitWrapper", "<recursive call limit after ") +
+                    highlighter("recursiveCallLimit", item.limit.toString()) +
+                    highlighter("recursiveCallLimitWrapper", " calls>")
+                )
+
+            case "timeout":
+                return (
+                    highlighter("timeoutWrapper", "<recursive call limit after ") +
+                    highlighter("timeout", item.limit.toString()) +
+                    highlighter("timeoutWrapper", " calls>")
+                )
         }
     }
 
