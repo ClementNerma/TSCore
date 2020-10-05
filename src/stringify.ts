@@ -529,6 +529,22 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
             }
         }
 
+        if (value instanceof WeakSet) {
+            return {
+                ref,
+                type: "wrapped",
+                typename: "WeakSet",
+            }
+        }
+
+        if (value instanceof WeakMap) {
+            return {
+                ref,
+                type: "wrapped",
+                typename: "WeakMap",
+            }
+        }
+
         if (value instanceof Task) {
             return {
                 ref,
