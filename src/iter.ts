@@ -58,7 +58,7 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * @returns The yielded value, or `None` if the iterator is already done
      */
     next(): Option<T> {
-        if (this.done) {
+        if (this._done) {
             return None()
         }
 
@@ -402,7 +402,14 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      * Turn the rewindable iterator into a native iterator
      */
     [Symbol.iterator](): IterableIterator<T> {
-        return this._iterator
+        return {
+            next: () =>
+                this.next()
+                    .map((value) => ({ done: false, value }))
+                    .unwrapOr({ done: true, value: undefined as any }),
+
+            [Symbol.iterator]: () => this[Symbol.iterator](),
+        }
     }
 
     /**
