@@ -35,6 +35,7 @@ export interface StringifyOptions {
             | "lineBreak"
             | "unknown"
             | "unknownWrapper"
+            | "unknownTypename"
             | "punctuation"
             | "void"
             | "boolean"
@@ -75,6 +76,12 @@ export interface StringifyOptions {
      * Sort record dictionaries' keys alphabetically (default: true)
      */
     sortRecordDictKeys?: boolean
+
+    /**
+     * Develop unknown values as objects (default: false)
+     * Non-object unknown values won't be developed even if this option is turned on
+     */
+    developUnknownValues?: boolean
 
     /**
      * Pretty-print the value on multiple lines (default: determined depending on the value's structural size)
@@ -130,6 +137,7 @@ export type RawStringifyable =
     | { type: "error"; typename: string; message: string; stack: Option<string> }
     | { type: "prefixed"; typename: string; prefixed: Array<[string, Option<RawStringifyable>]> }
     | { type: "unknown"; typename: string | undefined }
+    | { type: "unknownObj"; typename: string | undefined; content: Array<{ key: RawStringifyable; value: RawStringifyable }>; nativeColor?: true }
 
 /**
  * Convert a value to a stringifyable format
@@ -391,6 +399,22 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         }
     }
 
+    if (options?.developUnknownValues) {
+        const entries = Result.fallible(() => O.entries(value as object))
+
+        if (entries.isOk()) {
+            return {
+                type: "unknownObj",
+                typename: (value as any)?.constructor?.name,
+                content:
+                    options?.sortCollectionKeys === false
+                        ? entries.data.map(([key, value]) => ({ key: _nested(key), value: _nested(value) }))
+                        : entries.data.sort(([a], [b]) => compare(a, b)).map(([key, value]) => ({ key: _nested(key), value: _nested(value) })),
+                nativeColor: true,
+            }
+        }
+    }
+
     if (typeof (value as any).__tsCoreStringify === "function") {
         return (value as any).__tsCoreStringify()
     }
@@ -420,6 +444,7 @@ export function isStringifyableLinear(stri: RawStringifyable): boolean {
             return stri.content.length >= 1 && stri.content.every(({ value }) => isStringifyableLinear(value))
 
         case "collection":
+        case "unknownObj":
             return (
                 stri.content.length >= 1 &&
                 stri.content.every(({ key, value }) => isStringifyableLinear(value) && (typeof key === "number" ? true : isStringifyableLinear(key)))
@@ -458,6 +483,7 @@ export function isStringifyableChildless(stri: RawStringifyable): boolean {
             return stri.content.length === 0
 
         case "collection":
+        case "unknownObj":
             return stri.content.length === 0
 
         case "error":
@@ -557,12 +583,19 @@ export function stringifyRaw(stri: RawStringifyable, options?: StringifyOptions)
             )
 
         case "collection":
-            return (
-                (stri.typename === false
+        case "unknownObj":
+            const typename =
+                stri.type === "unknownObj"
+                    ? highlighter("unknownTypename", stri.typename ?? "unknown type")
+                    : stri.typename === false
                     ? options?.displayCollectionTypeName
-                        ? highlighter("typename", "Collection") + " "
+                        ? highlighter("typename", "Collection")
                         : ""
-                    : highlighter("typename", stri.typename) + " ") +
+                    : highlighter("typename", stri.typename)
+
+            return (
+                typename +
+                (typename !== "" ? " " : "") +
                 highlighter("punctuation", "{") +
                 (stri.content && !isStringifyableChildless(stri) ? (prettify ? "\n  " : " ") : "") +
                 (stri.content || [])
