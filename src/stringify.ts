@@ -358,6 +358,15 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
             }
         }
 
+        if (value instanceof Function) {
+            return {
+                ref: null,
+                type: "prefixed",
+                typename: "Function",
+                prefixed: [["name", Some(_nested(value.name))]],
+            }
+        }
+
         if (value instanceof Iter) {
             return { ref, type: "prefixed", typename: "Iter", prefixed: [["pointer", Some(_nested(value.pointer))]] }
         }
