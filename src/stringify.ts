@@ -196,6 +196,43 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
             return { ref: null, type: "string", value }
         }
 
+        if (value instanceof Error) {
+            return {
+                ref: null,
+                type: "error",
+                typename: "Error",
+                message: value.message,
+                stack: Option.maybe(value.stack),
+            }
+        }
+
+        if (value instanceof RegExp) {
+            return {
+                ref: null,
+                type: "wrapped",
+                typename: "RegExp",
+                content: { ref: null, type: "text", text: value.toString() },
+            }
+        }
+
+        if (value instanceof Function) {
+            return {
+                ref: null,
+                type: "prefixed",
+                typename: "Function",
+                prefixed: [["name", Some(_nested(value.name))]],
+            }
+        }
+
+        if (value instanceof Date) {
+            return {
+                ref: null,
+                type: "wrapped",
+                typename: "Date",
+                content: { ref: null, type: "text", text: options?.useLocaleForDates !== false ? value.toLocaleString() : value.toUTCString() },
+            }
+        }
+
         if (options?.trackReferences !== false) {
             const index = refs.indexOf(value)
 
@@ -309,16 +346,6 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
             }
         }
 
-        if (value instanceof Error) {
-            return {
-                ref: null,
-                type: "error",
-                typename: "Error",
-                message: value.message,
-                stack: Option.maybe(value.stack),
-            }
-        }
-
         if (value instanceof DecodingError) {
             return {
                 ref,
@@ -343,15 +370,6 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
             }
         }
 
-        if (value instanceof RegExp) {
-            return {
-                ref: null,
-                type: "wrapped",
-                typename: "RegExp",
-                content: { ref: null, type: "text", text: value.toString() },
-            }
-        }
-
         if (value instanceof Regex) {
             return {
                 ref,
@@ -361,24 +379,6 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
                     ["expression", Some(_nested(value.inner))],
                     ["names", Some(_nested(value.names))],
                 ],
-            }
-        }
-
-        if (value instanceof Function) {
-            return {
-                ref: null,
-                type: "prefixed",
-                typename: "Function",
-                prefixed: [["name", Some(_nested(value.name))]],
-            }
-        }
-
-        if (value instanceof Date) {
-            return {
-                ref: null,
-                type: "wrapped",
-                typename: "Date",
-                content: { ref: null, type: "text", text: options?.useLocaleForDates !== false ? value.toLocaleString() : value.toUTCString() },
             }
         }
 
