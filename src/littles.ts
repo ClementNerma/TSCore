@@ -26,7 +26,7 @@ export function tryParseFloat(str: string, strictCheck = true): Result<number, v
 
 /**
  * Map lines of a string
- * @param str The string to indent
+ * @param str The string to map
  * @param mapper A function to map the lines
  * @returns The mapped string
  * @example mapStrLines('a\nb', line => '> ' + line) === '> a\n> b'
@@ -34,4 +34,16 @@ export function tryParseFloat(str: string, strictCheck = true): Result<number, v
 export function mapStrLines(str: string, mapper: (line: string, lineIndex: number) => string): string {
     let i = 0
     return str.replace(/^.*$/gm, (match) => mapper(match, i++))
+}
+
+/**
+ * Add indentation to a string
+ * @param str The string to indent
+ * @param indent The number of indentation characters to add
+ * @param indentChar The character to use for the indentation
+ * @returns The indented string
+ */
+export function indentStr(str: string, indent: number, indentChar = " "): string {
+    const indentStr = indentChar.repeat(indent)
+    return str.replace(/^.*$/gm, (match) => indentStr + match)
 }
