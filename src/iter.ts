@@ -395,7 +395,7 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
      */
     take(values: number): Iter<T> {
         const start = this._pointer
-        return this.takeWhile((_) => this._pointer - start < values)
+        return this.takeWhile((_) => this._pointer - start <= values)
     }
 
     /**
