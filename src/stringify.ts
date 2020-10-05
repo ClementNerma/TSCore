@@ -747,8 +747,6 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
                 ? ""
                 : highlighter("referenceWrapper", "<ref: ") + highlighter("reference", item.ref.toString()) + highlighter("referenceWrapper", ">")
 
-        const spacedRefMarker = refMarker ? " " + refMarker + " " : ""
-
         const cut =
             "cut" in item && item.cut !== null
                 ? [
@@ -786,7 +784,7 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
             case "wrapped":
                 return (
                     highlighter("typename", item.typename) +
-                    spacedRefMarker +
+                    (refMarker ? " " + refMarker + " " : "") +
                     highlighter("punctuation", "(") +
                     (item.content && !isStringifyableChildless(item) ? (prettify ? "\n  " : "") : "") +
                     (item.content ? _lines(_nested(item.content), 0) : "") +
@@ -861,7 +859,7 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
             case "error":
                 return (
                     highlighter("typename", item.typename) +
-                    spacedRefMarker +
+                    (refMarker ? " " + refMarker + " " : "") +
                     highlighter("punctuation", "(") +
                     item.stack
                         .map(
@@ -913,7 +911,7 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
                     " " +
                     highlighter("unknown", item.typename ?? "unknown type") +
                     highlighter("punctuation", ">") +
-                    spacedRefMarker
+                    (refMarker ? " " + refMarker : "")
                 )
 
             case "reference":
