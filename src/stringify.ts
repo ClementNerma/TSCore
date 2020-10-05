@@ -398,11 +398,12 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
         }
 
         if (value instanceof Set) {
+            let index = 0
             return {
                 ref,
                 type: "list",
                 typename: "Set",
-                content: [...value.entries()].map(([index, value]) => ({ index, value })),
+                content: [...value.entries()].map(([value]) => ({ index: index++, value })),
             }
         }
 
