@@ -233,6 +233,19 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
             }
         }
 
+        if (value instanceof Symbol) {
+            return {
+                ref: null,
+                type: "wrapped",
+                typename: "Symbol",
+                content: {
+                    ref: null,
+                    type: "string",
+                    value: value.description ?? "",
+                },
+            }
+        }
+
         if (options?.trackReferences !== false) {
             const index = refs.indexOf(value)
 
@@ -243,19 +256,6 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
 
             refs.push(value)
             ref++
-        }
-
-        if (value instanceof Symbol) {
-            return {
-                ref,
-                type: "wrapped",
-                typename: "Symbol",
-                content: {
-                    ref: null,
-                    type: "string",
-                    value: value.description ?? "",
-                },
-            }
         }
 
         if (Option.is(value)) {
