@@ -338,7 +338,7 @@ export function format(message: string, ...params: unknown[]): string {
  */
 export function dump(value: unknown, options?: StringifyOptions): void {
     if (_tsCoreEnv.ref.verbosity(_tsCoreEnv.ref.devMode(), "dump")) {
-        return _tsCoreEnv.ref.dump(value)
+        return _tsCoreEnv.ref.dump(value, options)
     }
 }
 
