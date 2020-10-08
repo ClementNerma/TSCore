@@ -257,6 +257,21 @@ export class Dictionary<K, V> implements Iterable<[K, V]> {
     }
 
     /**
+     * Merge values from another dictionary
+     * @param other
+     * @param override Override existing keys with the other dictionary's ones
+     */
+    merge(other: Dictionary<K, V>, override = true): this {
+        for (const [key, value] of other.internalMap()) {
+            if (override || !this._content.has(key)) {
+                this._content.set(key, value)
+            }
+        }
+
+        return this
+    }
+
+    /**
      * Run a callback function for each entry of the dictionary
      * @param callback
      * @param thisArg
