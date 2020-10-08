@@ -417,6 +417,7 @@ export function unreachable(message?: string, ...params: unknown[]): never {
     params = params ?? []
 
     _tsCoreEnv.ref.logger("unreachable", message, params)
+    _tsCoreEnv.ref.panicWatcher(message, params)
     return _tsCoreEnv.ref.unreachable(message, params)
 }
 
@@ -430,6 +431,7 @@ export function unimplemented(message?: string, ...params: unknown[]): never {
     params = params ?? []
 
     _tsCoreEnv.ref.logger("unimplemented", message, params)
+    _tsCoreEnv.ref.panicWatcher(message, params)
     return _tsCoreEnv.ref.unimplemented(message, params)
 }
 
@@ -443,5 +445,6 @@ export function todo(message?: string, ...params: unknown[]): never {
     params = params ?? []
 
     _tsCoreEnv.ref.logger("todo", message, params)
+    _tsCoreEnv.ref.panicWatcher(message, params)
     return _tsCoreEnv.ref.todo(message, params)
 }
