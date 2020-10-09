@@ -27,7 +27,7 @@ export class O {
      * @param value
      */
     static isCollection(value: unknown): value is Collection<unknown> {
-        return value !== undefined && value !== null && (value as object).constructor === {}.constructor
+        return typeof value === "object" && value !== null && value.toString() === {}.toString()
     }
 
     /**
