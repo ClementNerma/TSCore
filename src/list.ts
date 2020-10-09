@@ -194,6 +194,16 @@ export class List<T> implements Iterable<T> {
     }
 
     /**
+     * Get a slice of the list without the last elements
+     * @param count The number of end elements to exclude from the slice (default: 1)
+     * @example new List([ 'a', 'b', 'c' ]).withoutLast() // List [ 'a', 'b' ]
+     * @example new List([ 'a', 'b', 'c' ]).withoutLast(2) // List [ 'a' ]
+     */
+    withoutLast(count?: number): List<T> {
+        return List.raw(this._content.slice(0, this._content.length - (count ?? 1)))
+    }
+
+    /**
      * Concatenate this list to other ones
      * @param list
      * @param lists
