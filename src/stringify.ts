@@ -73,7 +73,7 @@ export interface StringifyOptions {
     displayCollectionTypeName?: boolean
 
     /**
-     * Display indexes in arrays (default: true)
+     * Display indexes in arrays (default: determined depending on the value's structural size)
      */
     arrayIndexes?: boolean
 
@@ -137,7 +137,7 @@ export interface StringifyOptions {
     stringifyPrimitives?: boolean
 
     /**
-     * Maximum number of items to show from lists (default: 20)
+     * Maximum number of items to show from lists (default: 100)
      */
     arrayLengthLimit?: number
 
@@ -621,7 +621,7 @@ export function makeStringifyable(value: unknown, options?: StringifyOptions): R
     const timeLimit = options?.limitStringificationTime ?? 300_000
     const started = Date.now()
 
-    const arrayLengthLimit = options?.arrayLengthLimit ?? 20
+    const arrayLengthLimit = options?.arrayLengthLimit ?? 100
     const collectionPropertiesLimit = options?.collectionPropertiesLimit ?? Infinity
 
     return { rootItem: makeStringifyableItem(value, 0), duplicateRefs }
@@ -825,7 +825,7 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
                     (item.content || [])
                         .map(
                             ({ index, value }) =>
-                                (options?.arrayIndexes !== false
+                                (options?.arrayIndexes === true || (options?.arrayIndexes === undefined && !isStringifyableChildless(value))
                                     ? highlighter("listIndex", index.toString()) + highlighter("punctuation", ":") + " "
                                     : "") + highlighter("listValue", _lines(_nested(value), 0))
                         )
