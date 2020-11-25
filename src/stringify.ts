@@ -655,10 +655,7 @@ export function isStringifyableLinear(stri: RawStringifyableItem): boolean {
 
         case "collection":
         case "unknownObj":
-            return (
-                stri.content.length >= 1 &&
-                stri.content.every(({ key, value }) => isStringifyableLinear(value) && (typeof key === "number" ? true : isStringifyableLinear(key)))
-            )
+            return stri.content.length >= 1 && stri.content.every(({ key, value }) => isStringifyableLinear(value) && isStringifyableLinear(key))
 
         case "error":
             return stri.stack.isNone()
