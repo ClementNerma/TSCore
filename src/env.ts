@@ -1,6 +1,6 @@
 import { O } from "./objects"
 import { Regex } from "./regex"
-import { stringify, Stringifyable, StringifyOptions } from "./stringify"
+import { StringificationOptions, StringifierOptions, stringify, Stringifyable } from "./stringify"
 
 declare const console: {
     debug(message: string): void
@@ -67,9 +67,9 @@ export interface TSCoreEnv {
      * Dump a value in the console
      * By default, nothing is printed if development mode is not enabled
      * @param value The value to dump
-     * @param options Optional stringification options
+     * @param options Optional options for stringify()
      */
-    dump(value: unknown, options?: StringifyOptions): void
+    dump(value: unknown, options?: StringifierOptions & StringificationOptions): void
 
     /**
      * Print a debug message in the console
@@ -160,7 +160,7 @@ export interface FormatOptions {
      * @param devMode Is development mode enabled?
      * @param context The formatting context
      */
-    stringifyOptions: (devMode: boolean, context: FormattingContext, prettify: boolean | null) => StringifyOptions
+    stringifyOptions: (devMode: boolean, context: FormattingContext, prettify: boolean | null) => StringifierOptions & StringificationOptions
 }
 
 /**
@@ -207,7 +207,8 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
 
         dump(value, options) {
             if (this.devMode()) {
-                console.debug(stringify(value, { ...this.defaultFormattingOptions().stringifyOptions(this.devMode(), "dump", true), ...options }))
+                const baseOptions = this.defaultFormattingOptions().stringifyOptions(this.devMode(), "dump", true)
+                console.debug(stringify(value, !options ? baseOptions : { ...baseOptions, ...options }))
             }
         },
 
@@ -317,7 +318,7 @@ export function formatAdvanced(message: string, params: unknown[], context: Form
         if (display === "!" || display === "#" || !display) {
             const baseStringifyOptions = options.stringifyOptions(devMode, context, pretty !== "")
 
-            const stringifyOptions: StringifyOptions = {
+            const stringifyOptions: StringifierOptions & StringificationOptions = {
                 ...baseStringifyOptions,
                 numberFormat: (numberFormat as any) || baseStringifyOptions.numberFormat,
                 highlighter:
@@ -357,7 +358,7 @@ export function format(message: string, ...params: unknown[]): string {
  * @param value The value to dump
  * @param options Optional stringification options
  */
-export function dump(value: unknown, options?: StringifyOptions): void {
+export function dump(value: unknown, options?: StringifierOptions & StringificationOptions): void {
     if (_tsCoreEnv.ref.verbosity(_tsCoreEnv.ref.devMode(), "dump")) {
         return _tsCoreEnv.ref.dump(value, options)
     }

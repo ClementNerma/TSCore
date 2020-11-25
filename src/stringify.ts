@@ -17,9 +17,73 @@ import { Result } from "./result"
 import { Task } from "./task"
 
 /**
- * Stringification options
+ * Stringifier (value => stringifyable) options
  */
-export interface StringifyOptions {
+export interface StringifierOptions {
+    /**
+     * Sort collections' keys alphabetically (default: true)
+     */
+    sortCollectionKeys?: boolean
+
+    /**
+     * Sort record dictionaries' keys alphabetically (default: true)
+     */
+    sortRecordDictKeys?: boolean
+
+    /**
+     * Develop unknown values as objects (default: false)
+     * Non-object unknown values won't be developed even if this option is turned on
+     */
+    developUnknownValues?: boolean
+
+    /**
+     * Use the system's locale for dates (default: true)
+     * If disabled, will fall back to UTC
+     */
+    useLocaleForDates?: boolean
+
+    /**
+     * Track references (default: true)
+     * Disabling this option will increase performance but will make stringification crash with cyclic references
+     */
+    trackReferences?: boolean
+
+    /**
+     * Maximum number of items to show from lists (default: 100)
+     */
+    arrayLengthLimit?: number
+
+    /**
+     * Maximum number of items to show from collections (default: Infinity)
+     */
+    collectionPropertiesLimit?: number
+
+    /**
+     * Limit the number of recursive call during stringification (default: 1000)
+     * Setting a number too high will induce risks of high memory, CPU usage and latency when stringifying extremely large objects
+     */
+    recursiveCallsLimit?: number
+
+    /**
+     * Limit the time used to process an item (default: 300'000 ms)
+     * Setting a number too high will induce risks of high memory, CPU usage and latency when stringifying extremely large objects
+     */
+    limitStringificationTime?: number
+
+    /**
+     * Stringify unsupported types
+     * @param value The value to stringify
+     * @param references Referenced objects, array index is the object's reference ID
+     * @param duplicateRefs Objects that are referenced at least two times in the current value
+     * @returns A raw stringifyable object, or `null` if the extension doesn't know how to stringify this type
+     */
+    stringifyExt?: (value: unknown, references: unknown[], duplicateRefs: Set<number>) => RawStringifyableItem | null
+}
+
+/**
+ * Stringification (stringifyable => string) options
+ */
+export interface StringificationOptions {
     /**
      * Highlight tokens during stringification (default: no highlighting)
      */
@@ -78,46 +142,9 @@ export interface StringifyOptions {
     arrayIndexes?: boolean
 
     /**
-     * Sort collections' keys alphabetically (default: true)
-     */
-    sortCollectionKeys?: boolean
-
-    /**
-     * Sort record dictionaries' keys alphabetically (default: true)
-     */
-    sortRecordDictKeys?: boolean
-
-    /**
-     * Develop unknown values as objects (default: false)
-     * Non-object unknown values won't be developed even if this option is turned on
-     */
-    developUnknownValues?: boolean
-
-    /**
-     * Use the system's locale for dates (default: true)
-     * If disabled, will fall back to UTC
-     */
-    useLocaleForDates?: boolean
-
-    /**
      * Pretty-print the value on multiple lines (default: determined depending on the value's structural size)
      */
     prettify?: boolean
-
-    /**
-     * Track references (default: true)
-     * Disabling this option will increase performance but will make stringification crash with cyclic references
-     */
-    trackReferences?: boolean
-
-    /**
-     * Stringify unsupported types
-     * @param value The value to stringify
-     * @param references Referenced objects, array index is the object's reference ID
-     * @param duplicateRefs Objects that are referenced at least two times in the current value
-     * @returns A raw stringifyable object, or `null` if the extension doesn't know how to stringify this type
-     */
-    stringifyExt?: (value: unknown, references: unknown[], duplicateRefs: Set<number>) => RawStringifyableItem | null
 
     /**
      * How to stringify 'undefined' values (default: '<unknown>')
@@ -135,28 +162,6 @@ export interface StringifyOptions {
      * The highlighter is also disabled
      */
     stringifyPrimitives?: boolean
-
-    /**
-     * Maximum number of items to show from lists (default: 100)
-     */
-    arrayLengthLimit?: number
-
-    /**
-     * Maximum number of items to show from collections (default: Infinity)
-     */
-    collectionPropertiesLimit?: number
-
-    /**
-     * Limit the number of recursive call during stringification (default: 1000)
-     * Setting a number too high will induce risks of high memory, CPU usage and latency when stringifying extremely large objects
-     */
-    recursiveCallsLimit?: number
-
-    /**
-     * Limit the time used to process an item (default: 300'000 ms)
-     * Setting a number too high will induce risks of high memory, CPU usage and latency when stringifying extremely large objects
-     */
-    limitStringificationTime?: number
 }
 
 /**
@@ -164,7 +169,7 @@ export interface StringifyOptions {
  * @param value
  * @param options
  */
-export function stringify(value: unknown, options?: StringifyOptions): string {
+export function stringify(value: unknown, options?: StringifierOptions & StringificationOptions): string {
     return stringifyRaw(makeStringifyable(value, options), options)
 }
 
@@ -213,7 +218,7 @@ export type RawStringifyableItem = { ref: null | number } & (
  * @param value
  * @param numberFormat
  */
-export function makeStringifyable(value: unknown, options?: StringifyOptions): RawStringifyable {
+export function makeStringifyable(value: unknown, options?: StringifierOptions): RawStringifyable {
     function makeStringifyableItem(value: unknown, l: number): RawStringifyableItem {
         if (l > recursiveCallLimit) {
             return { ref: null, type: "recursiveCallLimit", limit: recursiveCallLimit }
@@ -725,8 +730,8 @@ export function isStringifyableChildless(stri: RawStringifyableItem): boolean {
  * @param raw
  * @param options
  */
-export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions): string {
-    function stringifyItem(item: RawStringifyableItem, options: StringifyOptions): string {
+export function stringifyRaw(raw: RawStringifyable, options?: StringificationOptions): string {
+    function stringifyItem(item: RawStringifyableItem, options: StringificationOptions): string {
         if (!options?.stringifyPrimitives) {
             switch (item.type) {
                 case "void":
@@ -741,7 +746,7 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
 
         const prettify = options?.prettify ?? !isStringifyableLinear(item)
 
-        function _nested(item: RawStringifyableItem, addOptions?: Partial<StringifyOptions>): string {
+        function _nested(item: RawStringifyableItem, addOptions?: Partial<StringificationOptions>): string {
             return stringifyItem(
                 item,
                 options.stringifyPrimitives
@@ -961,21 +966,21 @@ export class Stringifyable {
     /**
      * Create a stringifyable value
      */
-    constructor(public stringifyable: RawStringifyable, public options?: StringifyOptions) {}
+    constructor(public stringifyable: RawStringifyable) {}
 
     /**
      * Create a stringifyable value
      */
-    static create(value: unknown, options?: StringifyOptions): Stringifyable {
-        return new Stringifyable(makeStringifyable(value, options), options)
+    static create(value: unknown, stringifierOptions?: StringifierOptions): Stringifyable {
+        return new Stringifyable(makeStringifyable(value, stringifierOptions))
     }
 
     /**
      * Stringify the value
      * @param additionalOptions Additional stringification options
      */
-    stringify(additionalOptions?: StringifyOptions): string {
-        return stringifyRaw(this.stringifyable, additionalOptions ? { ...this.options, ...additionalOptions } : this.options)
+    stringify(stringificationOptions?: StringificationOptions): string {
+        return stringifyRaw(this.stringifyable, stringificationOptions)
     }
 }
 

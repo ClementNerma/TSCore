@@ -2,14 +2,14 @@
  * @file Parser library for decoding data
  */
 
-import { CollLike, Dictionary, RecordDict } from './dictionary'
-import { format } from './env'
-import { List, ListLike } from './list'
-import { enumStr, Matchable, State, state, VoidStates } from './match'
-import { Collection, O } from './objects'
-import { None, Option, Some } from './option'
-import { Err, Ok, Result } from './result'
-import { stringify } from './stringify'
+import { CollLike, Dictionary, RecordDict } from "./dictionary"
+import { format } from "./env"
+import { List, ListLike } from "./list"
+import { enumStr, Matchable, State, state, VoidStates } from "./match"
+import { Collection, O } from "./objects"
+import { None, Option, Some } from "./option"
+import { Err, Ok, Result } from "./result"
+import { stringify } from "./stringify"
 
 /**
  * A function that handles decoding of a given type to another,
