@@ -917,7 +917,7 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringificationOpt
                                 highlighter("punctuation", ":") +
                                 " " +
                                 value
-                                    .map((value) => highlighter("collValue", _lines(_nested(value), 0)))
+                                    .map((value) => highlighter("collValue", _lines(_nested(value), prefix.length + 2)))
                                     .unwrapOrElse(() => highlighter("voidPrefixValue", "-"))
                         )
                         .join(highlighter("punctuation", ",") + (prettify && !isStringifyableChildless(item) ? "\n  " : " ")) +
