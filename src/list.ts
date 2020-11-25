@@ -217,6 +217,27 @@ export class List<T> implements Iterable<T> {
     }
 
     /**
+     * Concatenate this list to other ones if they are concrete values
+     * @param list
+     * @param lists
+     */
+    concatHeadMaybe(list: Option<ListLike<T>>, ...lists: Array<Option<ListLike<T>>>): List<T> {
+        const concat = this.clone()
+
+        for (const list of lists.reverse()) {
+            if (list.isSome()) {
+                concat.unshift(...list.data)
+            }
+        }
+
+        if (list.isSome()) {
+            concat.unshift(...list.data)
+        }
+
+        return concat
+    }
+
+    /**
      * Concatenate this list with other ones
      * @param list
      * @param lists
