@@ -1,6 +1,6 @@
 import { O } from "./objects"
 import { Regex } from "./regex"
-import { stringify, StringifyOptions } from "./stringify"
+import { stringify, Stringifyable, StringifyOptions } from "./stringify"
 
 declare const console: {
     debug(message: string): void
@@ -149,6 +149,13 @@ export interface FormatOptions {
     missingParam: (position: number, message: string, params: unknown[]) => string | never
 
     /**
+     * Invalid stringifyable value
+     * @param position Position of the invalid parameter (starting at 0)
+     * @param value The invalid value
+     */
+    invalidStringifyable: (position: number, value: unknown) => string | never
+
+    /**
      * Options for the stringify() function
      * @param devMode Is development mode enabled?
      * @param context The formatting context
@@ -179,6 +186,10 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
         defaultFormattingOptions: () => ({
             missingParam(position, message, params) {
                 return `<<<missing parameter ${position + 1}>>>`
+            },
+
+            invalidStringifyable(position, value) {
+                return `<<<invalid stringifyable at parameter ${position + 1}>>>`
             },
 
             stringifyOptions(devMode, context, prettify) {
@@ -276,10 +287,10 @@ export function formatAdvanced(message: string, params: unknown[], context: Form
     const options = maybeOptions ?? _tsCoreEnv.ref.defaultFormattingOptions()
     let paramCounter = -1
 
-    return message.replace(/{([a-zA-Z0-9_:#\?\$]*)}/g, (match, format) => {
+    return message.replace(/{([a-zA-Z0-9_:!#\?\$]*)}/g, (match, format) => {
         paramCounter++
 
-        const supported = new Regex(/^(\d+)?([:#])?([bdoxX])?(\?)?$/, ["strParamPos", "display", "numberFormat", "pretty"]).matchNamed(format)
+        const supported = new Regex(/^(\d+)?([:!#])?([bdoxX])?(\?)?$/, ["strParamPos", "display", "numberFormat", "pretty"]).matchNamed(format)
 
         if (supported.isNone()) {
             const ext = _tsCoreEnv.ref.formatExt(format, params, paramCounter, context, options)
@@ -303,17 +314,27 @@ export function formatAdvanced(message: string, params: unknown[], context: Form
             return options.missingParam(paramPos, message, params)
         }
 
-        if (display === "#" || !display) {
-            const stringifyOptions = options.stringifyOptions(devMode, context, pretty !== "")
+        if (display === "!" || display === "#" || !display) {
+            const baseStringifyOptions = options.stringifyOptions(devMode, context, pretty !== "")
 
-            return stringify(params[paramCounter], {
-                ...stringifyOptions,
-                numberFormat: (numberFormat as any) || stringifyOptions.numberFormat,
+            const stringifyOptions: StringifyOptions = {
+                ...baseStringifyOptions,
+                numberFormat: (numberFormat as any) || baseStringifyOptions.numberFormat,
                 highlighter:
                     (context === "format" || context === "logging") && _tsCoreEnv.ref.disableHighlighterInFormatContext(true)
                         ? undefined
-                        : stringifyOptions.highlighter,
-            })
+                        : baseStringifyOptions.highlighter,
+            }
+
+            const param = params[paramCounter]
+
+            if (display !== "!") {
+                return stringify(param, stringifyOptions)
+            } else if (param instanceof Stringifyable) {
+                return param.stringify(stringifyOptions)
+            } else {
+                return options.invalidStringifyable(paramCounter, param)
+            }
         }
 
         return JSON.stringify(params[paramCounter], null, pretty ? 4 : 0)

@@ -955,6 +955,31 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringifyOptions):
 }
 
 /**
+ * Stringifyable value, used as a guard to ensure the inner type is RawStringifyable in format functions
+ */
+export class Stringifyable {
+    /**
+     * Create a stringifyable value
+     */
+    constructor(public stringifyable: RawStringifyable, public options?: StringifyOptions) {}
+
+    /**
+     * Create a stringifyable value
+     */
+    static create(value: unknown, options?: StringifyOptions): Stringifyable {
+        return new Stringifyable(makeStringifyable(value, options), options)
+    }
+
+    /**
+     * Stringify the value
+     * @param additionalOptions Additional stringification options
+     */
+    stringify(additionalOptions?: StringifyOptions): string {
+        return stringifyRaw(this.stringifyable, additionalOptions ? { ...this.options, ...additionalOptions } : this.options)
+    }
+}
+
+/**
  * Non-natively stringifyable type
  */
 export interface TSCoreStringifyable {
