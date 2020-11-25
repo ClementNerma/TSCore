@@ -1,7 +1,7 @@
-import { O } from './objects'
-import { Option } from './option'
-import { Result } from './result'
-import { forceType } from './typecasting'
+import { O } from "./objects"
+import { Option } from "./option"
+import { Result } from "./result"
+import { forceType } from "./typecasting"
 
 /**
  * Regular expression

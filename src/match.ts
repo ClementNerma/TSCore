@@ -2,7 +2,7 @@
  * @file Core library for pattern-matching and base matchable types
  */
 
-import { O } from './objects'
+import { O } from "./objects"
 
 /**
  * Get the key types of an union type

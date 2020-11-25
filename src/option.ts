@@ -1,8 +1,8 @@
-import { panic } from './env'
-import { AbstractMatchable, KeyOfUnion, State, ValOfKeyOfUnion, state } from './match'
-import { O } from './objects'
-import { Err, Ok, Result } from './result'
-import { forceType } from './typecasting'
+import { panic } from "./env"
+import { AbstractMatchable, KeyOfUnion, State, state, ValOfKeyOfUnion } from "./match"
+import { O } from "./objects"
+import { Err, Ok, Result } from "./result"
+import { forceType } from "./typecasting"
 
 export type OptMatch<T> = State<"Some", T> | State<"None">
 

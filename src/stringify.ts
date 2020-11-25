@@ -1,20 +1,20 @@
-import { TaskCluster } from './cluster'
-import { compare } from './comparison'
-import { DecodingError } from './decode'
-import { Dictionary, RecordDict } from './dictionary'
-import { Either } from './either'
-import { Future } from './future'
-import { Iter } from './iter'
-import { JsonValue } from './json'
-import { List } from './list'
-import { matchString } from './match'
-import { MaybeUninit } from './maybeUinit'
-import { O } from './objects'
-import { None, Option, Some } from './option'
-import { Ref } from './ref'
-import { Regex } from './regex'
-import { Result } from './result'
-import { Task } from './task'
+import { TaskCluster } from "./cluster"
+import { compare } from "./comparison"
+import { DecodingError } from "./decode"
+import { Dictionary, RecordDict } from "./dictionary"
+import { Either } from "./either"
+import { Future } from "./future"
+import { Iter } from "./iter"
+import { JsonValue } from "./json"
+import { List } from "./list"
+import { matchString } from "./match"
+import { MaybeUninit } from "./maybeUinit"
+import { O } from "./objects"
+import { None, Option, Some } from "./option"
+import { Ref } from "./ref"
+import { Regex } from "./regex"
+import { Result } from "./result"
+import { Task } from "./task"
 
 /**
  * Stringification options

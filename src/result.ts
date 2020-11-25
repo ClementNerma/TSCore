@@ -2,9 +2,9 @@
  * @file Result values that are either a success or an error
  */
 
-import { formatAdvanced, panic, unreachable } from './env'
-import { AbstractMatchable, State, state } from './match'
-import { None, Option, Some } from './option'
+import { formatAdvanced, panic, unreachable } from "./env"
+import { AbstractMatchable, State, state } from "./match"
+import { None, Option, Some } from "./option"
 
 /**
  * Result's pattern matching

@@ -2,8 +2,6 @@
  * @file Comparison utilities
  */
 
-
-
 /**
  * Comparator's comparison result
  */

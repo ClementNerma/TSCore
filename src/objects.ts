@@ -2,7 +2,7 @@
  * @file Utility functions for objects
  */
 
-import { forceType } from './typecasting'
+import { forceType } from "./typecasting"
 
 /**
  * Key-value object type

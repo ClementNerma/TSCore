@@ -1,6 +1,6 @@
-import { O } from './objects'
-import { Regex } from './regex'
-import { StringifyOptions, stringify } from './stringify'
+import { O } from "./objects"
+import { Regex } from "./regex"
+import { stringify, StringifyOptions } from "./stringify"
 
 declare const console: {
     debug(message: string): void

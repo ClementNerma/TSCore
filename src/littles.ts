@@ -2,7 +2,7 @@
  * @file Some little utilities
  */
 
-import { Err, Ok, Result } from './result'
+import { Err, Ok, Result } from "./result"
 
 /**
  * Parse a string as an integer

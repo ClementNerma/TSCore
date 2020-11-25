@@ -5,7 +5,7 @@
 import { CollLike, Dictionary, RecordDict } from './dictionary'
 import { format } from './env'
 import { List, ListLike } from './list'
-import { Matchable, State, VoidStates, enumStr, state } from './match'
+import { enumStr, Matchable, State, state, VoidStates } from './match'
 import { Collection, O } from './objects'
 import { None, Option, Some } from './option'
 import { Err, Ok, Result } from './result'

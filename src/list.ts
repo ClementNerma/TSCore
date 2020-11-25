@@ -2,12 +2,12 @@
  * @file Type-safe arrays with functional and iterable capabilities
  */
 
-import { Comparator } from './comparison'
-import { panic } from './env'
-import { Iter } from './iter'
-import { O } from './objects'
-import { None, Option, Some } from './option'
-import { Err, Ok, Result } from './result'
+import { Comparator } from "./comparison"
+import { panic } from "./env"
+import { Iter } from "./iter"
+import { O } from "./objects"
+import { None, Option, Some } from "./option"
+import { Err, Ok, Result } from "./result"
 
 export class List<T> implements Iterable<T> {
     private _content: T[]

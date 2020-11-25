@@ -2,13 +2,13 @@
  * @file Mutual exclusion
  */
 
-import { panic } from './env'
-import { FailableFuture } from './future'
-import { Consumers } from './list'
-import { AbstractMatchable, State, match, matchState, state } from './match'
-import { None, Option, Some } from './option'
-import { Ref } from './ref'
-import { Err, Ok, Result } from './result'
+import { panic } from "./env"
+import { FailableFuture } from "./future"
+import { Consumers } from "./list"
+import { AbstractMatchable, match, matchState, State, state } from "./match"
+import { None, Option, Some } from "./option"
+import { Ref } from "./ref"
+import { Err, Ok, Result } from "./result"
 
 /**
  * State of a mutex

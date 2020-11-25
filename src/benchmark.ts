@@ -2,12 +2,12 @@
  * @file Micro-benchmarking library
  */
 
-import { Dictionary } from './dictionary'
-import { Future } from './future'
-import { List, StringBuffer } from './list'
-import { Enum, enumStr } from './match'
-import { Collection, O } from './objects'
-import { Err, Ok, Result } from './result'
+import { Dictionary } from "./dictionary"
+import { Future } from "./future"
+import { List, StringBuffer } from "./list"
+import { Enum, enumStr } from "./match"
+import { Collection, O } from "./objects"
+import { Err, Ok, Result } from "./result"
 
 /**
  * Content of a comparative benchmark

@@ -2,8 +2,8 @@
  * @file Represent a value that is either of a type or another
  */
 
-import { Matchable, State, match } from './match'
-import { None, Option, Some } from './option'
+import { match, Matchable, State } from "./match"
+import { None, Option, Some } from "./option"
 
 /**
  * Either's pattern matching

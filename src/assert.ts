@@ -2,15 +2,15 @@
  * @file Assertion utilities
  */
 
-import { Dictionary } from './dictionary'
-import { Either } from './either'
-import { format, panic } from './env'
-import { List } from './list'
-import { O } from './objects'
-import { Option } from './option'
-import { Ref } from './ref'
-import { Err, Ok, Result } from './result'
-import { forceType } from './typecasting'
+import { Dictionary } from "./dictionary"
+import { Either } from "./either"
+import { format, panic } from "./env"
+import { List } from "./list"
+import { O } from "./objects"
+import { Option } from "./option"
+import { Ref } from "./ref"
+import { Err, Ok, Result } from "./result"
+import { forceType } from "./typecasting"
 
 export interface FailedEqCmp {
     readonly message: string

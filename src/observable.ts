@@ -2,7 +2,7 @@
  * @file Functional observable object
  */
 
-import { List } from './list'
+import { List } from "./list"
 
 /**
  * Observer
