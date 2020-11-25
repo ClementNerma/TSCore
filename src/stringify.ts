@@ -81,45 +81,47 @@ export interface StringifierOptions {
 }
 
 /**
+ * Type of content to highlight
+ */
+export type HighlightingType =
+    | "typename"
+    | "prefix"
+    | "listIndex"
+    | "listValue"
+    | "collKey"
+    | "collValue"
+    | "text"
+    | "lineBreak"
+    | "unknown"
+    | "unknownWrapper"
+    | "unknownTypename"
+    | "punctuation"
+    | "void"
+    | "boolean"
+    | "string"
+    | "number"
+    | "voidPrefixValue"
+    | "errorMessage"
+    | "errorStack"
+    | "reference"
+    | "referenceWrapper"
+    | "remainingProperties"
+    | "remainingPropertiesWrapper"
+    | "propertyLimit"
+    | "propertyLimitWrapper"
+    | "recursiveCallLimit"
+    | "recursiveCallLimitWrapper"
+    | "timeout"
+    | "timeoutWrapper"
+
+/**
  * Stringification (stringifyable => string) options
  */
 export interface StringificationOptions {
     /**
      * Highlight tokens during stringification (default: no highlighting)
      */
-    highlighter?: (
-        type:
-            | "typename"
-            | "prefix"
-            | "listIndex"
-            | "listValue"
-            | "collKey"
-            | "collValue"
-            | "text"
-            | "lineBreak"
-            | "unknown"
-            | "unknownWrapper"
-            | "unknownTypename"
-            | "punctuation"
-            | "void"
-            | "boolean"
-            | "string"
-            | "number"
-            | "voidPrefixValue"
-            | "errorMessage"
-            | "errorStack"
-            | "reference"
-            | "referenceWrapper"
-            | "remainingProperties"
-            | "remainingPropertiesWrapper"
-            | "propertyLimit"
-            | "propertyLimitWrapper"
-            | "recursiveCallLimit"
-            | "recursiveCallLimitWrapper"
-            | "timeout"
-            | "timeoutWrapper",
-        str: string
-    ) => string
+    highlighter?: (type: HighlightingType, str: string) => string
 
     /**
      * Display numbers using a specific format (default: decimal)
@@ -199,7 +201,7 @@ export type RawStringifyableItem = { ref: null | number } & (
           nativeColor?: true
           cut: null | number
       }
-    | { type: "error"; typename: string; message: string; stack: Option<string> }
+    | { type: "error"; typename: string; message: string; stack: Option<string>; additionalFields: Array<[string, Option<RawStringifyableItem>]> }
     | { type: "prefixed"; typename: string; prefixed: Array<[string, Option<RawStringifyableItem>]> }
     | { type: "unknown"; typename: string | undefined }
     | {
@@ -261,6 +263,7 @@ export function makeStringifyable(value: unknown, options?: StringifierOptions):
                 typename: "Error",
                 message: value.message,
                 stack: Option.maybe(value.stack),
+                additionalFields: [],
             }
         }
 
@@ -435,6 +438,7 @@ export function makeStringifyable(value: unknown, options?: StringifierOptions):
                 typename: "DecodingError",
                 message: value.render(),
                 stack: None(),
+                additionalFields: [],
             }
         }
 
@@ -651,17 +655,21 @@ export function isStringifyableLinear(stri: RawStringifyableItem): boolean {
             return stri.content ? isStringifyableLinear(stri.content) : true
 
         case "list":
-            return stri.content.length >= 1 && stri.content.every(({ value }) => isStringifyableLinear(value))
+            return stri.content.every(({ value }) => isStringifyableLinear(value))
 
         case "collection":
         case "unknownObj":
-            return stri.content.length >= 1 && stri.content.every(({ key, value }) => isStringifyableLinear(value) && isStringifyableLinear(key))
+            return stri.content.every(({ key, value }) => isStringifyableLinear(value) && isStringifyableLinear(key))
 
         case "error":
-            return stri.stack.isNone()
+            return (
+                !stri.message.includes("\n") &&
+                stri.stack.mapOr((stack) => !stack.includes("\n"), true) &&
+                stri.additionalFields.every(([prefix, value]) => value.mapOr((value) => isStringifyableLinear(value), true))
+            )
 
         case "prefixed":
-            return stri.prefixed.every(([prefix, value]) => value.map((value) => isStringifyableLinear(value)).unwrapOr(true))
+            return stri.prefixed.every(([prefix, value]) => value.mapOr((value) => isStringifyableLinear(value), true))
 
         case "unknown":
             return true
@@ -703,7 +711,7 @@ export function isStringifyableChildless(stri: RawStringifyableItem): boolean {
             return stri.content.length === 0
 
         case "error":
-            return stri.stack.isNone()
+            return stri.stack.isNone() && stri.additionalFields.length === 0
 
         case "prefixed":
             return stri.prefixed.length <= 1
@@ -875,31 +883,6 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringificationOpt
                 )
 
             case "error":
-                return (
-                    highlighter("typename", item.typename) +
-                    (refMarker ? " " + refMarker + " " : "") +
-                    highlighter("punctuation", "(") +
-                    item.stack
-                        .map(
-                            (stack) =>
-                                (prettify ? "\n  " : "") +
-                                highlighter("prefix", "error: ") +
-                                highlighter("errorMessage", _lines(item.message, 7)) +
-                                (prettify ? (item.message.includes("\n") ? "\n" : "") + "\n  " : highlighter("punctuation", ",") + " ") +
-                                highlighter("prefix", "stack: ") +
-                                highlighter("errorStack", _lines(stack, 7)) +
-                                (prettify ? "\n" : "") +
-                                highlighter("punctuation", "}")
-                        )
-                        .unwrapOrElse(
-                            () =>
-                                highlighter("prefix", "error:") +
-                                " " +
-                                highlighter("errorMessage", _lines(item.message, 7)) +
-                                highlighter("punctuation", ")")
-                        )
-                )
-
             case "prefixed":
                 return (
                     highlighter("typename", item.typename) +
@@ -907,15 +890,35 @@ export function stringifyRaw(raw: RawStringifyable, options?: StringificationOpt
                     (refMarker ? refMarker + " " : "") +
                     highlighter("punctuation", "{") +
                     (!isStringifyableChildless(item) ? (prettify ? "\n  " : " ") : "") +
-                    (item.prefixed || [])
+                    List.raw(item.type === "error" ? item.additionalFields : item.prefixed)
                         .map(
                             ([prefix, value]) =>
                                 highlighter("prefix", prefix) +
                                 highlighter("punctuation", ":") +
                                 " " +
                                 value
-                                    .map((value) => highlighter("collValue", _lines(_nested(value), prefix.length + 2)))
+                                    .map((value) => highlighter("collValue", _lines(_nested(value), 0)))
                                     .unwrapOrElse(() => highlighter("voidPrefixValue", "-"))
+                        )
+                        .concatHead(
+                            item.type === "prefixed"
+                                ? []
+                                : [
+                                      highlighter("prefix", "message") +
+                                          highlighter("punctuation", ":") +
+                                          " " +
+                                          highlighter("errorMessage", _lines(item.message, 9)),
+                                  ].concat(
+                                      item.stack.mapOr(
+                                          (stack) => [
+                                              highlighter("prefix", "stack") +
+                                                  highlighter("punctuation", ":") +
+                                                  " " +
+                                                  highlighter("errorStack", _lines(stack, 7)),
+                                          ],
+                                          []
+                                      )
+                                  )
                         )
                         .join(highlighter("punctuation", ",") + (prettify && !isStringifyableChildless(item) ? "\n  " : " ")) +
                     (!isStringifyableChildless(item) ? (prettify ? "\n" : " ") : "") +
