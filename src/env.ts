@@ -193,7 +193,7 @@ const _tsCoreEnv: { ref: TSCoreEnv } = {
             },
 
             stringifyOptions(devMode, context, prettify) {
-                return { stringifyPrimitives: context === "dump", prettify: prettify ?? devMode }
+                return { stringifyPrimitives: context === "dump", prettify: prettify || devMode || undefined }
             },
         }),
 
