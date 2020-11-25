@@ -155,13 +155,6 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
     abstract okOrElse<U>(fallbackError: () => U): Result<T, U>
 
     /**
-     * Turn the option into a boolean value
-     * @param cond The condition function
-     * @param fallback The boolean value to return if the option is a 'None'
-     */
-    abstract toBoolean(cond: (value: T) => boolean, fallback?: boolean): boolean
-
-    /**
      * Clone this option
      */
     abstract clone(): Option<T>
@@ -284,10 +277,6 @@ class SomeValue<T> extends OptionClass<T> {
         return Ok(this.data)
     }
 
-    toBoolean(cond: (value: T) => boolean, fallback = false): boolean {
-        return cond(this.data)
-    }
-
     clone(): Option<T> {
         return Some(this.data)
     }
@@ -404,10 +393,6 @@ class NoneValue<T> extends OptionClass<T> {
 
     okOrElse<U>(fallbackError: () => U): Result<T, U> {
         return Err(fallbackError())
-    }
-
-    toBoolean(cond: (value: T) => boolean, fallback = false): boolean {
-        return fallback
     }
 
     clone(): Option<T> {
