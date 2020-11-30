@@ -502,6 +502,21 @@ export class List<T> implements Iterable<T> {
     }
 
     /**
+     * Map items through a function and collect the result in an array
+     * Faster than .map(...).toArray() or .toArray().map(...)
+     * @param mapper
+     */
+    mapToArray<U>(mapper: (value: T, index: number, list: this) => U): Array<U> {
+        const out: Array<U> = []
+
+        for (let i = 0; i < this._content.length; i++) {
+            out.push(mapper(this._content[i], i, this))
+        }
+
+        return out
+    }
+
+    /**
      * Map items through an asynchronous function
      * @param mapper
      */
