@@ -328,7 +328,7 @@ export namespace Decoders {
     }
 
     /** Decode an optional value */
-    export function undefinable<F, T>(decoder: Decoder<F, T>): Decoder<F, T | null | undefined> {
+    export function undefinable<F, T>(decoder: Decoder<F, T>): Decoder<F, T | undefined> {
         return (value) => (value === null || value === undefined ? Ok(undefined) : decoder(value))
     }
 
