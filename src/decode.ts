@@ -322,6 +322,11 @@ export namespace Decoders {
             })
     }
 
+    /** Decode a nullable value */
+    export function nullable<F, T>(decoder: Decoder<F, T>): Decoder<F, T | null> {
+        return (value) => (value === null ? Ok(null) : decoder(value))
+    }
+
     /** Decode an optional value */
     export function undefinable<F, T>(decoder: Decoder<F, T>): Decoder<F, T | null | undefined> {
         return (value) => (value === null || value === undefined ? Ok(undefined) : decoder(value))
