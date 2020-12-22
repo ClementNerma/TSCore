@@ -59,13 +59,13 @@ export interface StringifierOptions {
     collectionPropertiesLimit?: number
 
     /**
-     * Limit the number of recursive call during stringification (default: 1000)
+     * Limit the number of recursive call during stringification (default: 15)
      * Setting a number too high will induce risks of high memory, CPU usage and latency when stringifying extremely large objects
      */
     recursiveCallsLimit?: number
 
     /**
-     * Limit the time used to process an item (default: 300'000 ms)
+     * Limit the time used to process an item (default: 3'000 ms)
      * Setting a number too high will induce risks of high memory, CPU usage and latency when stringifying extremely large objects
      */
     limitStringificationTime?: number
@@ -625,9 +625,9 @@ export function makeStringifyable(value: unknown, options?: StringifierOptions):
     const duplicateRefs = new Set<number>()
     let ref = -1
 
-    const recursiveCallLimit = options?.recursiveCallsLimit ?? 1_000
+    const recursiveCallLimit = options?.recursiveCallsLimit ?? 15
 
-    const timeLimit = options?.limitStringificationTime ?? 300_000
+    const timeLimit = options?.limitStringificationTime ?? 3_000
     const started = Date.now()
 
     const arrayLengthLimit = options?.arrayLengthLimit ?? 100

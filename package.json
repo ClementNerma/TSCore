@@ -1,6 +1,6 @@
 {
     "name": "typescript-core",
-    "version": "8.4.3",
+    "version": "8.4.5",
     "description": "Functional utilities for TypeScript",
     "main": "build/index.js",
     "types": "build/index.d.ts",
