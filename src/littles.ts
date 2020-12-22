@@ -51,3 +51,15 @@ export function indentStr(str: string, indent: number, indentChar = " "): string
     const indentStr = indentChar.repeat(indent)
     return str.replace(/^.*$/gm, (match) => indentStr + match)
 }
+
+/**
+ * Create a Promise<Result<T, unknown>> from a failable promise
+ * @param promise
+ */
+export async function promiseResult<T>(promise: Promise<T>): Promise<Result<T, unknown>> {
+    try {
+        return Ok(await promise)
+    } catch (e: unknown) {
+        return Err(e)
+    }
+}

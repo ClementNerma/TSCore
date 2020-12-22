@@ -309,16 +309,4 @@ export class FailableFuture<T, E> extends Future<Result<T, E>> {
             )
         )
     }
-
-    /**
-     * Create a Promise<Result<T, unknown>> from a failable promise
-     * @param promise
-     */
-    static async promise<T>(promise: Promise<T>): Promise<Result<T, unknown>> {
-        try {
-            return Ok(await promise)
-        } catch (e: unknown) {
-            return Err(e)
-        }
-    }
 }
