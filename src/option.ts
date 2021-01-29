@@ -87,6 +87,12 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
     abstract map<U>(mapper: (value: T) => U): Option<U>
 
     /**
+     * Map this option's concrete value, asynchronously
+     * @param mapper Asynchronous mapping function
+     */
+    abstract mapAsync<U>(mapper: (value: T) => Promise<U>): Promise<Option<U>>
+
+    /**
      * Map this option's concrete value
      * @param mapper Mapping function
      * @param fallback Fallback function in case this option is 'None'
@@ -94,11 +100,25 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
     abstract mapOr<U>(mapper: (value: T) => U, fallback: U): U
 
     /**
+     * Map this option's concrete value, asynchronously
+     * @param mapper Asynchronous mapping function
+     * @param fallback Fallback function in case this option is 'None'
+     */
+    abstract mapOrAsync<U>(mapper: (value: T) => Promise<U>, fallback: U): Promise<U>
+
+    /**
      * Map this option's concrete value
      * @param mapper Mapping function
      * @param fallback Fallback function in case this option is 'None'
      */
     abstract mapOrElse<U>(mapper: (value: T) => U, fallback: () => U): U
+
+    /**
+     * Map this option's concrete value, asynchronously
+     * @param mapper Asynchronous mapping function
+     * @param fallback Asynchronous fallback function in case this option is 'None'
+     */
+    abstract mapOrElseAsync<U>(mapper: (value: T) => Promise<U>, fallback: () => Promise<U>): Promise<U>
 
     /**
      * Map this option to a string, falling back to an empty string if this option is 'None'
@@ -119,6 +139,12 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
     abstract andThen<U>(mapper: (value: T) => Option<U>): Option<U>
 
     /**
+     * Run an asynchronous callback in case this option is concrete
+     * @param mapper A callback returning a nullable value from this option's concrete value
+     */
+    abstract andThenAsync<U>(mapper: (value: T) => Promise<Option<U>>): Promise<Option<U>>
+
+    /**
      * Expect this option and another to be concrete
      * @param other Another option
      */
@@ -129,6 +155,12 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
      * @param mapper A callback returning a nullable value from this option's concrete value
      */
     abstract andThenMaybe<U>(mapper: (value: T) => U | null | undefined): Option<U>
+
+    /**
+     * Run an asynchronous callback in case this option is concrete
+     * @param mapper A callback returning a nullable value from this option's concrete value
+     */
+    abstract andThenMaybeAsync<U>(mapper: (value: T) => Promise<U | null | undefined>): Promise<Option<U>>
 
     /**
      * Create a 'Some' or 'None' value depending on this option's concreteness
@@ -147,6 +179,12 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
      * @param other Function generating an option
      */
     abstract orElse(other: () => Option<T>): Option<T>
+
+    /**
+     * Expect one of this option and another to be concrete asynchronously
+     * @param other Asynchronous function generating an option
+     */
+    abstract orElseAsync(other: () => Promise<Option<T>>): Promise<Option<T>>
 
     /**
      * Expect exactly one of this option and another to be concrete
@@ -245,11 +283,23 @@ class SomeValue<T> extends OptionClass<T> {
         return Some(mapper(this.data))
     }
 
+    mapAsync<U>(mapper: (value: T) => Promise<U>): Promise<Option<U>> {
+        return mapper(this.data).then(Some)
+    }
+
     mapOr<U>(mapper: (value: T) => U, fallback: U): U {
         return mapper(this.data)
     }
 
+    mapOrAsync<U>(mapper: (value: T) => Promise<U>, fallback: U): Promise<U> {
+        return mapper(this.data)
+    }
+
     mapOrElse<U>(mapper: (value: T) => U, fallback: () => U): U {
+        return mapper(this.data)
+    }
+
+    mapOrElseAsync<U>(mapper: (value: T) => Promise<U>, fallback: () => Promise<U>): Promise<U> {
         return mapper(this.data)
     }
 
@@ -265,6 +315,10 @@ class SomeValue<T> extends OptionClass<T> {
         return mapper(this.data)
     }
 
+    andThenAsync<U>(mapper: (value: T) => Promise<Option<U>>): Promise<Option<U>> {
+        return mapper(this.data)
+    }
+
     andMaybe<U>(other: U | null | undefined): Option<U> {
         return other !== null && other !== undefined ? Some(other) : None()
     }
@@ -272,6 +326,10 @@ class SomeValue<T> extends OptionClass<T> {
     andThenMaybe<U>(mapper: (value: T) => U | null | undefined): Option<U> {
         const mapped = mapper(this.data)
         return mapped !== null && mapped !== undefined ? Some(mapped) : None()
+    }
+
+    andThenMaybeAsync<U>(mapper: (value: T) => Promise<U | null | undefined>): Promise<Option<U>> {
+        return mapper(this.data).then(Option.maybe)
     }
 
     filter(predicate: (value: T) => boolean): Option<T> {
@@ -284,6 +342,10 @@ class SomeValue<T> extends OptionClass<T> {
 
     orElse(other: () => Option<T>): Option<T> {
         return this
+    }
+
+    orElseAsync(other: () => Promise<Option<T>>): Promise<Option<T>> {
+        return Promise.resolve(this)
     }
 
     xor(other: Option<T>): Option<T> {
@@ -372,11 +434,23 @@ class NoneValue<T> extends OptionClass<T> {
         return None()
     }
 
+    mapAsync<U>(mapper: (value: T) => Promise<U>): Promise<Option<U>> {
+        return Promise.resolve(None())
+    }
+
     mapOr<U>(mapper: (value: T) => U, fallback: U): U {
         return fallback
     }
 
+    mapOrAsync<U>(mapper: (value: T) => Promise<U>, fallback: U): Promise<U> {
+        return Promise.resolve(fallback)
+    }
+
     mapOrElse<U>(mapper: (value: T) => U, fallback: () => U): U {
+        return fallback()
+    }
+
+    mapOrElseAsync<U>(mapper: (value: T) => Promise<U>, fallback: () => Promise<U>): Promise<U> {
         return fallback()
     }
 
@@ -392,12 +466,20 @@ class NoneValue<T> extends OptionClass<T> {
         return None()
     }
 
+    andThenAsync<U>(mapper: (value: T) => Promise<Option<U>>): Promise<Option<U>> {
+        return Promise.resolve(None())
+    }
+
     andMaybe<U>(other: U | null | undefined): Option<U> {
         return None()
     }
 
     andThenMaybe<U>(mapper: (value: T) => U | null | undefined): Option<U> {
         return None()
+    }
+
+    andThenMaybeAsync<U>(mapper: (value: T) => Promise<U | null | undefined>): Promise<Option<U>> {
+        return Promise.resolve(None())
     }
 
     filter(predicate: (value: T) => boolean): Option<T> {
@@ -422,6 +504,10 @@ class NoneValue<T> extends OptionClass<T> {
 
     okOrElse<U>(fallbackError: () => U): Result<T, U> {
         return Err(fallbackError())
+    }
+
+    orElseAsync(other: () => Promise<Option<T>>): Promise<Option<T>> {
+        return other()
     }
 
     clone(): Option<T> {
