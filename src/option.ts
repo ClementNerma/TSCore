@@ -114,9 +114,21 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
 
     /**
      * Run a callback in case this option is concrete
-     * @param mapper A callback returning a new option from this one's concrete value
+     * @param mapper A callback returning a nullable value from this option's concrete value
      */
     abstract andThen<U>(mapper: (value: T) => Option<U>): Option<U>
+
+    /**
+     * Expect this option and another to be concrete
+     * @param other Another option
+     */
+    abstract andMaybe<U>(other: U | null | undefined): Option<U>
+
+    /**
+     * Run a callback in case this option is concrete
+     * @param mapper A callback returning a nullable value from this option's concrete value
+     */
+    abstract andThenMaybe<U>(mapper: (value: T) => U | null | undefined): Option<U>
 
     /**
      * Create a 'Some' or 'None' value depending on this option's concreteness
@@ -253,6 +265,15 @@ class SomeValue<T> extends OptionClass<T> {
         return mapper(this.data)
     }
 
+    andMaybe<U>(other: U | null | undefined): Option<U> {
+        return other !== null && other !== undefined ? Some(other) : None()
+    }
+
+    andThenMaybe<U>(mapper: (value: T) => U | null | undefined): Option<U> {
+        const mapped = mapper(this.data)
+        return mapped !== null && mapped !== undefined ? Some(mapped) : None()
+    }
+
     filter(predicate: (value: T) => boolean): Option<T> {
         return predicate(this.data) ? this : None()
     }
@@ -368,6 +389,14 @@ class NoneValue<T> extends OptionClass<T> {
     }
 
     andThen<U>(mapper: (value: T) => Option<U>): Option<U> {
+        return None()
+    }
+
+    andMaybe<U>(other: U | null | undefined): Option<U> {
+        return None()
+    }
+
+    andThenMaybe<U>(mapper: (value: T) => U | null | undefined): Option<U> {
         return None()
     }
 
