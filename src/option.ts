@@ -113,7 +113,7 @@ abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
     abstract and<U>(other: Option<U>): Option<U>
 
     /**
-     * Run a callback in case this option is a success
+     * Run a callback in case this option is concrete
      * @param mapper A callback returning a new option from this one's concrete value
      */
     abstract andThen<U>(mapper: (value: T) => Option<U>): Option<U>
