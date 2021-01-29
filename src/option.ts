@@ -584,6 +584,14 @@ export namespace Option {
     }
 
     /**
+     * Create an Option<T> from a future nullable/maybe-undefined value
+     * @param futureValue
+     */
+    export async function maybeAsync<T>(futureValue: Promise<T | null | undefined>): Promise<Option<T>> {
+        return maybe(await futureValue)
+    }
+
+    /**
      * Create an Option<void> from a boolean (`true` creates a Some(), `false` creates a None())
      * @param value
      */
