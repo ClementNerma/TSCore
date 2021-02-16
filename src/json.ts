@@ -4,7 +4,6 @@
 
 import { Decoder, Decoders as d, DecodingError, DecodingErrorLine } from "./decode"
 import { Dictionary, RecordDict } from "./dictionary"
-import { Either } from "./either"
 import { panic, unreachable } from "./env"
 import { Iter } from "./iter"
 import { List } from "./list"
@@ -157,13 +156,6 @@ export class JsonValue extends AbstractMatchable<MatchableJsonValue> {
             return value
                 .mapErr((err) => _err("Cannot encode Err() variants of Result<T, E> values", err).unwrapErr())
                 .andThen((value) => JsonValue.tryEncode(value, path.concat(["Ok() variant of Result<T, E>"])))
-        }
-
-        if (value instanceof Either) {
-            return value.match({
-                Left: (value) => JsonValue.tryEncode(value, path.concat(["Left() variant of Either<L, R>"])),
-                Right: (value) => JsonValue.tryEncode(value, path.concat(["Right() variant of Either<L, R>"])),
-            })
         }
 
         if (value instanceof Iter) {

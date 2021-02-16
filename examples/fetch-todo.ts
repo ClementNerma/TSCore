@@ -3,15 +3,26 @@
  */
 
 // Import Chalk to display colors in the terminal
-import * as chalk from 'chalk'
+import * as chalk from "chalk"
 // Import HTTPS to make a request
-import * as https from 'https'
-
+import * as https from "https"
 // Import required stuff from TS-Core
 import {
-    DecodingError, Err, Future, JsonDecoders as j, JsonValue, Matchable, Ok, Option, Result, State, eprintln, match, matchString, println,
-    setupTypeScriptCore, state, tryParseInt
-} from '../src'
+    DecodingError,
+    eprintln,
+    Err,
+    JsonDecoders as j,
+    JsonValue,
+    Matchable,
+    matchString,
+    Ok,
+    Option,
+    println,
+    Result,
+    setupTypeScriptCore,
+    State,
+    state,
+} from "../src"
 
 /**
  * A todo note
@@ -33,10 +44,10 @@ class FetchError extends Matchable<State<"HttpError", Error> | State<"InvalidJso
  * @param url The URL to fetch
  * @returns Response's body as text in case of success
  */
-function fetch(url: string): Future<Result<string, Error>> {
+function fetch(url: string): Promise<Result<string, Error>> {
     println("Fetching URL: {}", url)
 
-    return new Future((complete) => {
+    return new Promise((complete) => {
         https.get(url, (res) => {
             let body: string[] = []
 
@@ -52,14 +63,12 @@ function fetch(url: string): Future<Result<string, Error>> {
  * Fetch a todo note as a JSON value
  * @param id ID of the note to fetch
  */
-function fetchTodoNoteAsJson(id: number): Future<Result<JsonValue, FetchError>> {
+async function fetchTodoNoteAsJson(id: number): Promise<Result<JsonValue, FetchError>> {
     println("Fetching note n°{}...", id)
 
-    return fetch("https://jsonplaceholder.typicode.com/todos/" + id).then((result) =>
-        result
-            .mapErr((err) => new FetchError(state("HttpError", err)))
-            .andThen((resText) => JsonValue.parse(resText).mapErr((err) => new FetchError(state("InvalidJson", err))))
-    )
+    return (await fetch("https://jsonplaceholder.typicode.com/todos/" + id))
+        .mapErr((err) => new FetchError(state("HttpError", err)))
+        .andThen((resText) => JsonValue.parse(resText).mapErr((err_1) => new FetchError(state("InvalidJson", err_1))))
 }
 
 /**
@@ -67,7 +76,7 @@ function fetchTodoNoteAsJson(id: number): Future<Result<JsonValue, FetchError>> 
  * @param json A JSON value
  */
 function decodeTodoNote(json: JsonValue): Result<TodoNote, DecodingError> {
-    println!("Decoding note...")
+    println("Decoding note...")
 
     return json.decode(
         j.mapped({
@@ -87,10 +96,10 @@ async function main() {
     const input = Option.maybe(process.argv[2]).expect("Please provide the todo note's ID as an argument (ex: 1)")
 
     // Parse it as an integer
-    const id = tryParseInt(input).expect("Invalid ID provided")
+    const id = Result.tryParseInt(input).expect("Invalid ID provided")
 
     // Fetch the note with this ID
-    const note = await fetchTodoNoteAsJson(id).promise()
+    const note = await fetchTodoNoteAsJson(id)
 
     // Handle errors
     note.match({
@@ -118,6 +127,9 @@ setupTypeScriptCore((prev) => ({
                     prefix: () => chalk.cyan(content),
                     unknown: () => chalk.yellowBright(content),
                     unknownWrapper: () => chalk.magentaBright(content),
+                    unknownTypename: () => chalk.magentaBright(content),
+                    reference: () => chalk.blue(content),
+                    referenceWrapper: () => chalk.yellow(content),
                     punctuation: () => chalk.cyan(content),
                     listIndex: () => chalk.magenta(content),
                     listValue: () => chalk.blue(content),
@@ -128,6 +140,8 @@ setupTypeScriptCore((prev) => ({
                     number: () => chalk.yellow(content),
                     errorMessage: () => chalk.red(content),
                     errorStack: () => chalk.red(content),
+                    remainingProperties: () => chalk.yellow(content),
+                    remainingPropertiesWrapper: () => chalk.blue(content),
                     _: () => content,
                 }),
         }),

@@ -2,8 +2,6 @@
  * @file Core library for pattern-matching and base matchable types
  */
 
-import { O } from "./objects"
-
 /**
  * Get the key types of an union type
  * @template T Union type
@@ -53,7 +51,7 @@ export abstract class AbstractMatchable<T extends object> {
      */
     _getState(): T {
         const state = this.__getState()
-        return { [O.keys(state)[0]]: O.values(state)[0] } as T
+        return { [Object.keys(state)[0] as string]: Object.values(state)[0] } as T
     }
 
     /**
@@ -61,7 +59,7 @@ export abstract class AbstractMatchable<T extends object> {
      * @private
      */
     _getStateName(): KeyOfUnion<T> {
-        return O.keys(this.__getState())[0] as KeyOfUnion<T>
+        return Object.keys(this.__getState())[0] as any
     }
 
     /**
@@ -69,7 +67,7 @@ export abstract class AbstractMatchable<T extends object> {
      * @private
      */
     _getStateValue(): ValOfUnion<T> {
-        return O.values(this.__getState())[0] as ValOfUnion<T>
+        return Object.values(this.__getState())[0] as any
     }
 
     /**
@@ -174,19 +172,34 @@ export class Enum<S extends string> extends Matchable<State<S>> {
         super(typeof stateOrName === "string" ? state(stateOrName as any) : stateOrName)
     }
 
+    /**
+     * Check if a state or enum variant's name is a variant of this enum class
+     * @param stateOrName
+     */
     isVariant(stateOrName: State<S> | S): boolean {
         return typeof stateOrName === "string" ? this._getStateName() === stateOrName : this._getStateName() === Object.keys(state)[0]
     }
 
+    /**
+     * Replace this value with another state or enum variant's name
+     * @param stateOrName
+     */
     replace(stateOrName: State<S> | S) {
         this._state = typeof stateOrName === "string" ? state(stateOrName as any) : stateOrName
     }
 
+    /**
+     * Cast this value to a broader enumeratino type
+     */
     into<U extends string>(): Enum<S | U> {
         return new Enum<S | U>(this._getStateName())
     }
 
-    static get<S extends string>(stateOrName: State<S> | S): Enum<S> {
+    /**
+     * Create an enumeration variant from its state or name
+     * @param stateOrName
+     */
+    static make<S extends string>(stateOrName: State<S> | S): Enum<S> {
         return new Enum(stateOrName)
     }
 }

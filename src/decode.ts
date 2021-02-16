@@ -60,7 +60,7 @@ export class DecodingError extends Matchable<
      * Get the error as not-yet-formatted lines
      */
     rawLines(): Array<DecodingErrorLine> {
-        return this.match({
+        return this.match<DecodingErrorLine[]>({
             WrongType: (expected) => [["f", `Value does not have expected type "{}"`, [expected]]],
 
             ArrayItem: ([i, err]) => [
@@ -97,16 +97,19 @@ export class DecodingError extends Matchable<
                 ["e", err],
             ],
 
-            NoneOfEither: (errors) => [
-                ["s", `...failed to decode using either() with decoder 1:`],
-                ["e", errors[0]],
-                ...errors
-                    .map<DecodingErrorLine[]>((err, i) => [
-                        ["s", `...as well as with decoder ${i + 2}:`],
-                        ["e", err],
-                    ])
-                    .flat(),
-            ],
+            NoneOfEither: (errors): DecodingErrorLine[] =>
+                errors[0]
+                    ? [
+                          ["s", `...failed to decode using either() with decoder 1:`],
+                          ["e", errors[0]],
+                          ...errors
+                              .map<DecodingErrorLine[]>((err, i) => [
+                                  ["s", `...as well as with decoder ${i + 2}:`],
+                                  ["e", err],
+                              ])
+                              .flat(),
+                      ]
+                    : [["s", "...failed to decode using either() with unspecified decoders"]],
 
             NoneOfCases: (candidates) => [["f", `Value is not one of the candidate values: {}`, [candidates.join(", ")]]],
 
@@ -318,7 +321,7 @@ export namespace Decoders {
         return (value) =>
             Option.maybe(value).match({
                 Some: (value) => decoder(value).map((value) => Some(value)),
-                None: (value) => Ok(None()),
+                None: () => Ok(None()),
             })
     }
 
@@ -430,7 +433,7 @@ export namespace Decoders {
             }
 
             for (const decoder of decoders) {
-                let decoded = decoder(arr[i++])
+                let decoded = decoder(Option.expect(arr[i++]))
 
                 if (decoded.isErr()) {
                     return Err(new DecodingError(state("ArrayItem", [i - 1, decoded.err])))

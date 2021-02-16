@@ -1,33 +1,27 @@
 {
-  "compilerOptions": {
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "strictFunctionTypes": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": true,
-    "strictBindCallApply": true,
-    "alwaysStrict": true,
+    "compilerOptions": {
+        "alwaysStrict": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
+        // "noPropertyAccessFromIndexSignature": true,
+        // "noImplicitOverride": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
 
-    "downlevelIteration": true,
-    "experimentalDecorators": true,
+        "moduleResolution": "node",
+        "module": "CommonJS",
+        "lib": ["ESNext"],
+        "target": "ES2015",
 
-    "moduleResolution": "node",
-    "module": "commonjs",
-    "incremental": true,
-    "lib": [
-      "esnext"
-    ],
+        "incremental": true,
 
-    "target": "es5",
-
-    "inlineSourceMap": true,
-    "inlineSources": true,
-
-    "declaration": true,
-    "outDir": "build"
-  },
-  "include": [
-    "src/**/*.ts"
-  ]
+        "declaration": true,
+        "outDir": "dist"
+    },
+    "include": ["src/**/*.ts"]
 }

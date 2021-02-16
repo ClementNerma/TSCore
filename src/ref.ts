@@ -8,6 +8,10 @@ import { AbstractMatchable, Enum, match, State, state } from "./match"
 import { None, Option, Some } from "./option"
 import { Result } from "./result"
 
+/**
+ * Reference's pattern matching
+ * @template T Available reference value
+ */
 export type RefMatch<T> = State<"Available", T> | State<"Destroyed">
 
 /**

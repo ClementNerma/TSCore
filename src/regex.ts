@@ -1,12 +1,14 @@
 import { O } from "./objects"
 import { Option } from "./option"
 import { Result } from "./result"
-import { forceType } from "./typecasting"
 
 /**
  * Regular expression
  */
 export class Regex<N extends string> {
+    /**
+     * Underlying regular expression, used for the actual matching operations
+     */
     readonly inner: RegExp
 
     /**
@@ -32,7 +34,10 @@ export class Regex<N extends string> {
      * @returns Matched string as well as matched parameters including the subject
      */
     matchWithSubject(subject: string): Option<[string, string[]]> {
-        return Option.maybe(subject.match(this.inner)).map(([match, ...parts]) => [match, parts])
+        return Option.maybe(subject.match(this.inner)).map(([match, ...parts]) => [
+            Option.expect(match, "Internal error: regex did not return any match value"),
+            parts,
+        ])
     }
 
     /**
@@ -41,11 +46,9 @@ export class Regex<N extends string> {
      * @returns Matched string as well as matched parameters in a strongly-typed object
      */
     matchNamed(subject: string): Option<{ [name in N]: string } & { _subject: string }> {
-        return this.matchWithSubject(subject).map(([matched, parts]) => {
-            return forceType<{ [name in N]: string } & { _subject: string }>(
-                O.fromEntries([["_subject", matched], ...this.names.map<[string, string]>((name, pos) => [name, parts[pos] ?? ""])])
-            )
-        })
+        return this.matchWithSubject(subject).map(([matched, parts]) =>
+            O.fromEntries([["_subject", matched], ...this.names.map<[string, string]>((name, pos) => [name, parts[pos] ?? ""])])
+        ) as any
     }
 
     /**

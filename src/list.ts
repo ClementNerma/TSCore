@@ -2,7 +2,6 @@
  * @file Type-safe arrays with functional and iterable capabilities
  */
 
-import { Comparator } from "./comparison"
 import { panic } from "./env"
 import { Iter } from "./iter"
 import { O } from "./objects"
@@ -40,6 +39,14 @@ export class List<T> implements Iterable<T> {
     }
 
     /**
+     * (Internal) Get the value at a specified index without checking its type
+     * Meant to be used *after* the index has proven to be existing in the content array
+     */
+    private _raw(index: number): T {
+        return this._content[index] as T
+    }
+
+    /**
      * Get the list's number of items
      */
     get length(): number {
@@ -66,7 +73,7 @@ export class List<T> implements Iterable<T> {
      * @param index
      */
     get(index: number): Option<T> {
-        return this.has(index) ? Some(this._content[index]) : None()
+        return this.has(index) ? Some(this._raw(index)) : None()
     }
 
     /**
@@ -172,7 +179,7 @@ export class List<T> implements Iterable<T> {
         let counter = 0
 
         for (let i = 0; i < this._content.length; i++) {
-            if (predicate(this._content[i], i, this)) {
+            if (predicate(this._raw(i) as T, i, this)) {
                 counter++
 
                 if (counter === stopAt) {
@@ -305,8 +312,8 @@ export class List<T> implements Iterable<T> {
      */
     find(predicate: (value: T, index: number, list: this) => boolean): Option<T> {
         for (let i = 0; i < this._content.length; i++) {
-            if (predicate(this._content[i], i, this)) {
-                return Some(this._content[i])
+            if (predicate(this._raw(i), i, this)) {
+                return Some(this._raw(i))
             }
         }
 
@@ -319,7 +326,7 @@ export class List<T> implements Iterable<T> {
      */
     findHas(predicate: (value: T, index: number, list: this) => boolean): boolean {
         for (let i = 0; i < this._content.length; i++) {
-            if (predicate(this._content[i], i, this)) {
+            if (predicate(this._raw(i), i, this)) {
                 return true
             }
         }
@@ -333,7 +340,7 @@ export class List<T> implements Iterable<T> {
      */
     findIndex(predicate: (value: T, index: number, list: this) => boolean): Option<number> {
         for (let i = 0; i < this._content.length; i++) {
-            if (predicate(this._content[i], i, this)) {
+            if (predicate(this._raw(i), i, this)) {
                 return Some(i)
             }
         }
@@ -369,7 +376,7 @@ export class List<T> implements Iterable<T> {
         const out = new List<U>()
 
         for (let i = 0; i < this._content.length; i++) {
-            func(this._content[i], i, this).ifSome((mapped) => out.push(mapped))
+            func(this._raw(i), i, this).ifSome((mapped) => out.push(mapped))
         }
 
         return out
@@ -383,7 +390,7 @@ export class List<T> implements Iterable<T> {
         const out = new List<U>()
 
         for (let i = 0; i < this._content.length; i++) {
-            const filteredMapped = await func(this._content[i], i, this)
+            const filteredMapped = await func(this._raw(i), i, this)
             filteredMapped.ifSome((mapped) => out.push(mapped))
         }
 
@@ -398,8 +405,8 @@ export class List<T> implements Iterable<T> {
         const out = new List<T>()
 
         for (let i = 0; i < this._content.length; i++) {
-            if (this._content.findIndex((val) => comparator(val, this._content[i])) === i) {
-                out.push(this._content[i])
+            if (this._content.findIndex((val) => comparator(val, this._raw(i))) === i) {
+                out.push(this._raw(i))
             }
         }
 
@@ -412,7 +419,7 @@ export class List<T> implements Iterable<T> {
      */
     removeDuplicates(comparator: (left: T, right: T) => boolean): this {
         for (let i = 0; i < this._content.length; i++) {
-            if (this._content.findIndex((val) => comparator(val, this._content[i])) !== i) {
+            if (this._content.findIndex((val) => comparator(val, this._raw(i))) !== i) {
                 this._content.splice(i, 1)
                 i--
             }
@@ -429,7 +436,7 @@ export class List<T> implements Iterable<T> {
         let found = false
 
         for (let i = 0; i < this._content.length; i++) {
-            if (predicate(this._content[i], i, this)) {
+            if (predicate(this._raw(i), i, this)) {
                 if (found) {
                     return true
                 }
@@ -452,8 +459,8 @@ export class List<T> implements Iterable<T> {
         const selected = new List<T>()
 
         for (let i = 0; i < this._content.length; i++) {
-            if (predicate(this._content[i], i, this)) {
-                selected.push(this._content[i])
+            if (predicate(this._raw(i), i, this)) {
+                selected.push(this._raw(i))
 
                 if (selected.length === size) {
                     return selected
@@ -474,7 +481,7 @@ export class List<T> implements Iterable<T> {
         const mapped = new List<U>()
 
         for (let i = 0; i < this._content.length; i++) {
-            const result = tester(this._content[i], i, this)
+            const result = tester(this._raw(i), i, this)
 
             if (result.isOk()) {
                 mapped.push(result.data)
@@ -510,7 +517,7 @@ export class List<T> implements Iterable<T> {
         const out: Array<U> = []
 
         for (let i = 0; i < this._content.length; i++) {
-            out.push(mapper(this._content[i], i, this))
+            out.push(mapper(this._raw(i), i, this))
         }
 
         return out
@@ -579,7 +586,7 @@ export class List<T> implements Iterable<T> {
             minValue = +Infinity
 
         for (let i = 0; i < this._content.length; i++) {
-            const num = numerize(this._content[i], i, this)
+            const num = numerize(this._raw(i), i, this)
 
             if (num < minValue) {
                 minValue = num
@@ -587,7 +594,7 @@ export class List<T> implements Iterable<T> {
             }
         }
 
-        return Some(this._content[index])
+        return Some(this._raw(index))
     }
 
     /**
@@ -603,7 +610,7 @@ export class List<T> implements Iterable<T> {
             maxValue = -Infinity
 
         for (let i = 0; i < this._content.length; i++) {
-            const num = numerize(this._content[i], i, this)
+            const num = numerize(this._raw(i), i, this)
 
             if (num > maxValue) {
                 maxValue = num
@@ -611,7 +618,7 @@ export class List<T> implements Iterable<T> {
             }
         }
 
-        return Some(this._content[index])
+        return Some(this._raw(index))
     }
 
     /**
@@ -619,7 +626,7 @@ export class List<T> implements Iterable<T> {
      * @param numerize Turn the list's values into numbers
      */
     sum(numerize: (current: T, index: number, list: List<T>) => number): number {
-        return this._content.reduce((prev, curr, index) => numerize(curr, index, this), 0)
+        return this._content.reduce((_, curr, index) => numerize(curr, index, this), 0)
     }
 
     /**
@@ -1092,3 +1099,34 @@ export class StringBuffer extends List<string> {
  * @template T Type of values
  */
 export type ListLike<T> = List<T> | Array<T> | Set<T>
+
+/**
+ * Comparator's comparison result
+ * Values of this enumeration are the same ones natively used by JavaScript for the Array<T>.sort() method
+ */
+export enum CompResult {
+    Smaller = -1,
+    Equal = 0,
+    Greater = 1,
+}
+
+/**
+ * Comparator
+ * @template T Type of values to compare
+ */
+export type Comparator<T> = (a: T, b: T) => CompResult
+
+/**
+ * Compare two values
+ * @param a Left value
+ * @param b Right value
+ */
+export function compare<T>(a: T, b: T): CompResult {
+    if (a < b) {
+        return CompResult.Smaller
+    } else if (a === b) {
+        return CompResult.Equal
+    } else {
+        return CompResult.Greater
+    }
+}

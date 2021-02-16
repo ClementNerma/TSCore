@@ -3,14 +3,12 @@
  */
 
 import { Dictionary } from "./dictionary"
-import { Either } from "./either"
 import { format, panic } from "./env"
 import { List } from "./list"
 import { O } from "./objects"
 import { Option } from "./option"
 import { Ref } from "./ref"
 import { Err, Ok, Result } from "./result"
-import { forceType } from "./typecasting"
 
 export interface FailedEqCmp {
     readonly message: string
@@ -51,7 +49,7 @@ export function deepCompareEq(left: unknown, right: unknown, _ctx: string[] = []
     }
 
     // Ensure values constructor are identical (= instances of the same class)
-    if (!right || forceType<object>(left).constructor !== forceType<object>(right).constructor) {
+    if (!right || (left as object).constructor !== (right as object).constructor) {
         return fail("Type of left and right values mismatch!")
     }
 
@@ -180,21 +178,6 @@ export function deepCompareEq(left: unknown, right: unknown, _ctx: string[] = []
         return left.isOk()
             ? deepCompareEq(left.maybeOk().unwrap(), right.maybeOk().unwrap(), _ctx.concat("[Result].Ok"))
             : deepCompareEq(left.maybeErr().unwrap(), right.maybeErr().unwrap(), _ctx.concat("[Result].Err"))
-    }
-
-    // Check for either values
-    if (left instanceof Either && right instanceof Either) {
-        if (left.isLeft() && !right.isLeft()) {
-            return fail("Left [Either] does have its value on the left side but right [Either] does not")
-        }
-
-        if (!left.isLeft() && right.isLeft()) {
-            return fail("Left [Either] does have its value on the right side but right [Either] does not")
-        }
-
-        return left.isLeft()
-            ? deepCompareEq(left.left().unwrap(), right.left().unwrap(), _ctx.concat("[Either].Left"))
-            : deepCompareEq(left.right().unwrap(), right.right().unwrap(), _ctx.concat("[Either].Right"))
     }
 
     // Handle unsupported types

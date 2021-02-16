@@ -1,24 +1,24 @@
 {
     "name": "typescript-core",
-    "version": "8.6.1",
+    "version": "9.0.0",
     "description": "Functional utilities for TypeScript",
     "main": "build/index.js",
     "types": "build/index.d.ts",
     "scripts": {
-        "prepublishOnly": "tsc && uglifyjs-folder build --compress --mangle -eo build -x \".js\"",
+        "prepublishOnly": "tsc -p tsconfig.json && uglifyjs-folder dist --compress --mangle -eo dist -x \".js\"",
         "typedoc": "typedoc --out docs/types src",
         "build": "tsc"
     },
     "author": "Clément Nerma",
     "license": "Apache-2.0",
     "devDependencies": {
-        "typedoc": "^0.19.2",
-        "typescript": "^4.1.2",
+        "typedoc": "^0.20.25",
+        "typescript": "^4.1.5",
         "uglifyjs-folder": "^2.0.0"
     },
     "files": [
         "tsconfig.json",
-        "build/*.js",
-        "build/*.d.ts"
+        "dist/*.js",
+        "dist/*.d.ts"
     ]
 }

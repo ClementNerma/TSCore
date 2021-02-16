@@ -7,10 +7,11 @@ import { List } from "./list"
 import { Collection, O } from "./objects"
 import { None, Option, Some } from "./option"
 import { Err, Ok, Result } from "./result"
-import { forceType } from "./typecasting"
 
 /**
- * Convert a dictionary type to a collection type
+ * Convert a dictionary type to a collection
+ * @template K
+ * @template V
  */
 export type DictionaryToCollection<K, V> = {
     [S in K extends string | number | symbol ? K : string | number | symbol]: V
@@ -37,8 +38,8 @@ export class Dictionary<K, V> implements Iterable<[K, V]> {
      * Create a dictionary from an object
      * @param object
      */
-    static fromObject<T extends object>(object: T): Dictionary<keyof T, T[keyof T]> {
-        return new Dictionary(forceType(O.entries(object)))
+    static fromObject<T extends object>(object: T): Dictionary<Exclude<keyof T, number>, T[Exclude<keyof T, number>]> {
+        return new Dictionary(O.entries(object))
     }
 
     /**
@@ -130,7 +131,7 @@ export class Dictionary<K, V> implements Iterable<[K, V]> {
      * @param mapper
      */
     mapKeys<X>(mapper: (key: K, value: V) => X): Dictionary<X, V> {
-        return new Dictionary(Array.from(this._content.entries()).map((entry) => [mapper(entry[0], entry[1]), entry[1]]))
+        return new Dictionary(Array.from(this._content.entries()).map(([key, value]) => [mapper(key, value), value]))
     }
 
     /**
@@ -138,7 +139,7 @@ export class Dictionary<K, V> implements Iterable<[K, V]> {
      * @param mapper
      */
     mapValues<Y>(mapper: (value: V, key: K) => Y): Dictionary<K, Y> {
-        return new Dictionary(Array.from(this._content.entries()).map((entry) => [entry[0], mapper(entry[1], entry[0])]))
+        return new Dictionary(Array.from(this._content.entries()).map(([key, value]) => [key, mapper(value, key)]))
     }
 
     /**
@@ -146,7 +147,7 @@ export class Dictionary<K, V> implements Iterable<[K, V]> {
      * @param mapper
      */
     map<X, Y>(mapper: (key: K, value: V) => [X, Y]): Dictionary<X, Y> {
-        return new Dictionary(Array.from(this._content.entries()).map((entry) => mapper(entry[0], entry[1])))
+        return new Dictionary(Array.from(this._content.entries()).map(([key, value]) => mapper(key, value)))
     }
 
     /**
@@ -154,7 +155,7 @@ export class Dictionary<K, V> implements Iterable<[K, V]> {
      * @param mapper
      */
     mapKeysToCollection<X extends string | number | symbol>(mapper: (key: K, value: V) => X): { [S in X]: V } {
-        return O.fromEntries(Array.from(this._content.entries()).map((entry) => [mapper(entry[0], entry[1]), entry[1]])) as { [S in X]: V }
+        return O.fromEntries(Array.from(this._content.entries()).map(([key, value]) => [mapper(key, value), value])) as { [S in X]: V }
     }
 
     /**
@@ -164,20 +165,16 @@ export class Dictionary<K, V> implements Iterable<[K, V]> {
      */
     mapValuesToCollection<Y>(mapper: (value: V, key: K) => Y): Result<DictionaryToCollection<K, Y>, void> {
         if (this.size == 0) {
-            return Ok(forceType({}))
+            return Ok({} as DictionaryToCollection<K, Y>)
         }
 
         if (this.keys().any((key) => !["string", "number", "symbol"].includes(typeof key))) {
             return Err(undefined)
-        } else {
-            return Ok(
-                O.fromEntries(
-                    forceType<[number | string | symbol, Y][]>(
-                        Array.from(this._content.entries()).map((entry) => [entry[0], mapper(entry[1], entry[0])])
-                    )
-                ) as DictionaryToCollection<K, Y>
-            )
         }
+
+        const mappedEntries: Array<[K, Y]> = Array.from(this._content.entries()).map(([key, value]) => [key, mapper(value, key)])
+
+        return Ok(O.fromEntries(mappedEntries as any)) as any
     }
 
     /**
@@ -190,9 +187,9 @@ export class Dictionary<K, V> implements Iterable<[K, V]> {
      * @param mapper
      */
     mapValuesToCollectionUnchecked<Y>(mapper: (value: V, key: K) => Y): DictionaryToCollection<K, Y> {
-        return O.fromEntries(
-            forceType<[number | string | symbol, Y][]>(Array.from(this._content.entries()).map((entry) => [entry[0], mapper(entry[1], entry[0])]))
-        ) as DictionaryToCollection<K, Y>
+        const mappedEntries = Array.from(this._content.entries()).map(([key, value]) => [key, mapper(value, key)])
+
+        return O.fromEntries(mappedEntries as any) as any
     }
 
     /**
@@ -200,7 +197,11 @@ export class Dictionary<K, V> implements Iterable<[K, V]> {
      * @param mapper
      */
     mapToCollection<X extends string | number | symbol, Y>(mapper: (key: K, value: V) => [X, Y]): { [S in X]: Y } {
-        return O.fromEntries(Array.from(this._content.entries()).map((entry) => mapper(entry[0], entry[1]))) as { [S in X]: Y }
+        const mappedEntries = Array.from(this._content.entries()).map(([key, value]) => mapper(key, value))
+
+        return O.fromEntries(mappedEntries) as {
+            [S in X]: Y
+        }
     }
 
     /**
@@ -208,7 +209,7 @@ export class Dictionary<K, V> implements Iterable<[K, V]> {
      * @param mapper
      */
     mapToArray<U>(mapper: (key: K, value: V) => U): U[] {
-        return Array.from(this._content.entries()).map((entry) => mapper(entry[0], entry[1]))
+        return Array.from(this._content.entries()).map(([key, value]) => mapper(key, value))
     }
 
     /**
@@ -273,10 +274,9 @@ export class Dictionary<K, V> implements Iterable<[K, V]> {
 
     /**
      * Run a callback function for each entry of the dictionary
-     * @param callback
-     * @param thisArg
+     * @param callback Callback to run on each entry of the dictionary
      */
-    forEach(callback: (value: V, key: K, dict: this) => void, thisArg?: any): void {
+    forEach(callback: (value: V, key: K, dict: this) => void): void {
         this._content.forEach((value, key) => callback(value, key, this))
     }
 
@@ -341,7 +341,7 @@ export class RecordDict<V> extends Dictionary<string, V> {
      * @param mapper
      */
     mapRecordKeys(mapper: (key: string, value: V) => string): RecordDict<V> {
-        return new RecordDict(Array.from(this._content.entries()).map((entry) => [mapper(entry[0], entry[1]), entry[1]]))
+        return new RecordDict(Array.from(this._content.entries()).map(([key, value]) => [mapper(key, value), value]))
     }
 
     /**
@@ -349,7 +349,7 @@ export class RecordDict<V> extends Dictionary<string, V> {
      * @param mapper
      */
     mapRecordValues<Y>(mapper: (value: V, key: string) => Y): RecordDict<Y> {
-        return new RecordDict(Array.from(this._content.entries()).map((entry) => [entry[0], mapper(entry[1], entry[0])]))
+        return new RecordDict(Array.from(this._content.entries()).map(([key, value]) => [key, mapper(value, key)]))
     }
 
     /**
@@ -357,7 +357,7 @@ export class RecordDict<V> extends Dictionary<string, V> {
      * @param mapper
      */
     mapRecord<Y>(mapper: (key: string, value: V) => [string, Y]): RecordDict<Y> {
-        return new RecordDict(Array.from(this._content.entries()).map((entry) => mapper(entry[0], entry[1])))
+        return new RecordDict(Array.from(this._content.entries()).map(([key, value]) => mapper(key, value)))
     }
 
     /**

@@ -2,11 +2,18 @@ import { panic } from "./env"
 import { AbstractMatchable, KeyOfUnion, State, state, ValOfKeyOfUnion } from "./match"
 import { O } from "./objects"
 import { Err, Ok, Result } from "./result"
-import { forceType } from "./typecasting"
 
-export type OptMatch<T> = State<"Some", T> | State<"None">
+/**
+ * Option's pattern matching
+ * @template T Concrete type
+ */
+type OptionMatch<T> = State<"Some", T> | State<"None">
 
-abstract class OptionClass<T> extends AbstractMatchable<OptMatch<T>> {
+/**
+ * Option type
+ * @template T Concrete type
+ */
+abstract class OptionClass<T> extends AbstractMatchable<OptionMatch<T>> {
     /**
      * Create a new optional value
      */
@@ -369,7 +376,7 @@ class SomeValue<T> extends OptionClass<T> {
     }
 
     cast<U>(): T extends U ? Option<U> : never {
-        return forceType(this)
+        return this as any
     }
 
     extend<U>(): Option<T | U> {
@@ -519,7 +526,7 @@ class NoneValue<T> extends OptionClass<T> {
     }
 
     cast<U>(): T extends U ? Option<U> : never {
-        return forceType(this)
+        return this as any
     }
 
     extend<U>(): Option<T | U> {
@@ -551,13 +558,13 @@ export function None<T>(): Option<T> {
  * Get the value from a single state
  * @param key
  */
-export function getStateValue<T extends object, K extends string & KeyOfUnion<T>, U>(
+export function getStateValue<T extends object, K extends string & KeyOfUnion<T>>(
     matchable: AbstractMatchable<T>,
     key: K
 ): Option<ValOfKeyOfUnion<T, K>> {
     let state = matchable._getState()
 
-    if (O.keys(state)[0] !== key) {
+    if (((O.keys(state)[0] as unknown) as KeyOfUnion<T>) !== key) {
         return None()
     } else {
         return Some(O.values(state)[0]) as ValOfKeyOfUnion<T, K>
@@ -612,6 +619,24 @@ export namespace Option {
                 )
             )
             .unwrapOrElse(() => Ok(None<T>()))
+    }
+
+    /**
+     * Expect a value to be neither 'null' nor 'undefined'
+     * @param value
+     * @param message
+     */
+    export function expect<T>(value: T | null | undefined, message?: string): NonNullable<T> {
+        return value ?? panic(message || "Tried to use a null or undefined value as non-nullable!")
+    }
+
+    /**
+     * Expect a value to be neither 'null' nor 'undefined'
+     * @param value
+     * @param message
+     */
+    export function expectSome<T>(value: T | null | undefined, message?: string): Option<T> {
+        return Some(value ?? panic(message || "Tried to use a null or undefined value as non-nullable!"))
     }
 
     /**

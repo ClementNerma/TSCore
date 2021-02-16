@@ -399,6 +399,13 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
     }
 
     /**
+     * Get the original raw (and so, unsafe) iterator this one was built on top of
+     */
+    getRawUnsafeIterator(): IterableIterator<T> {
+        return this._iterator
+    }
+
+    /**
      * Turn the rewindable iterator into a native iterator
      */
     [Symbol.iterator](): IterableIterator<T> {
@@ -425,6 +432,6 @@ export class Iter<T> extends AbstractMatchable<IterState> implements Iterable<T>
  * Create a rewindable iterator from an object's entries
  * @param object
  */
-export function iter<T extends object>(object: T): Iter<[string, T[keyof T]]> {
+export function iter<T extends object>(object: T): Iter<[Exclude<keyof T, number>, T[Exclude<keyof T, number>]]> {
     return new Iter(O.entries(object))
 }

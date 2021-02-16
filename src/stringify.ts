@@ -1,12 +1,8 @@
-import { TaskCluster } from "./cluster"
-import { compare } from "./comparison"
 import { DecodingError } from "./decode"
 import { Dictionary, RecordDict } from "./dictionary"
-import { Either } from "./either"
-import { Future } from "./future"
 import { Iter } from "./iter"
 import { JsonValue } from "./json"
-import { List } from "./list"
+import { compare, List } from "./list"
 import { matchString } from "./match"
 import { MaybeUninit } from "./maybeUinit"
 import { O } from "./objects"
@@ -14,7 +10,6 @@ import { None, Option, Some } from "./option"
 import { Ref } from "./ref"
 import { Regex } from "./regex"
 import { Result } from "./result"
-import { Task } from "./task"
 
 /**
  * Stringifier (value => stringifyable) options
@@ -442,20 +437,6 @@ export function makeStringifyable(value: unknown, options?: StringifierOptions):
             }
         }
 
-        if (value instanceof Future) {
-            return {
-                ref,
-                type: "prefixed",
-                typename: "Future",
-                prefixed: [
-                    value.match({
-                        Pending: () => ["Pending", None()],
-                        Complete: (value) => ["Complete", Some(_nested(value))],
-                    }),
-                ],
-            }
-        }
-
         if (value instanceof Regex) {
             return {
                 ref,
@@ -484,13 +465,6 @@ export function makeStringifyable(value: unknown, options?: StringifierOptions):
                     }),
                 ],
             }
-        }
-
-        if (value instanceof Either) {
-            return value.match({
-                Left: (value) => ({ ref, type: "wrapped", typename: "Left", content: _nested(value) }),
-                Right: (right) => ({ ref, type: "wrapped", typename: "Err", content: _nested(right) }),
-            })
         }
 
         if (value instanceof Ref) {
@@ -551,41 +525,6 @@ export function makeStringifyable(value: unknown, options?: StringifierOptions):
                 ref,
                 type: "wrapped",
                 typename: "WeakMap",
-            }
-        }
-
-        if (value instanceof Task) {
-            return {
-                ref,
-                type: "prefixed",
-                typename: "Task",
-                prefixed: [
-                    value.match({
-                        Created: () => ["Created", None()],
-                        Pending: () => ["Pending", None()],
-                        RunningStep: () => ["RunningStep", None()],
-                        Fulfilled: (value) => ["Fulfilled", Some(_nested(value))],
-                        Failed: (err) => ["Failed", Some(_nested(err))],
-                    }),
-                ],
-            }
-        }
-
-        if (value instanceof TaskCluster) {
-            return {
-                ref,
-                type: "prefixed",
-                typename: "TaskCluster",
-                prefixed: [
-                    value.match({
-                        Created: () => ["Created", None()],
-                        Running: () => ["Running", None()],
-                        Paused: () => ["Paused", None()],
-                        Aborted: () => ["Aborted", None()],
-                        Fulfilled: (value) => ["Fulfilled", Some(_nested(value))],
-                        Failed: (err) => ["Failed", Some(_nested(err))],
-                    }),
-                ],
             }
         }
 

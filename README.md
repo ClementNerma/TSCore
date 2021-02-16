@@ -1,12 +1,10 @@
 # TS-Core
 
-[![npm version](https://badge.fury.io/js/typescript-core.svg)](https://badge.fury.io/js/typescript-core)
+[![npm version](https://badge.fury.io/js/tscore.svg)](https://badge.fury.io/js/tscore)
 
 TS-Core is a library that provides replacement types for some basic structures of TypeScript, like `undefined`, `null` or `Array<T>`. It also provides a pattern-matching system capable to pseudo-emulate a simple algebraic data type system.
 
 This project was originally inspired by the [Rust programming language](https://www.rust-lang.org/). If you are familiar this Rust, you should be able to use functional types very quickly.
-
-**WARNING: This library is NOT READY for production yet as it does not have any test and does not follow semantic versioning. A stable version will ship soon.**
 
 ## Concept of matchables
 
@@ -15,26 +13,23 @@ A **matchable** is a value that can has a specific _state_ among a list of possi
 Matchables are dealt with using the pattern-matching `match` function:
 
 ```ts
-import { Future, match } from "ts-core"
+import { Option, Some, match } from "typescript-core"
 
-// Create a future that resolves instantly
-let future = Future.resolve(2)
+const message = Some("Hello world!")
 
 // Match the future's state
-match(future, {
-    Pending: () => console.log("The future is pending..."),
-    Fulfilled: (data) => console.info("The future is fulfilled!", data),
-    Failed: (err) => console.error("The future has failed :(", err),
+match(message, {
+    Some: (message) => println("Message: {}", message),
+    None: () => println("No message to display :(")
 })
 ```
 
 Matching is exhaustive, meaning that if you omit to match any of the matchable's state, you will get an error:
 
 ```ts
-// ERROR: Pattern 'Failed' is not covered
+// ERROR: Pattern 'None' is not covered
 match(future, {
-    Pending: () => console.log("The future is pending..."),
-    Fulfilled: (data) => console.info("The future is fulfilled!", data),
+    Some: (message) => println("Message: {}", message)
 })
 ```
 
@@ -43,10 +38,9 @@ Most code editors will also feature code completion, meaning that if you ask you
 Note that you can also match objects using the postfix method:
 
 ```ts
-future.match({
-    Pending: () => console.log("The future is pending..."),
-    Fulfilled: (data) => console.info("The future is fulfilled!", data),
-    Failed: (err) => console.error("The future has failed :(", err),
+message.match({
+    Some: (message) => println("Message: {}", message),
+    None: () => println("No message to display :(")
 })
 ```
 
