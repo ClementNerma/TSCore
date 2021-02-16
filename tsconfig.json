@@ -1,27 +1,27 @@
 {
-    "compilerOptions": {
-        "alwaysStrict": true,
-        "noImplicitAny": true,
-        "noImplicitThis": true,
-        "noImplicitReturns": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUncheckedIndexedAccess": true,
-        // "noPropertyAccessFromIndexSignature": true,
-        // "noImplicitOverride": true,
-        "strict": true,
-        "forceConsistentCasingInFileNames": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
+  "compilerOptions": {
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    // "noPropertyAccessFromIndexSignature": true,
+    // "noImplicitOverride": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
 
-        "moduleResolution": "node",
-        "module": "CommonJS",
-        "lib": ["ESNext"],
-        "target": "ES2015",
+    "moduleResolution": "node",
+    "module": "CommonJS",
+    "lib": ["ESNext"],
+    "target": "ES2015",
 
-        "incremental": true,
+    "incremental": true,
 
-        "declaration": true,
-        "outDir": "dist"
-    },
-    "include": ["src/**/*.ts"]
+    "declaration": true,
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.ts"]
 }

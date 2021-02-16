@@ -1,24 +1,24 @@
 {
-    "compilerOptions": {
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "strictFunctionTypes": true,
-        "strictNullChecks": true,
-        "strictPropertyInitialization": true,
-        "strictBindCallApply": true,
-        "alwaysStrict": true,
-        "downlevelIteration": true,
-        "experimentalDecorators": true,
-        "moduleResolution": "node",
-        "module": "commonjs",
-        "incremental": true,
-        "lib": ["esnext"],
-        "target": "es5",
-        "inlineSourceMap": true,
-        "inlineSources": true,
-        "declaration": true,
-        "outDir": "build"
-    },
-    "include": ["*.ts"]
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "strictBindCallApply": true,
+    "alwaysStrict": true,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "incremental": true,
+    "lib": ["esnext"],
+    "target": "es5",
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "declaration": true,
+    "outDir": "build"
+  },
+  "include": ["*.ts"]
 }
