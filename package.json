@@ -1,9 +1,9 @@
 {
     "name": "typescript-core",
-    "version": "9.0.0",
+    "version": "9.0.1",
     "description": "Functional utilities for TypeScript",
-    "main": "build/index.js",
-    "types": "build/index.d.ts",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "scripts": {
         "prepublishOnly": "tsc -p tsconfig.json && uglifyjs-folder dist --compress --mangle -eo dist -x \".js\"",
         "typedoc": "typedoc --out docs/types src",
