@@ -92,6 +92,24 @@ export class MaybeUninit<T> extends MappedMatchable<MaybeUninitMatch<T>, Option<
   }
 
   /**
+   * Do something with the initialized value's key
+   * Returns a None() if it has not been initialized yet
+   * @param key The key to get
+   */
+  mapKey<K extends keyof T>(key: K): Option<T[K]> {
+    return this._under.map((obj) => obj[key])
+  }
+
+  /**
+   * Do something with the initialized value's key
+   * Returns a None() if it has not been initialized yet
+   * @param key The key to get
+   */
+  mapKeyOr<K extends keyof T>(key: K, fallback: T[K]): T[K] {
+    return this._under.mapOr((obj) => obj[key], fallback)
+  }
+
+  /**
    * Expect the value to be initialized
    * Panics otherwise
    */

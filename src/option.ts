@@ -131,6 +131,19 @@ abstract class OptionClass<T> extends AbstractMatchable<OptionMatch<T>> {
   ): Promise<U>
 
   /**
+   * Map a key of this option's concrete value
+   * @param key Key to get
+   */
+  abstract mapKey<K extends keyof T>(key: K): Option<T[K]>
+
+  /**
+   * Map a key of this option's concrete value
+   * @param key Key to get
+   * @param fallback
+   */
+  abstract mapKeyOr<K extends keyof T>(key: K, fallback: T[K]): T[K]
+
+  /**
    * Map this option to a string, falling back to an empty string if this option is 'None'
    * @param mapper Mapping function
    */
@@ -315,6 +328,14 @@ class SomeValue<T> extends OptionClass<T> {
     return mapper(this.data)
   }
 
+  mapKey<K extends keyof T>(key: K): Option<T[K]> {
+    return Some(this.data[key])
+  }
+
+  mapKeyOr<K extends keyof T>(key: K): T[K] {
+    return this.data[key]
+  }
+
   mapStr(mapper: (value: T) => string): string {
     return mapper(this.data)
   }
@@ -466,6 +487,14 @@ class NoneValue<T> extends OptionClass<T> {
     return fallback()
   }
 
+  mapKey<K extends keyof T>(key: K): Option<T[K]> {
+    return None()
+  }
+
+  mapKeyOr<K extends keyof T>(key: K, fallback: T[K]): T[K] {
+    return fallback
+  }
+
   mapStr(mapper: (value: T) => string): string {
     return ""
   }
@@ -569,7 +598,7 @@ export function getStateValue<T extends object, K extends string & KeyOfUnion<T>
 ): Option<ValOfKeyOfUnion<T, K>> {
   let state = matchable._getState()
 
-  if (((O.keys(state)[0] as unknown) as KeyOfUnion<T>) !== key) {
+  if ((O.keys(state)[0] as unknown as KeyOfUnion<T>) !== key) {
     return None()
   } else {
     return Some(O.values(state)[0]) as ValOfKeyOfUnion<T, K>
