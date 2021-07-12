@@ -40,10 +40,12 @@ export class MaybeUninit<T> extends MappedMatchable<MaybeUninitMatch<T>, Option<
    * Panics if it has already been initialized
    * For an alternative without panicking, see tryInit()
    * @param value
+   * @returns The initialization value
    */
-  init(value: T) {
+  init(value: T): T {
     this._under.expectNone("Tried to re-initialize a MaybeUninit value")
     this._under = Some(value)
+    return value
   }
 
   /**

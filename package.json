@@ -1,6 +1,6 @@
 {
     "name": "typescript-core",
-    "version": "9.1.0",
+    "version": "9.1.2",
     "description": "Functional utilities for TypeScript",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
