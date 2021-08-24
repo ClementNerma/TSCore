@@ -174,6 +174,11 @@ export class DecodingError extends Matchable<
  * Common decoders
  */
 export namespace Decoders {
+  /**
+   * (Internal) Optional property attribute for decoders
+   */
+  export const OPTIONAL_PROPERTY = Symbol("TSCoreDecoderOptionalPropertyAttribute")
+
   /** Expect the value to be exactly 'undefined' */
   export const exactlyUndefined: Decoder<unknown, undefined> = (value) =>
     value === undefined ? Ok(undefined) : Err(new DecodingError(state("WrongType", "undefined")))
@@ -368,12 +373,25 @@ export namespace Decoders {
   }
 
   /** Decode an optional value to an Option<T> */
-  export function maybe<F, T>(decoder: Decoder<F, T>): Decoder<F | null | undefined, Option<T>> {
-    return (value) =>
-      Option.maybe(value).match({
-        Some: (value) => decoder(value).map((value) => Some(value)),
-        None: () => Ok(None()),
-      })
+  export function optional<F, T>(decoder: Decoder<F, T>): Decoder<F | undefined, Option<T>> {
+    const optional: Decoder<F | undefined, Option<T>> = (value) =>
+      value === undefined ? Ok(None()) : decoder(value).map((value) => Some(value))
+
+    // @ts-ignore
+    optional[OPTIONAL_PROPERTY] = () => None()
+
+    return optional
+  }
+
+  /** Decode an optional value to an undefinable value */
+  export function maybe<F, T>(decoder: Decoder<F, T>): Decoder<F | undefined, T | undefined> {
+    const maybe: Decoder<F | undefined, T | undefined> = (value) =>
+      value === undefined ? Ok(undefined) : decoder(value)
+
+    // @ts-ignore
+    maybe[OPTIONAL_PROPERTY] = () => undefined
+
+    return maybe
   }
 
   /** Decode a nullable value */
@@ -528,10 +546,15 @@ export namespace Decoders {
         const collField = coll.get(field)
 
         if (collField.isNone()) {
+          // @ts-ignore
+          if (decoder[OPTIONAL_PROPERTY]) {
+            continue
+          }
+
           return Err(new DecodingError(state("MissingCollectionField", field)))
         }
 
-        let decoded = decoder(collField.data)
+        const decoded = decoder(collField.data)
 
         if (decoded.isErr()) {
           return Err(new DecodingError(state("CollectionItem", [field, decoded.err])))

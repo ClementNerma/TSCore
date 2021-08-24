@@ -613,6 +613,11 @@ export type JsonDecoder<T> = Decoder<JsonValue, T>
  */
 export namespace JsonDecoders {
   /**
+   * (Internal) Optional property attribute for decoders
+   */
+  export const OPTIONAL_PROPERTY = Symbol("TSCoreDecoderOptionalPropertyAttribute")
+
+  /**
    * (Internal) Generate a decoding error
    */
   function _err(lines: DecodingErrorLine[]): DecodingError {
@@ -737,6 +742,13 @@ export namespace JsonDecoders {
         const value = dict.get(field)
 
         if (value.isNone()) {
+          // @ts-ignore
+          if (decoder[OPTIONAL_PROPERTY]) {
+            // @ts-ignore
+            out[field] = decoder[OPTIONAL_PROPERTY]()
+            continue
+          }
+
           return Err(new DecodingError(state("MissingCollectionField", field)))
         }
 
@@ -761,11 +773,22 @@ export namespace JsonDecoders {
   }
 
   /** Decode an optional value to an Option<T> */
-  export function maybe<T>(decoder: JsonDecoder<T>): JsonDecoder<Option<T>> {
-    return (value) => (value.isNull() ? Ok(None()) : decoder(value).map((value) => Some(value)))
+  export function optional<T>(decoder: JsonDecoder<T>): JsonDecoder<Option<T>> {
+    const optional: JsonDecoder<Option<T>> = (value) => decoder(value).map((value) => Some(value))
+    // @ts-ignore
+    optional[OPTIONAL_PROPERTY] = () => None()
+    return optional
   }
 
-  /** Decode an optional value */
+  /** Decode an optional value to an undefinable value */
+  export function maybe<T>(decoder: JsonDecoder<T>): JsonDecoder<T | undefined> {
+    const maybe: JsonDecoder<T | undefined> = (value) => decoder(value)
+    // @ts-ignore
+    maybe[OPTIONAL_PROPERTY] = () => undefined
+    return maybe
+  }
+
+  /** Decode a value that can be undefined */
   export function undefinable<T>(decoder: JsonDecoder<T>): JsonDecoder<T | undefined> {
     return (value) => (value.isNull() ? Ok(undefined) : decoder(value))
   }
