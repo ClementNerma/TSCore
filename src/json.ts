@@ -736,7 +736,6 @@ export namespace JsonDecoders {
       for (const [field, decoder] of O.entries(mappings)) {
         const value = dict.get(field)
 
-        // HACK: Temporary fix until https://github.com/microsoft/TypeScript/issues/39733 gets fixed
         if (value.isNone()) {
           return Err(new DecodingError(state("MissingCollectionField", field)))
         }
