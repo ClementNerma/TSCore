@@ -741,7 +741,7 @@ export namespace JsonDecoders {
           return Err(new DecodingError(state("MissingCollectionField", field)))
         }
 
-        let decoded = decoder(value.data)
+        const decoded = decoder(value.data)
 
         if (decoded.isErr()) {
           return Err(new DecodingError(state("CollectionItem", [field, decoded.err])))
